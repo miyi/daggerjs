@@ -17,7 +17,7 @@
     <!--<link rel="stylesheet" href="css.css" media="print" onload="media = 'all'">-->
     <style>[dg-cloak] { display: none !important; }</style>
     <link rel="stylesheet" href="./index.css">
-    <script type="module" integrity1="sha256-j36ZDu6LWjub1P/IAX9LlsRFNkLSt4Pcrd8/xRfPpFc=" crossorigin="anonymous" src="http://dagger.core.com:8280/dagger.js" defer></script>
+    <script type="module" integrity1="sha256-j36ZDu6LWjub1P/IAX9LlsRFNkLSt4Pcrd8/xRfPpFc=" crossorigin="anonymous" src="./src/dagger.js" defer></script>
     <script type="dagger/configs" integrity1="CV7omJ8n3bMRVSdloGsIeJTnvfc6By4UTXna5C+7CHw=" src="./configs.json"></script>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.21.2/min/vs/loader.min.js"></script>
     <script>
@@ -36,7 +36,7 @@
   <body dg-cloak>
     <div id="header">
       <h1>🗡️ dagger.js</h1>
-      <a id="github-link" href="https://github.com/dagger8224/dagger_1.0_rc">${ $.viewOnGithub }</a>
+      <a id="github-link" href="https://github.com/dagger8224/dagger.js">${ $.viewOnGithub }</a>
       <select id="language-select" $selected="language" +change="localStorage.setItem('language', language) || ($ = languages[language])">
         <option $each="$.languages" $text="item" $value="key"></option>
       </select>
