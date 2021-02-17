@@ -1,0 +1,303 @@
+{
+    "//": "dagger demo configs",
+    "options": {
+        "//": "dagger options",
+        "debug": "location.hostname.includes('dagger.demo.com') || location.hostname.includes('localhost')",
+        "commentNode": true,
+        "directiveAttribute": true,
+        "moduleLog": true,
+        "routerLog": true,
+        "integrity": false
+    },
+    "rootSelectors": ["title", "body"],
+    "customTags": ["custom_tag0"],
+    "routing": {
+        "aliases": {
+            "/index2": "/index"
+        },
+        "default": "/default",
+        "hashPrefix": "#",
+        "overrideRelativeLinks": true,
+        "redirects": {
+            "/": "/index"
+        },
+        "scenarios": {
+            "//": "path/constants/variables/tailable/modules/children",
+            "tailable": true,
+            "variables": {},
+            "constants": {
+                "title": "default, should be overwritten"
+            },
+            "modules": {
+                "test_script": "#root_test_script",
+                "script": "#script",
+                "component": [{
+                    "condition": false,
+                    "uri": "#component1"
+                }, {
+                    "condition": true,
+                    "uri": "#component"
+                }],
+                "prefix": "#prefix",
+                "suffix": "#suffix",
+                "directive": {
+                    "content": "<div>directive content</div>",
+                    "type": "template"
+                }
+            },
+            "children": [{
+                "path": "index",
+                "constants": {
+                    "title": "index",
+                    "template": "index"
+                },
+                "modules": {
+                    "@script": {
+                        "test_script": "#index_test_script"
+                    },
+                    "@namespace": {
+                        "index": {
+                            "customTags": ["custom_tag1"],
+                            "content": {
+                                "template": [{
+                                    "condition": false,
+                                    "uri": "#index_template123",
+                                    "style": "style"
+                                }, {
+                                    "condition": true,
+                                    "uri": "#index_template",
+                                    "style": "style"
+                                }],
+                                "style": "#index_style",
+                                "content": "./index.json"
+                            }
+                        }
+                    }
+                }
+            }, {
+                "path": "controllers",
+                "constants": {
+                    "title": "controllers",
+                    "template": "controllers"
+                },
+                "modules": {
+                    "controllers": "http://local.controllers.com:8283/controllers.html"
+                },
+                "children": [{
+                    "path": "focus",
+                    "variables": {
+                        "focus": false
+                    },
+                    "constants": {
+                        "title": "focus"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/focus.html"
+                    }
+                }, {
+                    "path": "boolean",
+                    "variables": {
+                        "boolean": false
+                    },
+                    "constants": {
+                        "title": "boolean"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/boolean.html"
+                    }
+                }, {
+                    "path": "class",
+                    "constants": {
+                        "title": "class"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/class.html"
+                    }
+                }, {
+                    "path": "style",
+                    "constants": {
+                        "title": "style"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/style.html"
+                    }
+                }, {
+                    "path": "raw",
+                    "constants": {
+                        "title": "raw"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/raw.html"
+                    }
+                }, {
+                    "path": "general",
+                    "variables": {
+                        "index": 0
+                    },
+                    "constants": {
+                        "title": "general"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/general.html"
+                    }
+                }, {
+                    "path": "text",
+                    "variables": {
+                        "index": 0
+                    },
+                    "constants": {
+                        "title": "text"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/text.html"
+                    }
+                }, {
+                    "path": "lifeCycle",
+                    "constants": {
+                        "title": "lifeCycle"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/lifeCycle.html"
+                    }
+                }, {
+                    "path": "html",
+                    "constants": {
+                        "title": "html"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/html.html"
+                    }
+                }, {
+                    "path": "file",
+                    "constants": {
+                        "title": "file"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/file.html"
+                    }
+                }, {
+                    "path": "exist",
+                    "constants": {
+                        "title": "exist"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/exist.html"
+                    }
+                }, {
+                    "path": "each",
+                    "constants": {
+                        "title": "each"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/each.html"
+                    }
+                }, {
+                    "path": "value",
+                    "constants": {
+                        "title": "value"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/value.html"
+                    }
+                }, {
+                    "path": "checked",
+                    "constants": {
+                        "title": "checked"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/checked.html"
+                    }
+                }, {
+                    "path": "selected",
+                    "constants": {
+                        "title": "selected"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/selected.html"
+                    }
+                }, {
+                    "path": "modules",
+                    "constants": {
+                        "title": "modules"
+                    },
+                    "modules": {
+                        "directive": {
+                            "uri": "http://local.controllers.com:8283/modules/modules.html",
+                            "integrity": "oPX2k9am7u4x0hdm6tuvZ2fYau82MkZHs+QS+Ku9egM="
+                        }
+                    }
+                }, {
+                    "path": "href",
+                    "constants": {
+                        "title": "href"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/href.html",
+                        "component": {
+                            "content": "<div>component1</div>",
+                            "type": "template"
+                        }
+                    }
+                }, {
+                    "path": "iframe",
+                    "constants": {
+                        "title": "iframe"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/iframe.html"
+                    }
+                }, {
+                    "path": "template",
+                    "constants": {
+                        "title": "template"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/template.html"
+                    }
+                }, {
+                    "path": "eventHandler",
+                    "constants": {
+                        "title": "eventHandlers"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/eventHandler.html"
+                    }
+                }, {
+                    "path": "Date",
+                    "constants": {
+                        "title": "Date"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/date.html"
+                    }
+                }, {
+                    "path": "custom",
+                    "constants": {
+                        "title": "custom class"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/custom.html"
+                    }
+                }, {
+                    "path": "watch",
+                    "constants": {
+                        "title": "watch"
+                    },
+                    "modules": {
+                        "directive": "http://local.controllers.com:8283/modules/watch.html"
+                    }
+                }]}, {
+                "path": "imggallery",
+                "constants": {
+                    "title": "Image Gallery"
+                },
+                "children": [{
+                    "path": "card",
+                    "constants": {
+                        "title": "card"
+                    }
+                }]
+            }]
+        }
+    }
+}

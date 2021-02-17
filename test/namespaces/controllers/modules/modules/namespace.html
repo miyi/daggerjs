@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+        "script1": "#script1",
+        "style": {
+            "content": "div { background-color: #666666; }",
+            "type": "style"
+        },
+        "inner": {
+            "type": "namespace",
+            "content": {
+                "inner_template321": {
+                    "content": "<div class='ttee' $html='html'></div>",
+                    "type": "template"
+                }
+            }
+        }
+    }
+  </script>
+  <script id="script1" type="dagger/script">
+      export let count = 0;
+      export const increment = () => count++;
+      export const loading1 = async (array = []) => ({
+          a: 'this is a plain text from loading1',
+          b: {
+            id: 'id1'
+          },
+          c: [3, ...array, 6],
+          event: 'event',
+          classNames: 'class1, class2',
+          // $intervalIds: false
+      });
+      const innerProcessor = content => alert(content);
+      export const processor = (content = 'processor in module1') => innerProcessor(content);
+      export const watch = (p1, p2) => console.log(p1, p2);
+      export const onResize = event => {
+          console.warn('window is resized', window.innerWidth, window.innerHeight, event);
+      };
+      export const loading2 = () => {
+          return {
+              a: 'override "a" from loading2'
+          };
+      };
+      export const symbol = Symbol('private');
+      export const map = array => array.map((item, index) => ({ item: `this is item "${ item }"`, key: `this is key: "${ index }"` }));
+      export const html = (array, content = 'c.length') => {
+        setTimeout(() => { // TODO: sensitive
+            const that = this;
+            // debugger
+            // array[1] = 10;
+            // array[6] = 7;
+            array.length = 2;
+            // delete array[1];
+            // array.shift();
+        }, 1000);
+        return `<span>\${ ${ content } }</span><div id="nnnn" $class="classNames"><div class="inner-test"><div $class="a"></div></div></div>`;
+      };
+  </script>
+</html>

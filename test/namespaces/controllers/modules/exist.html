@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "inner_template1": "#innerTemplate1",
+        "inner_template2": "#innerTemplate2",
+        "script": {
+            "uri": "#script",
+            "anonymous": true
+        },
+        "style": "#style"
+    }
+  </script>
+  <template id="template">
+      <div $loading="{ exist: true }">
+        <div class="exist" $exist="exist">
+            <div class="container1" $html="`<inner_template1><inner_template1>`"></div>
+        </div>
+        <button +click="exist = !exist">toggle</button>
+      </div>
+  </template>
+  <template id="innerTemplate1">
+    <inner_template2 $loading="outerLoading()" $loaded="outerLoaded()" $unloading="outerUnloading()" $unloaded="outerUnloaded()"></inner_template2>
+  </template>
+  <template id="innerTemplate2">
+    <span $loading="innerLoading()" $loaded="innerLoaded()" $unloading="innerUnloading()" $unloaded="innerUnloaded()">The content is: "${ a }" and "${ b }".</span>
+  </template>
+  <script id="script" type="dagger/script">
+    export const outerLoading = () => {
+        console.log('I\'m outer loading...');
+        return { a: 1234 };
+    };
+    export const outerLoaded = () => console.log('I\'m outer loaded');
+    export const outerUnloading = () => console.log('I\'m outer unloading...');
+    export const outerUnloaded = () => console.log('I\'m outer unloaded');
+    export const innerLoading = () => {
+        console.log('I\'m inner loading...');
+        return { b: 'string' };
+    };
+    export const innerLoaded = () => console.log('I\'m inner loaded');
+    export const innerUnloading = () => console.log('I\'m inner unloading...');
+    export const innerUnloaded = () => console.log('I\'m inner unloaded');
+  </script>
+  <style id="style" type="dagger/style">
+    .exist {
+        height: 100px;
+        border: 1px solid green;
+    }
+  </style>
+</html>

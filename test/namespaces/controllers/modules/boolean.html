@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+    <div $loading="script.loading($router.schemes.enabled)">
+      <input $disabled="!enabled">
+      <br/>
+      <button +click="enabled = !enabled">toggle</button>
+      enabled value is: ${ enabled }, the current input element is ${ enabled ? 'enabled' : 'disabled' }.
+    </div>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = enabled => ({ enabled });
+  </script>
+  <style id="style" type="dagger/style">
+    input {
+        border: 1px solid green;
+    }
+    input:disabled {
+        border: 1px solid red;
+    }
+    button {
+        margin-right: 20px;
+    }
+  </style>
+</html>

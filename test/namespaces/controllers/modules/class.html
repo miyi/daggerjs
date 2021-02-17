@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+    <div $loading="script.loading()">
+      <p class="content" $class="className">class value is "${ className instanceof Object ? JSON.stringify(className) : className }", class content -></p>
+      <button +click="className = script.onSwitchClass()">switch</button>
+    </div>
+  </template>
+  <script id="script" type="dagger/script">
+    const classes = {
+        class0: null,
+        class1: 'string1 string2',
+        class2: ['array1', 'array2'],
+        class3: {
+            object1: true,
+            object2: false
+        }
+    };
+    export const loading = () => ({
+        className: ''
+    });
+    let index = 0;
+    export const onSwitchClass = () => classes[`class${ [(index++) % 4] }`];
+  </script>
+  <style id="style" type="dagger/style">
+    p::after {
+        content: "["attr(class)"]";
+    }
+    button {
+        margin-right: 20px;
+    }
+  </style>
+</html>

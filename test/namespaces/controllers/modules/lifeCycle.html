@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "inner_template": "#innerTemplate",
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+      <div id="container" $loading="script.init()">
+        <div id="outerContainer" $html="html">loading...</div>
+        <button +click="html = html ? '' : '<inner_template></inner_template>'">toggle</button>
+      </div>
+  </template>
+  <template id="innerTemplate">
+    <span id="innerContainer" $loading="script.loading()" $loaded="script.loaded($node)" $unloading="script.unloading($node)" $unloaded="script.unloaded($node)">random number: "${ Math.floor(Math.random() * 100) }", please see console.log for the usage of lifeCycle callbacks.</span>
+  </template>
+  <script id="script" type="dagger/script">
+    export const init = () => {
+        console.log('init outer scope, click "toggle" button to start');
+        return {
+            html: ''
+        };
+    };
+    export const loading = () => {
+        console.log('loading...');
+        return {};
+    };
+    export const loaded = node => {
+        console.log('loaded', node, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+    export const unloading = node => {
+        console.log('unloading...', node, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+    export const unloaded = node => {
+        console.log('unloaded', node, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+  </script>
+  <style id="style" type="dagger/style">
+    span {
+        border: 1px solid green;
+    }
+  </style>
+</html>

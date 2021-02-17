@@ -1,0 +1,4 @@
+/.vscode
+/mock_server/node_modules
+/mock_server/package-lock.json
+/temp_upload_files/*

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+      "template": {
+        "uri": "#template",
+        "style": "style"
+      },
+      "script": "#script",
+      "style": {
+          "uri": "#style",
+          "scoped": true
+      }
+    }
+  </script>
+  <template id="template">
+    <template $loading="script.loading()">
+      <br/>
+      <button +click="exist = !exist"> exist</button>
+      <button +click="object.setType('b')">setType</button>
+      <button +click="object.setValue(2)">setValue</button>
+      <br/>
+      <span $exist="exist">Current object is ${ JSON.stringify(object) }</span><br/>
+      <span $exist="exist">Current object.type is ${ object.getType() }</span><br/>
+      <span $exist="exist">Current object.type is ${ object.type }</span><br/>
+      <span $exist="exist">Current object.value is ${ object.getValue() }</span><br/>
+      <span $exist="exist">Current object.value is ${ object.value }</span><br/>
+    </template>
+    <template $loading="script.loading2()">
+        <template $each="array">
+            <br/>
+            <button +click="item.setType(Math.random())">setType</button>
+            <button +click="item.setValue(Math.random())">setValue</button>
+            <br/>
+            <span>${ index }. Current object is ${ JSON.stringify(item) }</span><br/>
+            <span>${ index }. Current object.type is ${ item.getType() }</span><br/>
+            <span>${ index }. Current object.type is ${ item.type }</span><br/>
+            <span>${ index }. Current object.value is ${ item.getValue() }</span><br/>
+            <span>${ index }. Current object.value is ${ item.value }</span><br/>
+        </template>
+    </template>
+  </template>
+  <script id="script" type="dagger/script">
+    class customClass {
+        constructor (type, value) {
+            this.type = type;
+            this.value = value;
+        }
+        getType (type) {
+            return this.type;
+        }
+        getValue (value) {
+            return this.value;
+        }
+        setType (type) {
+            this.type = type;
+        }
+        setValue (value) {
+            this.value = value;
+        }
+    };
+    $dagger.register(customClass, ['setType', 'setValue']);
+    export const loading = () => ({
+        object: new customClass('a', 1),
+        exist: true
+    });
+    export const loading2 = () => ({
+        array: [new customClass('a', 1), new customClass('b', 2)]
+    });
+  </script>
+  <style id="style" type="dagger/style">
+    input {
+        border: 1px solid blue;
+    }
+    button {
+        margin: 10px;
+    }
+  </style>
+</html>

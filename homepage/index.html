@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html $loading="onLoad(languages)" $loaded="onLoaded($router, demo), html = demo;" $sentry#next:$target-router="$targetRouter.path == '/blocked'" $unloading="console.log($router, 'unloading')" $unloaded="console.log($router, 'unloaded')">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="dagger.js">
+    <meta property="og:description" content="A lightweight runtime web frontend javaScript framework">
+    <meta property="og:url" content="https://daggerjs.org">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="dagger.js">
+    <meta name="twitter:description" content="A lightweight runtime web frontend javaScript framework">
+    <link rel="icon" href="data:image/svg+xml,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3e%3ctext y=%22.9em%22 font-size=%2280%22%3e🗡️%3c/text%3e%3c/svg%3e">
+    <link rel="preload" href="./configs.json" as="fetch" crossorigin="anonymous">
+    <!--<link rel="stylesheet" href="css.css" media="print" onload="media = 'all'">-->
+    <style>[dg-cloak] { display: none !important; }</style>
+    <link rel="stylesheet" href="./index.css">
+    <script type="module" integrity1="sha256-j36ZDu6LWjub1P/IAX9LlsRFNkLSt4Pcrd8/xRfPpFc=" crossorigin="anonymous" src="http://dagger.core.com:8280/dagger.js" defer></script>
+    <script type="dagger/configs" integrity1="CV7omJ8n3bMRVSdloGsIeJTnvfc6By4UTXna5C+7CHw=" src="./configs.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.21.2/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.21.2/min/vs' }});
+        require(['vs/editor/editor.main'], () => (window.$editor = monaco.editor.create(document.querySelector('#codeContainer'), {
+            minimap: { enabled: false },
+            automaticLayout: true,
+            formatOnPaste: true,
+            formatOnType: true,
+            wordWrap: 'on',
+            theme: 'vs-dark'
+        })));
+    </script>
+    <title $text="$[$router.schemes.title] || $router.schemes.title">loading...</title>
+  </head>
+  <body dg-cloak>
+    <div id="header">
+      <h1>🗡️ dagger.js</h1>
+      <a id="github-link" href="https://github.com/dagger8224/dagger_1.0_rc">${ $.viewOnGithub }</a>
+      <select id="language-select" $selected="language" +change="localStorage.setItem('language', language) || ($ = languages[language])">
+        <option $each="$.languages" $text="item" $value="key"></option>
+      </select>
+    </div>
+    <div id="navigator">
+      <h3>${ $.index }</h3>
+      <ul $each#item:topic="menus" $loading="{ className: '' }" $class="className">
+        <div +click="className = className ? '' : 'hidden'">
+          <span class="prefix">${ className ? '+' : '-' }</span><span>${ $[topic.text] || topic.text }</span>
+        </div>
+        <li $each#item:section="topic.sections" +click="location.href = `#/${ section.href }`" $class="{active: Object.is(`/${ section.href }`, $router.path), 'sub-directive': section.text.startsWith('$')}">${ $[section.text] || section.text }</li>
+      </ul>
+    </div>
+    <div id="content" $sentry="document.querySelector('html').scrollTop = 0;">
+      <template $html="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></template>
+      <div id="editor" $style="(() => `display: ${ demo ? 'block' : 'none' }`)($router.identity)">
+        <span id="try-it">${ $.try }</span>
+        <div id="codeContainer"></div>
+        <button id="run" +click="html = '', queueMicrotask(() => (html = window.$editor.getValue()));">${ $.run }</button>
+        <button id="reset" +click="onLoaded($router, demo), html = '', queueMicrotask(() => (html = demo));">${ $.reset }</button>
+        <br/>
+        <span id="view-result">${ $.view }</span>
+        <div id="result" $html="updateResult($router, html)"></div>
+      </div>
+    </div>
+    <div id="footer"></div>
+  </body>
+</html>

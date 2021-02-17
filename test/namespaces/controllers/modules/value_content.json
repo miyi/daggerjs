@@ -1,0 +1,152 @@
+[{
+    "label": "button",
+    "type": "button",
+    "extra": "+click#event:click-event='script.button(clickEvent)' value='button'"
+}, {
+    "label": "color",
+    "type": "color"
+}, {
+    "label": "date #change",
+    "type": "date"
+}, {
+    "label": "date #input",
+    "type": "date",
+    "decorator": "#input"
+}, {
+    "label": "datetime-local #change",
+    "type": "datetime-local"
+}, {
+    "label": "datetime-local #input",
+    "type": "datetime-local",
+    "decorator": "#input",
+    "extra": "step='60.1234567'"
+}, {
+    "label": "email #change",
+    "type": "email"
+}, {
+    "label": "email #input",
+    "type": "email",
+    "decorator": "#input"
+}, {
+    "label": "hidden",
+    "type": "hidden"
+}, {
+    "label": "image (invalid, should use \"$src\" instead)",
+    "type": "image",
+    "extra": "$src='`https://tse2-mm.cn.bing.net/th/id/OIP.PATE_2kcu082sJMYWXFoZgHaEK?w=333&h=187&c=7&o=5&dpr=2&pid=1.7`'"
+}, {
+    "label": "month #change",
+    "type": "month"
+}, {
+    "label": "month #input",
+    "type": "month",
+    "decorator": "#input"
+}, {
+    "label": "number #change",
+    "type": "number"
+}, {
+    "label": "number #input",
+    "type": "number",
+    "decorator": "#input"
+}, {
+    "label": "number #input min='0' max='100'",
+    "type": "number",
+    "decorator": "#input",
+    "extra": "min='0' max='100'"
+}, {
+    "label": "number #number",
+    "type": "number",
+    "decorator": "#number"
+}, {
+    "label": "number #input #number",
+    "type": "number",
+    "decorator": "#input#number"
+}, {
+    "label": "password #change",
+    "type": "password",
+    "extra": "autocomplete"
+}, {
+    "label": "password #input",
+    "type": "password",
+    "extra": "autocomplete",
+    "decorator": "#input"
+}, {
+    "label": "password #number",
+    "type": "password",
+    "extra": "autocomplete",
+    "decorator": "#number"
+}, {
+    "label": "range #change",
+    "type": "range"
+}, {
+    "label": "range #input",
+    "type": "range",
+    "decorator": "#input"
+}, {
+    "label": "reset",
+    "type": "reset",
+    "extra": "+click='script.reset($event)' value='reset'"
+}, {
+    "label": "search #change",
+    "type": "search"
+}, {
+    "label": "search #input",
+    "type": "search",
+    "decorator": "#input"
+}, {
+    "label": "search #number",
+    "type": "search",
+    "decorator": "#number"
+}, {
+    "label": "submit",
+    "type": "submit"
+}, {
+    "label": "tel #change",
+    "type": "tel"
+}, {
+    "label": "tel #input",
+    "type": "tel",
+    "decorator": "#input"
+}, {
+    "label": "tel #number",
+    "type": "tel",
+    "decorator": "#number"
+}, {
+    "label": "text (default) #change",
+    "type": "text"
+}, {
+    "label": "text (default) #input",
+    "type": "text",
+    "decorator": "#input"
+}, {
+    "label": "text (default) #number",
+    "type": "text",
+    "decorator": "#number"
+}, {
+    "label": "time #change",
+    "type": "time",
+    "extra": "step='60'"
+}, {
+    "label": "time #input",
+    "type": "time",
+    "decorator": "#input",
+    "extra": "step='60.1234567'"
+}, {
+    "label": "url #change",
+    "type": "url"
+}, {
+    "label": "url #input",
+    "type": "url",
+    "decorator": "#input"
+}, {
+    "label": "url #number",
+    "type": "url",
+    "decorator": "#number"
+}, {
+    "label": "week #change",
+    "type": "week"
+}, {
+    "label": "week #input",
+    "type": "week",
+    "decorator": "#input"
+}]

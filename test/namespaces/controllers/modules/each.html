@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+      "template": {
+        "uri": "#template",
+        "style": "style"
+      },
+      "inner_template1": "#innerTemplate1",
+      "inner_template2": "#innerTemplate2",
+      "script": "#script",
+      "style": "#style"
+    }
+  </script>
+  <template id="template">
+    <template $loading="script.loading()">
+      <div class="container" +click="script.logger($event)">
+        <div class="separator"></div>
+        <label>loop0 [array]:</label>
+        <div $each="loop0">
+          <p>${ key }: ${ JSON.stringify(item) }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop1 [object]:</label>
+        <div $each#item#key="loop1">
+          <p>${ key }: ${ JSON.stringify(item) }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop2 [toggle with $exist]:</label>
+        <div>data: ${ JSON.stringify(loop2) }</div>
+        <button +click="script.trigger(loop1)">trigger loop1</button>
+        <button +click="script.show(loop2)">show</button>
+        <button +click="script.hide(loop2)">hide</button>
+        <button +click="script.split(loop2)">split</button>
+        <button +click="script.toggle(loop2)">toggle</button>
+        <button +click="script.unshift(loop2)">unshift</button>
+        <button +click="script.shift(loop2)">shift</button>
+        <button +click="script.push(loop2)">push</button>
+        <button +click="script.pop(loop2)">pop</button>
+        <button +click="script.modify(loop2)">modify(1)</button>
+        <button +click="script.deleteElement(loop2)">delete(2)</button>
+        <button +click="script.splice(loop2)">splice(1, 1, item)</button>
+        <button +click="script.sort(loop2)">sort</button>
+        <button +click="script.reverse(loop2)">reverse</button>
+        <button +click="script.clear(loop2)">clear</button>
+        <button +click="script.spread(loop2)">spread (10)</button>
+        <button +click="script.fill(loop2)">fill (3)</button>
+        <button +click="script.copyWithin(loop2)">copyWithin</button>
+        <button +click="script.loop3(loop3)">toggle loop3</button>
+        <div class="test" $class="`each-item${ key }`" $each#xxx#item:slice="loop2" $id="key" $exist="slice.exist" $loading="console.log('loading', index, key)" $loaded="console.log('loaded', index, key)" $unloading="console.log('unloading', index, key)" $unloaded="console.log('unloaded', index, key)" loading#recycle="$intervalIds.push(setInterval(() => { slice.exist = !slice.exist; }, 3000));">
+          <p>index: ${ index }-key: ${ key }-${ slice.content }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop2 [nested]:</label>
+        <inner_template1 $each#item:item1#index:index1="loop2" $exist="item1.exist"></inner_template1>
+        <!--<inner_template1 $each#key:index1="new Array(2)"></inner_template1>-->
+        <span>This is the end!</span>
+      </div>
+    </template>
+  </template>
+  <template id="innerTemplate1">
+    <!-- comment 1 -->
+    <div class="innerItem1">
+      <div $class="`prefix1-${ index1 + 1 }`"></div>
+      <inner_template2 $each#item:item2#index:index2="loop3"></inner_template2>
+    </div>
+  </template>
+  <template id="innerTemplate2">
+    <!-- comment 2 -->
+    <div $class="`prefix2-${ index2 + 1 }`" $html="`<span>html ${ index2 + 1 }</span>`"></div>
+    <div class="innerItem2">index: ${ index1 + 1 } - ${ index2 + 1 }: ${ item1.content } - ${ item2 }</div>
+  </template>
+  <script id="script" type="dagger/script">
+    let index = 5;
+    export const loading = () => {
+        const object = {
+            loop0: [0, true, 'string', { m: 1 }],
+            loop1: { a: 1, b: false, c: 'string', d: { n: 1 } },
+            loop2: [{
+                content: 'string1',
+                exist: true
+            }, {
+                content: 'string2',
+                exist: false
+            }, {
+                content: 'string3',
+                exist: true
+            }, {
+                content: 'string4',
+                exist: false
+            }],
+            loop3: ['a', 'b']
+        };
+        setTimeout(() => {
+            object.loop2[1].exist = true;
+            // console.log(object.loop2[1].exist, 'not working');
+        }, 1000);
+        return object;
+    };
+    export const logger = event => event.target.tagName == 'BUTTON' && console.log(event.target.innerText);
+    export const trigger = array => (array.x = Math.random());
+    export const show = array => array.forEach(slice => (slice.exist = true));
+    export const hide = array => array.forEach(slice => (slice.exist = false));
+    export const split = array => array.forEach((slice, index) => (slice.exist = !!(index % 2)));
+    export const toggle = array => array.forEach(slice => (slice.exist = !slice.exist));
+    export const unshift = array => array.unshift({
+        content: `unshift string${ index++ }`,
+        exist: true
+    });
+    export const shift = array => array.shift();
+    export const push = array => array.push({
+        content: `push string${ index++ }`,
+        exist: index % 2
+    });
+    export const pop = array => array.pop();
+    export const deleteElement = array => (delete array[2]);
+    export const modify = array => array[1] && (array[1].content = `modified ${ Math.random() }`);
+    export const splice = array => array.splice(1, 1, {
+        content: `splice string${ index++ }`,
+        exist: true
+    });
+    export const sort = array => array.sort((item1, item2) => {
+        if (item1.content < item2.content) {
+            return -1;
+        } else if (item1.content > item2.content) {
+            return 1;
+        } else {
+            return 0;
+        }
+    });
+    export const reverse = array => array.reverse();
+    export const clear = array => (array.length = 0);
+    export const spread = array => (array.length = 10);
+    export const fill = array => array.fill(3);
+    export const copyWithin = array => array.copyWithin(1, 2, 3);
+    export const loop3 = array => array.push(100 + index++);
+  </script>
+  <style id="style" type="dagger/style">
+    div.separator {
+        border-bottom: 3px solid green;
+    }
+    div.innerItem1 {
+        margin-bottom: 10px;
+    }
+    div.innerItem2 {
+        border: 2px dashed blue;
+    }
+    label {
+        font-size: 20px;
+    }
+    button {
+        margin-left: 20px;
+    }
+  </style>
+</html>

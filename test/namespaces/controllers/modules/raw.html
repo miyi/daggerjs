@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+      <div id="raw-content" @raw $loading="script.loading()">
+        <span>You should see the raw expression "${ Math.random() }", remove "@raw" directive to see what happens.</span>
+        <button +click="alert('You should not see this message.')">toggle</button>
+      </div>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = () => {
+        alert('You should not see this message.');
+        return {
+            raw: true
+        };
+    };
+  </script>
+  <style id="style" type="dagger/style">
+    span {
+        border: 1px solid green;
+    }
+  </style>
+</html>

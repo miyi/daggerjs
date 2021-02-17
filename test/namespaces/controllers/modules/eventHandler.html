@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+      "template": {
+        "uri": "#template",
+        "style": "style"
+      },
+      "script": "#script",
+      "style": {
+          "uri": "#style",
+          "scoped": true
+      }
+    }
+  </script>
+  <template id="template">
+    <template $loading="script.loading()">
+      <br/>
+      <button $each="[3, 4, 5, 6, 1]" +click#stop="console.log(`this is button ${ index }, item is ${ item }`);">button ${ index }</button>
+      <template $exist="enabled" +click#target:document.body="console.log(123)"></template>
+      <!--<textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +click#modifier:['-Shift','-Control']#capture#once="console.log('clicked')" $value#input="value" rows="4" cols="50" $loaded="resizeObserver = script.loaded($node, textarea)"></textarea><br/>-->
+      <textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +mousemove#modifier:['-Caps-Lock']="console.log('keydown', $event)" +click#current#modifier:%5b%27%2dShift%27%2c%27%2dControl%27%5d#capture#key:[1,'2']="console.log('clicked')" $value#input="value" rows="4" cols="50" $loaded="resizeObserver = script.loaded($node, textarea)"></textarea><br/>
+      <div $exist="enabled" +resize#target:window="console.log($event)"></div>
+      <span +custom-event#target:window="console.log('custom-event', $event)">height is ${ textarea.height }</span><br/>
+      <span>value is ${ value }</span><br/>
+      <span>Observer ${ enabled ? 'enabled' : 'disabled' }</span><br/>
+      <input type="checkbox" $checked="enabled"><br/>
+      <button +click#modifier:['-Caps-Lock']#stop#stop-Immediate="window.dispatchEvent(new CustomEvent('custom-event', { detail: 'dagger' }))">trigger custom event</button>
+    </template>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = () => ({
+        value: '',
+        enabled: true,
+        textarea: { height: 0 },
+        resizeObserver: null
+    });
+    export const loaded = (node, textarea) => {
+        textarea.height = node.offsetHeight;
+        const resizeObserver = new ResizeObserver(() => (textarea.height = node.offsetHeight));
+        resizeObserver.observe(node);
+        return resizeObserver;
+    };
+  </script>
+  <style id="style" type="dagger/style">
+    button {
+        margin: 5px;
+    }
+    #textarea {
+        margin: 20px;
+        border: 1px dashed green;
+    }
+    #textarea.disabled {
+      resize: none;
+      border: 1px solid red;
+    }
+  </style>
+</html>

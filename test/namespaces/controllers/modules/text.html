@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+    <div $loading="script.loading($router.schemes.index)">
+        <span $text="`The current text content is %22${ text }%22.`">You should not see this content.</span>
+        <span>The current text content is "${ text }".</span>
+        <br/>
+        <button +click="text = script.onToggle()">toggle</button>
+    </div>
+  </template>
+  <script id="script" type="dagger/script">
+    let index = 0;
+    const array = [Math.random(), new Date().getFullYear(), Math.PI];
+    export const loading = base => {
+        index = base;
+        return {
+            text: array[index]
+        };
+    };
+    export const onToggle = () => array[(++index) % 3];
+  </script>
+  <style id="style" type="dagger/style">
+    span {
+        border: 1px solid green;
+    }
+  </style>
+</html>

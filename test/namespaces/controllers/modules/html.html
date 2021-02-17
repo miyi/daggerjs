@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "inner_template1": "#innerTemplate1",
+        "inner_template2": "#innerTemplate2",
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+      <div id="container" $loading="script.init()">
+        <div id="outerContainer" $html="html">loading...</div>
+        <button +click="html = html ? '' : '<inner_template1></inner_template1>'">toggle</button>
+      </div>
+  </template>
+  <template id="innerTemplate1">
+    <div id="innerContainer1" $loading#recycle="script.loading1()" $loaded="script.loaded($node, string)" $unloading="script.unloading($node, 'inner_template1')" $unloaded="script.unloaded($node, 'inner_template1')">
+      <inner_template2 $loading="{ string: 'override string' }"></inner_template2>
+    </div>
+  </template>
+  <template id="innerTemplate2">
+    <span id="innerContainer2" $loading="script.loading2(number, string, array)" $loaded="script.loaded($node, string)" $unloading="script.unloading($node, 'inner_template2')" $unloaded="script.unloaded($node, 'inner_template2')">random number: "${ Math.floor(Math.random() * 100) }", please see console.log for the usage of lifeCycle callbacks.</span>
+  </template>
+  <script id="script" type="dagger/script">
+    export const init = () => {
+        console.log('init outer scope, click "toggle" button to start');
+        return {
+            html: ''
+        };
+    };
+    export const loading1 = () => {
+        console.log('loading1...');
+        return {
+            number: 123,
+            string: 'string',
+            array: [456, 'item'],
+            object: {
+                a: 1,
+                b: 2
+            }
+        };
+    };
+    export const loading2 = (number, string, array) => {
+        console.log('loading2...', number, string, array);
+        return {
+            number: 666,
+            string: 'loading2 string',
+            array: Array.from(array)
+        };
+    };
+    export const loaded = (node, string) => {
+        console.log('loaded', string, node, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+    export const unloading = (node, name) => {
+        console.log('unloading...', node, name, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+    export const unloaded = (node, name) => {
+        console.log('unloaded', node, name, `node is ${ node.isConnected ? 'connected' : 'disconnected' }`);
+    };
+  </script>
+  <style id="style" type="dagger/style">
+    span {
+        border: 1px solid green;
+    }
+  </style>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+      "content": "./value_content.json",
+      "template": {
+        "uri": "#template",
+        "style": "style"
+      },
+      "script": "#script",
+      "style": "#style"
+    }
+  </script>
+  <template id="template">
+    <div $loading="script.loading()" style="margin-top: 20px;">
+        <button +click="show = !show;">toggle show</button>
+        <button +click="exist = !exist;">toggle exist</button>
+        <button +click="index = script.toggleValue(array)">toggle value</button>
+        <span $name="array[index]" $name0="JSON.stringify(array[index])" $name1="0 + array[index]" $name2="(() => array[index])()">The selected value is: ${ index }. ${ JSON.stringify(array[index]) }</span>
+        <form>
+            <template $html="content.map((item, idx) => `<label>${ idx + 1 }. ${ item.label }:</label><input type='${ item.type }' $exist='exist' $show='show' $value${ item.decorator || '' }='array[index]' ${ item.extra || '' }><br/>`).join('')"></template>
+            <label>${ content.length + 1 }. textarea #change:</label><textarea $exist="exist" $show="show" $value="array[index]" rows="4" cols="50">1</textarea><br/>
+            <label>${ content.length + 2 }. textarea #input:</label><textarea $exist="exist" $show="show" $value#input="array[index]" rows="4" cols="50">2</textarea><br/>
+            <label>${ content.length + 3 }. textarea #number:</label><textarea $exist="exist" $show="show" $value#number="array[index]" rows="4" cols="50">3</textarea><br/>
+        </form>
+    </div>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = () => ({
+        array: [new Date(), '2020-W01', 0, [], {}],
+        exist: true,
+        index: -1,
+        show: true
+    });
+    let iterator = 1;
+    export const toggleValue = array => (iterator++) % array.length;
+    export const button = $event => alert($event == window.event);
+    export const reset = event => confirm('Please double confirm if you want to reset the form!') || event.preventDefault();
+    export const map = array => array.map((item, index) => ({
+        checked: !!(index % 2),
+        value: item
+    }));
+  </script>
+  <style id="style" type="dagger/style">
+    button {
+        margin: 0 20px 40px 0;
+        border: 1px solid blue;
+    }
+    form {
+        padding: 20px;
+    }
+    label {
+        margin-right: 20px;
+    }
+    input {
+        margin-bottom: 20px;
+        border: 1px solid green;
+    }
+  </style>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+    {
+      "template": {
+        "uri": "#template",
+        "style": "style"
+      },
+      "script": "#script",
+      "style": "#style"
+    }
+  </script>
+  <template id="template">
+    <div $loading="script.loading($router.schemes.focus)">
+      <input $focus="focus" +blur="script.onBlur()" +focus="script.onFocus()" $value="focus">
+      <button +click="focus = !focus">toggle</button>
+      focus value is: ${ focus }, the current input element is ${ focus ? 'focused' : 'blurred' }.
+      <!--<button +click="script.onclick()">toggle</button>-->
+    </div>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = focus => ({ focus });
+    export const onclick = function () {
+        this.focus = !this.focus;
+    };
+    export const onBlur = () => console.log('blur');
+    export const onFocus = () => console.log('focus');
+  </script>
+  <style id="style" type="dagger/style">
+    input {
+        border: 1px solid red;
+    }
+    input:focus {
+        border: 2px dashed green;
+    }
+    button {
+        margin-right: 20px;
+    }
+  </style>
+</html>

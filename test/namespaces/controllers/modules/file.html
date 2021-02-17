@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <script type="dagger/configs">
+      {
+        "template": {
+            "uri": "#template",
+            "style": "style"
+        },
+        "script": "#script",
+        "style": "#style"
+      }
+  </script>
+  <template id="template">
+      <div $loading="script.loading()" style="margin-top: 20px;">
+        <label>single file select (*.txt, *.js, *.zip)</label><input type="file" accept=".txt,.js,.zip" $multiple="!multiple" $file="file" $watch="script.watch(file, 'single')">
+        <div></div>
+        <label>multiple files select</label><input type="file" $multiple="multiple" $file="files" $watch="script.watch(files, 'multiple')">
+        <!--<div></div>
+        <label>video select</label><input type="file" $multiple="multiple" accept="video/*" capture="environment" $file="video" $watch="script.watch(video, 'video')">-->
+      </div>
+  </template>
+  <script id="script" type="dagger/script">
+    export const loading = () => ({
+        file: null,
+        files: null,
+        video: null,
+        multiple: true
+    });
+    export const watch = (files, type) => console.log(`current selected object of ${ type } file input: `, files);
+  </script>
+  <style id="style" type="dagger/style">
+    div {
+        margin-bottom: 20px;
+    }
+    label {
+        margin: 20px;
+    }
+    input {
+        border: 1px solid green;
+    }
+  </style>
+</html>

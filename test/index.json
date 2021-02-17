@@ -1,0 +1,56 @@
+{
+    "array": [{
+        "path": "focus",
+        "query": "focus=true"
+    }, {
+        "path": "boolean",
+        "query": "boolean=true"
+    }, {
+        "path": "class"
+    }, {
+        "path": "style"
+    }, {
+        "path": "raw"
+    }, {
+        "path": "general",
+        "query": "index=0"
+    }, {
+        "path": "text",
+        "query": "index=0"
+    }, {
+        "path": "lifeCycle"
+    }, {
+        "path": "html"
+    }, {
+        "path": "file"
+    }, {
+        "path": "exist"
+    }, {
+        "path": "each"
+    }, {
+        "path": "value",
+        "query": "value=value"
+    }, {
+        "path": "checked",
+        "query": "checked=true"
+    }, {
+        "path": "selected",
+        "query": "selected=[1, '3', 5]"
+    }, {
+        "path": "modules"
+    }, {
+        "path": "href"
+    }, {
+        "path": "iframe"
+    }, {
+        "path": "template"
+    }, {
+        "path": "eventHandler"
+    }, {
+        "path": "Date"
+    }, {
+        "path": "custom"
+    }, {
+        "path": "watch"
+    }]
+}
