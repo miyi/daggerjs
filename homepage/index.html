@@ -41,17 +41,17 @@
         <option $each="$.languages" $text="item" $value="key"></option>
       </select>
     </div>
-    <div id="navigator" $class="{'closed-menu': isMenuClosed}">
+    <div id="navigator" $class="{ 'closed-menu': isMenuClosed }" +resize#target:window="document.querySelector('#navigator').scrollTo(0, 0);" $watch="isMenuClosed, document.querySelector('#navigator').scrollTo(0, 0)">
       <h3>${ $.index }</h3>
       <ul $each#item:topic="menus" $loading="{ className: ''}" $class="className">
         <div +click="className = className ? '' : 'hidden'">
           <span class="prefix">${ className ? '+' : '-' }</span><span>${ $[topic.text] || topic.text }</span>
         </div>
-        <li $each#item:section="topic.sections" +click="location.href = `#/${ section.href }`" $class="{active: Object.is(`/${ section.href }`, $router.path), 'sub-directive': section.text.startsWith('$')}">${ $[section.text] || section.text }</li>
+        <li $each#item:section="topic.sections" +click="location.href = `#/${ section.href }`, isMenuClosed = true;" $class="{ active: Object.is(`/${ section.href }`, $router.path), 'sub-directive': section.text.startsWith('$') }">${ $[section.text] || section.text }</li>
       </ul>
-      <div class="bottom-switcher button" +click="isMenuClosed=!isMenuClosed"><span>${ isMenuClosed ? "》" : "《" }</span></div>
+      <div class="bottom-switcher button" +click="isMenuClosed = !isMenuClosed"><span>${ isMenuClosed ? "》" : "《" }</span></div>
     </div>
-    <div id="content" $sentry="document.querySelector('html').scrollTop = 0;">
+    <div id="content" $watch=" $router.identity, document.querySelector('#content').scrollTo(0, 0);">
       <template $html="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></template>
       <div id="editor" $style="(() => `display: ${ demo ? 'block' : 'none' }`)($router.identity)">
         <span id="try-it">${ $.try }</span>
@@ -63,6 +63,9 @@
         <div id="result" $html="updateResult($router, html)"></div>
       </div>
     </div>
-    <div id="footer"></div>
+    <div id="footer">
+      <a $exist="$router.schemes.previousLink" $href="$router.schemes.previousLink">${ $.previous }</a>
+      <a $exist="$router.schemes.nextLink" $href="$router.schemes.nextLink">${ $.next }</a>
+    </div>
   </body>
 </html>
