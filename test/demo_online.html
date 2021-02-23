@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html $loading="{ $: 'hello dagger' }">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>[dg-cloak] { display: none !important; }</style>
+    <script type="module" integrity="sha256-ygHhn0RZ72eDZB2OHnQS9x1DswiRHUm9qR00A0Fp6/Y=" crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/@peakman/dagger.js/dagger.js" defer></script>
+    <script type="dagger/configs" base="https://cdn.jsdelivr.net/npm/dagger.demo.modules@1.0.5/" src="./configs.json">
+    </script>
+    <title $text="`${ $router.schemes.title } demo`">loading...</title>
+    <template id="index_template">
+      <div id="index" $loading="content">
+        <a $each#item:slice="array" $href="`controllers/${ slice.path }${ slice.query ? `?${ slice.query }` : '' }`" $title="`${ slice.path } demo`">${ index + 1 }. ${ slice.path } demo</a>
+        <br/>
+      </div>
+    </template>
+    <style id="index_style" type="dagger/style">
+        a {
+            display: inline-block;
+            padding: 10px;
+        }
+    </style>
+    <style>
+      body {
+        display: block !important;
+        border: 10px solid blue;
+      }
+    </style>
+  </head>
+  <body dg-cloak>
+    <span class="raw">Please click the following links to see directives demo:</span>
+    <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
+    <br/>
+    <div $loading="{ item: 'default-item' }" $html="(() => `<${ $router.schemes.template }></${ $router.schemes.template }>`)($router.identity)" watch="console.clear($router.schemes.template)"></div>
+  </body>
+</html>
