@@ -1,6 +1,8 @@
 dagger.js is a lightweight html-based runtime web frontend framework.
 
-Please find the document and examples ***[here](https://daggerjs.org/)***.
+Please find the document and examples ***[here](https://daggerjs.org)***.
+
+Please find the ***npm*** link ***[here](https://www.npmjs.com/package/@peakman/dagger.js)***.
 
 Please find the dagger.js source code in the ***"src"*** folder.
 
