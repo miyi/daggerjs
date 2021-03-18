@@ -9,7 +9,7 @@
 *  </copyright>
 *  ***********************************************************************/
 
-export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, rootNodeProfiles = [], emptier = () => Object.create(null), forEach = (iterators, processor) => {
+export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emptier = () => Object.create(null), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
@@ -150,7 +150,7 @@ export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, r
     asserter(`The content "${ content }" is not a valid style declaration`, key && value);
     resolvedStyles[key] = value;
 }, timeNormalizer = (data, padLength = 2) => String(data).padStart(padLength, '0')) => ({ // data -> node
-    $boolean: (data, node, nodeContext, { name }) => data ? node.setAttribute(name, '') : node.removeAttribute(name),
+    $boolean: (data, node, nodeContext, { name }) => data ? node.setAttribute(name, '') : node.removeAttribute(name), // toggleAttribute
     checked: (data, node, { parentNode }, { decorators }) => {
         const { tagName, type } = node, isOption = is(tagName, 'OPTION'), isRadio = is(type, 'radio');
         if (isOption || (is(tagName, 'INPUT') && (isRadio || is(type, 'checkbox')))) {
@@ -291,14 +291,14 @@ export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, r
             node.value = textResolver(data, decorators.trim || false);
         }
     }
-}))(), booleanDirectiveNames = hashTableResolver('autocapitalize', 'autocomplete', 'contenteditable', 'controls', 'disabled', 'draggable', 'loop', 'multiple', 'muted', 'open', 'preload', 'readonly', 'required', 'reversed', 'spellcheck', 'translate', 'wrap'), lazyDirectiveNames = hashTableResolver('checked', 'focus', 'selected'), Controller = class {
+}))(), lazyDirectiveNames = hashTableResolver('checked', 'focus', 'selected'), Controller = class {
     constructor (nodeContext, { name, decorators = emptyObject, processor }) {
         this.nodeContext = nodeContext, this.decorators = decorators, this.processor = processor, this.topologySet = new Set(), this.visitedTopologySet = new Set();
         if (name) {
             this.name = name;
             lazyDirectiveNames[name] && (this.lazy = true);
-            this.updater = (booleanDirectiveNames[name] && nodeUpdater.$boolean) || nodeUpdater[name] || generalUpdater;
             const node = nodeContext.node;
+            this.updater = nodeUpdater[name] || (node && is(typeof node[name], 'boolean') && nodeUpdater.$boolean) || generalUpdater;
             if (is(name, 'selected') && node && is(node.tagName, 'SELECT')) { // watch children update
                 this.observer = new MutationObserver(() => this.trigger());
                 this.observer.observe(node, { childList: true });
@@ -623,6 +623,7 @@ export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, r
     constructor (profile, closures = {}, parent = null, index = -1, sliceScope = null, scopes = parent ? parent.scopes : [rootScope, htmlScope], parentNode = null) {
         this.profile = profile;
         this.scopes = scopes;
+        this.baseScopes = scopes;
         if (parent) {
             this.parent = parent, this.parentNode = parentNode || parent.node || parent.parentNode;
             parent.children[index] = this;
@@ -702,6 +703,7 @@ export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, r
         delete this.node;
         unloaded && unloaded.processor(node);
         this.baseClosures && (this.closures = this.baseClosures);
+        this.scopes = this.baseScopes;
     }
     initialize () {
         if (!this.profile) { return; }
@@ -712,7 +714,7 @@ export default ((daggerOptions = { integrity: true }, rootNodeContexts = null, r
         }
         if (is(node.tagName, 'HTML')) {
             htmlScope = this.scopes[2] || Topology.resolveScope({});
-            rootNodeContexts = rootNodeProfiles.map(nodeProfile => new NodeContext(nodeProfile, functionResolver(closureResolver(nodeProfile.closures, 2))(rootScope, htmlScope)));
+            rootNodeProfiles.map(nodeProfile => new NodeContext(nodeProfile, functionResolver(closureResolver(nodeProfile.closures, 2))(rootScope, htmlScope)));
             loaded && loaded.processor();
         } else {
             child && (this.childrenController = new Controller(this, child));
