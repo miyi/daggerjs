@@ -1,27 +1,20 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-    {
-      "template": {
-          "uri": "#template",
-          "style": "style"
-      },
-      "script": "#script",
-      "style": "#style"
-    }
-  </script>
   <template id="template">
     <br/>
-    <template $loading="script.loading()">
+    <template +loading="loading()">
       <button +click="exist = !exist">toggle exist</button><br/>
       <span $exist="exist">${ Math.random() }</span><br/>
       <div class="static" $exist="exist" $html="html">placeholder</div>
       <template $exist="exist" $html="html">placeholder</template>
-      <template $exist="item.exist" $each="array" $loading="script.loading1(item.content, index)" $html="html"></template>
+      <template $exist="exist">This is string template: ${ Math.random() }</template>
+      <span $exist="exist">1234</span>
+      <template $exist="exist">abcd</template>
+      <template $exist="item.exist" $each="array" +loading="loading1(item.content, index)" $html="html"></template>
       <p>end</p>
     </template>
   </template>
-  <script id="script" type="dagger/script">
+  <script type="dagger/script">
     export const loading = () => ({
         exist: true,
         html: '<div class="plain"><span>${ Math.random() }</span></div>',
@@ -43,7 +36,7 @@
         };
     };
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     button {
         margin: 0 20px 40px 0;
     }

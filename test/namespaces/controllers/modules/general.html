@@ -1,31 +1,17 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-      {
-        "template": {
-            "uri": "#template",
-            "style": "style"
-        },
-        "script": "#script",
-        "style": "#style"
-      }
-  </script>
   <template id="template">
-      <div $loading="script.loading($router.schemes.index)">
+      <div +loading="{ id: '', placeholder: '' }">
         <input $id="id" $placeholder="placeholder">
-        <button +click="(({ id: p_id, placeholder: p_placeholder }) => { id = p_id; placeholder = p_placeholder; })(script.onToggle())">toggle</button>
+        <button +click="({ id, placeholder } = toggle())">toggle</button>
       </div>
   </template>
-  <script id="script" type="dagger/script">
+  <script type="dagger/script">
     let index = 0;
-    const array = [{ id: '', placeholder: '' }, { id: 'id1', placeholder: 'please enter your name' }, { id: 'id2', placeholder: 'please enter your email' }];
-    export const loading = base => {
-        index = base;
-        return array[index];
-    };
-    export const onToggle = () => array[(++index) % 3];
+    const array = [{ id: 'id1', placeholder: 'please enter your name' }, { id: 'id2', placeholder: 'please enter your email' }];
+    export const toggle = () => array[(index++) % 2];
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     input {
         border: 1px solid red;
     }

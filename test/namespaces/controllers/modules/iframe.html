@@ -1,31 +1,21 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-      {
-        "template": {
-            "uri": "#template",
-            "style": "style"
-        },
-        "script": "#script",
-        "style": "#style"
-      }
-  </script>
   <template id="template">
     <br/>
-    <template $loading="script.loading()">
-      <button +click="src = script.onSwitch()">switch</button><br/>
+    <template +loading="loading()">
+      <button +click="src = onSwitch()">switch</button><br/>
       <iframe $src="src" style="width: 100%; height: 100%"></iframe>
     </template>
   </template>
-  <script id="script" type="dagger/script">
-    const array = ['#/controllers/checked', 'http://dagger.demo.com:8288/prototype.html#/controllers/modules', '#/controllers/each', '#/controllers/modules', 'http://localhost:8288/prototype.html#/index'];
+  <script type="dagger/script">
+    const array = ['#/controllers/checked', 'http://dagger.demo.com:8288/demo_local.html#/controllers/modules', '#/controllers/each', '#/controllers/href', 'http://localhost:8288/demo_local.html#/index'];
     export const loading = () => ({
         src: ''
     });
     let index = 0;
-    export const onSwitch = () => array[(index++) % 4];
+    export const onSwitch = () => array[(index++) % 5];
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     button {
         margin-right: 20px;
         border: 1px solid green;

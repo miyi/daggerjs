@@ -1,22 +1,12 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-      {
-        "template": {
-            "uri": "#template",
-            "style": "style"
-        },
-        "script": "#script",
-        "style": "#style"
-      }
-  </script>
   <template id="template">
-    <div $loading="script.loading()">
-      <button +click="style = script.onSwitchStyle()">switch</button><br/>
+    <div +loading="$module.loading()">
+      <button +click="style = $module.onSwitchStyle()">switch</button><br/>
       <p style="border: 1px solid black; display: inline !important;" $style="style">style value is "${ style instanceof Object ? JSON.stringify(style) : style }"</p>
     </div>
   </template>
-  <script id="script" type="dagger/script">
+  <script type="dagger/script">
     const styles = {
         style0: null,
         style1: 'border-color: green; display: none;',
@@ -33,7 +23,7 @@
     let index = 0;
     export const onSwitchStyle = () => styles[`style${ [(index++) % 4] }`];
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     button {
         margin-right: 20px;
         border: 1px solid green;

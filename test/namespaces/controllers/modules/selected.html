@@ -1,24 +1,14 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-    {
-      "template": {
-          "uri": "#template",
-          "style": "style"
-      },
-      "script": "#script",
-      "style": "#style"
-    }
-  </script>
   <template id="template">
-    <div $loading="script.loading()" style="margin-top: 20px;">
+    <div +loading="loading()" style="margin-top: 20px;">
         <button +click="exist = !exist;">toggle exist</button>
         <form onsubmit="return false;">
             <span>"$selected" works with "$value" or value</span><br/>
             <template>
                 <span>The selected array is: ${ JSON.stringify(selectedArray) }</span><br/>
-                <button +click="selectedArray = array;">check all</button>
-                <button +click="selectedArray = [];">check none</button>
+                <button +click="selectedArray = array.slice()">check all</button>
+                <button +click="selectedArray = []">check none</button>
                 <button +click="array[2] = 1">array[2] = 1</button>
                 <br/>
                 <template $each="array"><label>${ index + 1 }-${ JSON.stringify(array[index]) }. checkbox:<input type="checkbox" $selected="selectedArray" $value="item" $exist="exist" name="checkbox-group1"></label><br/></template>
@@ -45,15 +35,15 @@
         </form>
     </div>
   </template>
-  <script id="script" type="dagger/script">
+  <script type="dagger/script">
     export const loading = () => ({
-        array: [new Date(), '2020-W01', 0, [], {}],
-        selectedArray: ['2020-W01'],
-        selectedValue: null,
+        array: [new Date(), '2020-W01', 0, null, [], {}],
+        selectedArray: ['2020-W01', 0, null],
+        selectedValue: 0,
         exist: true
     });
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     button {
         margin: 0 20px 40px 0;
     }

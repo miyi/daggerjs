@@ -1,7 +1,7 @@
 [{
     "label": "button",
     "type": "button",
-    "extra": "+click#event:click-event='script.button(clickEvent)' value='button'"
+    "extra": "+click='button($event)' value='button'"
 }, {
     "label": "color",
     "type": "color"
@@ -85,7 +85,7 @@
 }, {
     "label": "reset",
     "type": "reset",
-    "extra": "+click='script.reset($event)' value='reset'"
+    "extra": "+click='reset($event)' value='reset'"
 }, {
     "label": "search #change",
     "type": "search"

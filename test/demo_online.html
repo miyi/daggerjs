@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html $loading="{ $: 'hello dagger' }">
+<html +loading="{ $: 'hello dagger' }">
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -11,7 +11,7 @@
     </script>
     <title $text="`${ $router.schemes.title } demo`">loading...</title>
     <template id="index_template">
-      <div id="index" $loading="content">
+      <div id="index" +loading="content">
         <a $each#item:slice="array" $href="`controllers/${ slice.path }${ slice.query ? `?${ slice.query }` : '' }`" $title="`${ slice.path } demo`">${ index + 1 }. ${ slice.path } demo</a>
         <br/>
       </div>
@@ -33,6 +33,6 @@
     <span class="raw">Please click the following links to see directives demo:</span>
     <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
     <br/>
-    <div $loading="{ item: 'default-item' }" $html="(() => `<${ $router.schemes.template }></${ $router.schemes.template }>`)($router.identity)" watch="console.clear($router.schemes.template)"></div>
+    <div +loading="{ item: 'default-item' }" $html#router="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></div>
   </body>
 </html>

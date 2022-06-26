@@ -1,13 +1,5 @@
 {
     "//": "dagger demo configs",
-    "options": {
-        "//": "dagger options",
-        "commentNode": false,
-        "directiveAttribute": false,
-        "moduleLog": true,
-        "routerLog": true,
-        "integrity": false
-    },
     "rootSelectors": ["title", "body"],
     "routing": {
         "default": "/overview/introduction",
@@ -23,20 +15,14 @@
                 "languages": {
                     "type": "namespace",
                     "base": "./languages/",
+                    "explicit": true,
                     "content": {
                         "en-us": "./en-us.json",
                         "zh-cn": "./zh-cn.json"
                     }
                 },
                 "menus": "./menus.json",
-                "index": {
-                    "uri": "./index.js",
-                    "anonymous": true
-                },
-                "demo": {
-                    "content": "",
-                    "type": "string"
-                }
+                "index": "./index.js"
             },
             "children": [{
                 "path": "blocked"
@@ -48,21 +34,32 @@
                         "title": "overview.introduction",
                         "template": "overview_introduction",
                         "previousLink": "",
-                        "nextLink": "overview/version"
+                        "nextLink": "overview/install"
                     },
                     "modules": {
                         "overview_introduction": "./overview/introduction.html"
                     }
                 }, {
-                    "path": "version",
+                    "path": "install",
                     "constants": {
-                        "title": "overview.version",
-                        "template": "overview_version",
+                        "title": "overview.install",
+                        "template": "overview_install",
                         "previousLink": "overview/introduction",
+                        "nextLink": "overview/application"
+                    },
+                    "modules": {
+                        "overview_install": "./overview/install.html"
+                    }
+                }, {
+                    "path": "application",
+                    "constants": {
+                        "title": "overview.application",
+                        "template": "overview_application",
+                        "previousLink": "overview/install",
                         "nextLink": "directive/introduction"
                     },
                     "modules": {
-                        "overview_version": "./overview/version.html"
+                        "overview_application": "./overview/application.html"
                     }
                 }]
             }, {
@@ -72,41 +69,55 @@
                     "constants": {
                         "title": "directive.introduction",
                         "template": "directive_introduction",
-                        "previousLink": "overview/version",
-                        "nextLink": "directive/raw"
+                        "previousLink": "overview/application",
+                        "nextLink": "directive/decorator"
                     },
                     "modules": {
                         "directive_introduction": "./directive/introduction.html"
                     }
                 }, {
-                    "path": "raw",
+                    "path": "decorator",
                     "constants": {
-                        "title": "directive.raw",
-                        "template": "directive_raw",
+                        "title": "directive.decorator",
+                        "template": "directive_decorator",
                         "previousLink": "directive/introduction",
+                        "nextLink": "directive/expression"
+                    },
+                    "modules": {
+                        "directive_decorator": "./directive/decorator.html"
+                    }
+                }, {
+                    "path": "expression",
+                    "constants": {
+                        "title": "directive.expression",
+                        "template": "directive_expression",
+                        "previousLink": "directive/decorator",
+                        "nextLink": "directive/scope"
+                    },
+                    "modules": {
+                        "directive_expression": "./directive/expression.html"
+                    }
+                }, {
+                    "path": "scope",
+                    "constants": {
+                        "title": "directive.scope",
+                        "template": "directive_scope",
+                        "previousLink": "directive/expression",
                         "nextLink": "directive/lifeCycle"
                     },
                     "modules": {
-                        "directive_raw": "./directive/raw.html",
-                        "demo": {
-                            "uri": "./directive/raw_demo.html",
-                            "type": "string"
-                        }
+                        "directive_scope": "./directive/scope.html"
                     }
                 }, {
                     "path": "lifeCycle",
                     "constants": {
                         "title": "directive.lifeCycle",
                         "template": "directive_life-Cycle",
-                        "previousLink": "directive/raw",
+                        "previousLink": "directive/scope",
                         "nextLink": "directive/loading"
                     },
                     "modules": {
-                        "directive_lifeCycle": "./directive/lifeCycle.html",
-                        "demo": {
-                            "uri": "./directive/lifeCycle_demo.html",
-                            "type": "string"
-                        }
+                        "directive_lifeCycle": "./directive/lifeCycle.html"
                     }
                 }, {
                     "path": "loading",
@@ -117,11 +128,7 @@
                         "nextLink": "directive/loaded"
                     },
                     "modules": {
-                        "directive_loading": "./directive/loading.html",
-                        "demo": {
-                            "uri": "./directive/loading_demo.html",
-                            "type": "string"
-                        }
+                        "directive_loading": "./directive/loading.html"
                     }
                 }, {
                     "path": "loaded",
@@ -132,11 +139,7 @@
                         "nextLink": "directive/unloading"
                     },
                     "modules": {
-                        "directive_loaded": "./directive/loaded.html",
-                        "demo": {
-                            "uri": "./directive/loaded_demo.html",
-                            "type": "string"
-                        }
+                        "directive_loaded": "./directive/loaded.html"
                     }
                 }, {
                     "path": "unloading",
@@ -147,11 +150,7 @@
                         "nextLink": "directive/unloaded"
                     },
                     "modules": {
-                        "directive_unloading": "./directive/unloading.html",
-                        "demo": {
-                            "uri": "./directive/unloading_demo.html",
-                            "type": "string"
-                        }
+                        "directive_unloading": "./directive/unloading.html"
                     }
                 }, {
                     "path": "unloaded",
@@ -162,11 +161,7 @@
                         "nextLink": "directive/sentry"
                     },
                     "modules": {
-                        "directive_unloaded": "./directive/unloaded.html",
-                        "demo": {
-                            "uri": "./directive/unloaded_demo.html",
-                            "type": "string"
-                        }
+                        "directive_unloaded": "./directive/unloaded.html"
                     }
                 }, {
                     "path": "sentry",
@@ -177,11 +172,7 @@
                         "nextLink": "directive/controller"
                     },
                     "modules": {
-                        "directive_sentry": "./directive/sentry.html",
-                        "demo": {
-                            "uri": "./directive/sentry_demo.html",
-                            "type": "string"
-                        }
+                        "directive_sentry": "./directive/sentry.html"
                     }
                 }, {
                     "path": "controller",
@@ -203,11 +194,7 @@
                         "nextLink": "directive/class"
                     },
                     "modules": {
-                        "directive_checked": "./directive/checked.html",
-                        "demo": {
-                            "uri": "./directive/checked_demo.html",
-                            "type": "string"
-                        }
+                        "directive_checked": "./directive/checked.html"
                     }
                 }, {
                     "path": "class",
@@ -218,11 +205,7 @@
                         "nextLink": "directive/each"
                     },
                     "modules": {
-                        "directive_class": "./directive/class.html",
-                        "demo": {
-                            "uri": "./directive/class_demo.html",
-                            "type": "string"
-                        }
+                        "directive_class": "./directive/class.html"
                     }
                 }, {
                     "path": "each",
@@ -233,11 +216,7 @@
                         "nextLink": "directive/exist"
                     },
                     "modules": {
-                        "directive_each": "./directive/each.html",
-                        "demo": {
-                            "uri": "./directive/each_demo.html",
-                            "type": "string"
-                        }
+                        "directive_each": "./directive/each.html"
                     }
                 }, {
                     "path": "exist",
@@ -248,11 +227,7 @@
                         "nextLink": "directive/file"
                     },
                     "modules": {
-                        "directive_exist": "./directive/exist.html",
-                        "demo": {
-                            "uri": "./directive/exist_demo.html",
-                            "type": "string"
-                        }
+                        "directive_exist": "./directive/exist.html"
                     }
                 }, {
                     "path": "file",
@@ -263,11 +238,7 @@
                         "nextLink": "directive/focus"
                     },
                     "modules": {
-                        "directive_file": "./directive/file.html",
-                        "demo": {
-                            "uri": "./directive/file_demo.html",
-                            "type": "string"
-                        }
+                        "directive_file": "./directive/file.html"
                     }
                 }, {
                     "path": "focus",
@@ -278,11 +249,7 @@
                         "nextLink": "directive/html"
                     },
                     "modules": {
-                        "directive_focus": "./directive/focus.html",
-                        "demo": {
-                            "uri": "./directive/focus_demo.html",
-                            "type": "string"
-                        }
+                        "directive_focus": "./directive/focus.html"
                     }
                 }, {
                     "path": "html",
@@ -290,29 +257,32 @@
                         "title": "directive.html",
                         "template": "directive_html",
                         "previousLink": "directive/focus",
+                        "nextLink": "directive/result"
+                    },
+                    "modules": {
+                        "directive_html": "./directive/html.html"
+                    }
+                }, {
+                    "path": "result",
+                    "constants": {
+                        "title": "directive.result",
+                        "template": "directive_result",
+                        "previousLink": "directive/html",
                         "nextLink": "directive/selected"
                     },
                     "modules": {
-                        "directive_html": "./directive/html.html",
-                        "demo": {
-                            "uri": "./directive/html_demo.html",
-                            "type": "string"
-                        }
+                        "directive_result": "./directive/result.html"
                     }
                 }, {
                     "path": "selected",
                     "constants": {
                         "title": "directive.selected",
                         "template": "directive_selected",
-                        "previousLink": "directive/html",
+                        "previousLink": "directive/result",
                         "nextLink": "directive/style"
                     },
                     "modules": {
-                        "directive_selected": "./directive/selected.html",
-                        "demo": {
-                            "uri": "./directive/selected_demo.html",
-                            "type": "string"
-                        }
+                        "directive_selected": "./directive/selected.html"
                     }
                 }, {
                     "path": "style",
@@ -323,11 +293,7 @@
                         "nextLink": "directive/text"
                     },
                     "modules": {
-                        "directive_style": "./directive/style.html",
-                        "demo": {
-                            "uri": "./directive/style_demo.html",
-                            "type": "string"
-                        }
+                        "directive_style": "./directive/style.html"
                     }
                 }, {
                     "path": "text",
@@ -338,11 +304,7 @@
                         "nextLink": "directive/value"
                     },
                     "modules": {
-                        "directive_text": "./directive/text.html",
-                        "demo": {
-                            "uri": "./directive/text_demo.html",
-                            "type": "string"
-                        }
+                        "directive_text": "./directive/text.html"
                     }
                 }, {
                     "path": "value",
@@ -353,11 +315,7 @@
                         "nextLink": "directive/watch"
                     },
                     "modules": {
-                        "directive_value": "./directive/value.html",
-                        "demo": {
-                            "uri": "./directive/value_demo.html",
-                            "type": "string"
-                        }
+                        "directive_value": "./directive/value.html"
                     }
                 }, {
                     "path": "watch",
@@ -368,11 +326,7 @@
                         "nextLink": "directive/boolean"
                     },
                     "modules": {
-                        "directive_watch": "./directive/watch.html",
-                        "demo": {
-                            "uri": "./directive/watch_demo.html",
-                            "type": "string"
-                        }
+                        "directive_watch": "./directive/watch.html"
                     }
                 }, {
                     "path": "boolean",
@@ -383,11 +337,7 @@
                         "nextLink": "directive/general"
                     },
                     "modules": {
-                        "directive_boolean": "./directive/boolean.html",
-                        "demo": {
-                            "uri": "./directive/boolean_demo.html",
-                            "type": "string"
-                        }
+                        "directive_boolean": "./directive/boolean.html"
                     }
                 }, {
                     "path": "general",
@@ -398,11 +348,7 @@
                         "nextLink": "directive/eventHandler"
                     },
                     "modules": {
-                        "directive_general": "./directive/general.html",
-                        "demo": {
-                            "uri": "./directive/general_demo.html",
-                            "type": "string"
-                        }
+                        "directive_general": "./directive/general.html"
                     }
                 }, {
                     "path": "eventHandler",
@@ -410,29 +356,43 @@
                         "title": "directive.eventHandler",
                         "template": "directive_event-handler",
                         "previousLink": "directive/general",
-                        "nextLink": "directive/decorator"
+                        "nextLink": "directive/meta"
                     },
                     "modules": {
-                        "directive_eventHandler": "./directive/eventHandler.html",
-                        "demo": {
-                            "uri": "./directive/eventHandler_demo.html",
-                            "type": "string"
-                        }
+                        "directive_eventHandler": "./directive/eventHandler.html"
                     }
                 }, {
-                    "path": "decorator",
+                    "path": "meta",
                     "constants": {
-                        "title": "directive.decorator",
-                        "template": "directive_decorator",
+                        "title": "directive.meta",
+                        "template": "directive_meta",
                         "previousLink": "directive/eventHandler",
+                        "nextLink": "directive/raw"
+                    },
+                    "modules": {
+                        "directive_meta": "./directive/meta.html"
+                    }
+                }, {
+                    "path": "raw",
+                    "constants": {
+                        "title": "directive.raw",
+                        "template": "directive_raw",
+                        "previousLink": "directive/meta",
+                        "nextLink": "directive/dynamic"
+                    },
+                    "modules": {
+                        "directive_raw": "./directive/raw.html"
+                    }
+                }, {
+                    "path": "dynamic",
+                    "constants": {
+                        "title": "directive.dynamic",
+                        "template": "directive_dynamic",
+                        "previousLink": "directive/raw",
                         "nextLink": "module/introduction"
                     },
                     "modules": {
-                        "directive_decorator": "./directive/decorator.html",
-                        "demo": {
-                            "uri": "./directive/decorator_demo.html",
-                            "type": "string"
-                        }
+                        "directive_dynamic": "./directive/dynamic.html"
                     }
                 }]
             }, {
@@ -445,15 +405,11 @@
                     "constants": {
                         "title": "module.introduction",
                         "template": "module_introduction",
-                        "previousLink": "directive/decorator",
+                        "previousLink": "directive/dynamic",
                         "nextLink": "module/template"
                     },
                     "modules": {
-                        "module_introduction": "./module/introduction.html",
-                        "demo": {
-                            "uri": "./module/introduction_demo.json",
-                            "type": "string"
-                        }
+                        "module_introduction": "./module/introduction.html"
                     }
                 }, {
                     "path": "template",
@@ -461,44 +417,32 @@
                         "title": "module.template",
                         "template": "module_template",
                         "previousLink": "module/introduction",
-                        "nextLink": "module/script"
-                    },
-                    "modules": {
-                        "module_template": "./module/template.html",
-                        "demo": {
-                            "uri": "./module/template_demo.json",
-                            "type": "string"
-                        }
-                    }
-                }, {
-                    "path": "script",
-                    "constants": {
-                        "title": "module.script",
-                        "template": "module_script",
-                        "previousLink": "module/template",
                         "nextLink": "module/style"
                     },
                     "modules": {
-                        "module_script": "./module/script.html",
-                        "demo": {
-                            "uri": "./module/script_demo.json",
-                            "type": "string"
-                        }
+                        "module_template": "./module/template.html"
                     }
                 }, {
                     "path": "style",
                     "constants": {
                         "title": "module.style",
                         "template": "module_style",
-                        "previousLink": "module/script",
+                        "previousLink": "module/template",
+                        "nextLink": "module/script"
+                    },
+                    "modules": {
+                        "module_style": "./module/style.html"
+                    }
+                }, {
+                    "path": "script",
+                    "constants": {
+                        "title": "module.script",
+                        "template": "module_script",
+                        "previousLink": "module/style",
                         "nextLink": "module/json"
                     },
                     "modules": {
-                        "module_style": "./module/style.html",
-                        "demo": {
-                            "uri": "./module/style_demo.json",
-                            "type": "string"
-                        }
+                        "module_script": "./module/script.html"
                     }
                 }, {
                     "path": "json",
@@ -509,11 +453,7 @@
                         "nextLink": "module/string"
                     },
                     "modules": {
-                        "module_json": "./module/json.html",
-                        "demo": {
-                            "uri": "./module/json_demo.json",
-                            "type": "string"
-                        }
+                        "module_json": "./module/json.html"
                     }
                 }, {
                     "path": "string",
@@ -524,11 +464,7 @@
                         "nextLink": "module/namespace"
                     },
                     "modules": {
-                        "module_string": "./module/string.html",
-                        "demo": {
-                            "uri": "./module/string_demo.json",
-                            "type": "string"
-                        }
+                        "module_string": "./module/string.html"
                     }
                 }, {
                     "path": "namespace",
@@ -539,11 +475,7 @@
                         "nextLink": "router/introduction"
                     },
                     "modules": {
-                        "module_namespace": "./module/namespace.html",
-                        "demo": {
-                            "uri": "./module/namespace_demo.json",
-                            "type": "string"
-                        }
+                        "module_namespace": "./module/namespace.html"
                     }
                 }]
             }, {
@@ -557,11 +489,7 @@
                         "nextLink": "router/structure"
                     },
                     "modules": {
-                        "router_introduction": "./router/introduction.html",
-                        "demo": {
-                            "uri": "./router/introduction_demo.html",
-                            "type": "string"
-                        }
+                        "router_introduction": "./router/introduction.html"
                     }
                 }, {
                     "path": "structure",
@@ -573,11 +501,7 @@
                         "nextLink": "api/introduction"
                     },
                     "modules": {
-                        "router_structure": "./router/structure.html",
-                        "demo": {
-                            "uri": "./router/structure_demo.json",
-                            "type": "string"
-                        }
+                        "router_structure": "./router/structure.html"
                     }
                 }]
             }, {

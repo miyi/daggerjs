@@ -1,12 +1,12 @@
 {
     "template": [{
-        "description": "invalid 'media'",
-        "media": "(resolution: 4dppx)",
-        "uri": ["#template-invalid-media"]
+        "description": "mismatch",
+        "match": "(resolution: 4dppx)",
+        "uri": ["#template-mismatch"]
     }, {
-        "description": "invalid 'condition'",
-        "condition": false,
-        "uri": ["#template-invalid-condition"]
+        "description": "mismatch",
+        "match": false,
+        "uri": ["#template-mismatch"]
     }, {
         "description": "force breaking when embedded module missing",
         "uri": ["#template", "#template_not_exist"]
@@ -26,43 +26,42 @@
         "content": "<inner_template1></inner_template1>",
         "type": "template"
     },
-    "namespace": "./namespace.html",
-    "namespace_alias": "namespace",
-    "namespace_embedded": "#namespace",
-    "json": {
-        "uri": "./json.json",
-        "integrity": "jgpm3EZ/qAzBdmO1XbTFzLrCDLWxkJC7skQheneKfn4=",
-        "converter": "{ title: $module.object.name, number: $module.array[1] }"
+    "namespace": {
+        "explicit": true,
+        "uri": "./namespace.html"
+    },
+    "namespace_alias": {
+        "explicit": true,
+        "uri": "namespace"
+    },
+    "namespace_embedded": {
+        "explicit": true,
+        "uri": "#namespace"
     },
     "json_dup": {
         "uri": "./json.json",
-        "integrity": "jgpm3EZ/qAzBdmO1XbTFzLrCDLWxkJC7skQheneKfn4=",
-        "converter": "{ title: $module.object.name, number: $module.array[0] }",
+        "integrity1": "jgpm3EZ/qAzBdmO1XbTFzLrCDLWxkJC7skQheneKfn4=",
         "anonymous": true
     },
     "script0": {
         "uri": ["script#script"],
-        "converter": "{ inner_script0: $module.inner2 }",
         "anonymous": false
     },
     "script": {
         "candidates": [{
-            "media": "screen and (resolution: 2dppx)",
+            "match": "screen and (resolution: 2dppx)",
             "uri": "#script"
         }],
         "uri": "#script",
-        "converter": "{ loading1: $module.loading, loading2: $module.default, inner_script: $module.inner2 }",
         "anonymous": true
     },
     "script_inline": {
         "content": "export const processor = () => alert('inline script processor')",
-        "converter": "{ converted_inline_processor: $module.processor }",
         "anonymous": true,
         "type": "script"
     },
     "style1": [{
-        "media": "(resolution: 2dppx)",
-        "condition": "false",
+        "match": "false",
         "content": {}
     }, {
         "uri": ["#style1"],

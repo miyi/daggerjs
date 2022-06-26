@@ -1,32 +1,30 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs" base="./modules/" src="./configs.json" integrity="hpKXSMVLFvNuLkPgzMkX8z6V8n91XE/yj7Tq8mVOank="></script>
+  <script type="dagger/configs" base="./modules/" src="./configs.json"></script>
   <template id="template">
-    <template $loading="loading1()">
+    <template +loading="loading()">
         <br/>
         <span>Current index is: "${ index }"</span><br/>
         <span>Current html is: "${ html }"</span><br/>
         <button +click="alert($)">alert($)</button><br/>
-        <button +click="console.log($modules)">console.log($modules)</button><br/>
+        <button +click="console.log($module)">console.log($module)</button><br/>
         <button +click="alert(JSON.stringify(empty_data))">alert(JSON.stringify(empty_data))</button><br/>
-        <button +click="converted_inline_processor()">converted_inline_processor()</button><br/>
-        <button +click="namespace.script1.processor()">namespace.script1.processor()</button><br/>
+        <button +click="processor()">processor()</button><br/>
+        <button +click="console.log($module), namespace_alias.script1.processor()">namespace.script1.processor()</button><br/>
         <button +click="alert(namespace_embedded.json[1])">alert(namespace_embedded.json[1])</button><br/>
-        <button +click="script0.inner_script0()">inner</button><br/>
-        <button +click="alert(json.title + json.number)">json</button><br/>
-        <button +click="alert(title + number)">json_dup</button><br/>
-        <button +click="++index, html=`<inner_template1 $loading='{ index: 10, html: \`hello world\` }'></inner_template1>`;">++index</button><br/>
+        <button +click="script0.inner2()">script0.inner2()</button><br/>
+        <button +click="++index, html=`<inner_template1 +loading='{ index: 10, html: \`hello world\` }'></inner_template1>`;">++index</button><br/>
         <!--<custom_tag>this is a custom tag ${ index }</custom_tag><br/>-->
         <span>start of inner_template1</span><br/>
         <inner_template1></inner_template1>
         <span>end of inner_template1</span><br/>
-        <inner_template2 $loading="{ index: 3 }"></inner_template2>
-        <!--<inner_template2 $loading="{ index, html }"></inner_template2>-->
+        <inner_template2 +loading="{ index: 3 }"></inner_template2>
+        <!--<inner_template2 +loading="{ index, html }"></inner_template2>-->
     </template>
   </template>
   <template id="innerTemplate1">
-      <namespace.inner.inner_template321 $loading="{ html: '<span +click#stop=script1.processor()>1234567</span>' }"></namespace.inner.inner_template321>
-      <inner_template2 $sentry="new Promise((resolve, reject) => setTimeout(() => resolve(false), 1000))"></inner_template2>
+      <namespace.inner.inner_template321 +loading="{ html: '<span +click#stop=script1.processor()>1234567</span>' }"></namespace.inner.inner_template321>
+      <inner_template2 +sentry="console.log($scope, $router, $nextRouter), new Promise((resolve, reject) => setTimeout(() => resolve(false), 1000))"></inner_template2>
       <div class="innerTemplate1_root">
         <div description="should be dashed red">
         <span>inside innerTemplate1 start - ${ index }</span><br/>
@@ -44,7 +42,8 @@
     }
   </script>
   <script id="script" type="dagger/script">
-    export { inner_script1 as inner1, default as inner2 } from 'BASE(./script.js)'; // inner module
+    export { inner_script1 as inner1, default as inner2 } from './script.js'; // inner module
+    export { inner_script1 as inner3, default as inner4 } from "./script.js"; // inner module
     export const loading = () => ({
         html: '<span>hello dagger</span><br/>',
         index: 0

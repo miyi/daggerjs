@@ -6,11 +6,9 @@
         "commentNode": true,
         "directiveAttribute": true,
         "moduleLog": true,
-        "routerLog": true,
-        "integrity": false
+        "routerLog": true
     },
     "rootSelectors": ["title", "body"],
-    "customTags": ["custom_tag0"],
     "routing": {
         "aliases": {
             "/index2": "/index"
@@ -32,10 +30,10 @@
                 "test_script": "#root_test_script",
                 "script": "#script",
                 "component": [{
-                    "condition": false,
+                    "match": false,
                     "uri": "#component1"
                 }, {
-                    "condition": true,
+                    "match": true,
                     "uri": "#component"
                 }],
                 "prefix": "#prefix",
@@ -57,14 +55,13 @@
                     },
                     "@namespace": {
                         "index": {
-                            "customTags": ["custom_tag1"],
                             "content": {
                                 "template": [{
-                                    "condition": false,
+                                    "match": false,
                                     "uri": "#index_template123",
                                     "style": "style"
                                 }, {
-                                    "condition": true,
+                                    "match": true,
                                     "uri": "#index_template",
                                     "style": "style"
                                 }],
@@ -81,7 +78,7 @@
                     "template": "controllers"
                 },
                 "modules": {
-                    "controllers": "http://local.controllers.com:8283/controllers.html"
+                    "controllers": "http://localhost:8283/controllers.html"
                 },
                 "children": [{
                     "path": "focus",
@@ -92,7 +89,7 @@
                         "title": "focus"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/focus.html"
+                        "directive": "http://localhost:8283/modules/focus.html"
                     }
                 }, {
                     "path": "boolean",
@@ -103,7 +100,7 @@
                         "title": "boolean"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/boolean.html"
+                        "directive": "http://localhost:8283/modules/boolean.html"
                     }
                 }, {
                     "path": "class",
@@ -111,7 +108,7 @@
                         "title": "class"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/class.html"
+                        "directive": "http://localhost:8283/modules/class.html"
                     }
                 }, {
                     "path": "style",
@@ -119,7 +116,7 @@
                         "title": "style"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/style.html"
+                        "directive": "http://localhost:8283/modules/style.html"
                     }
                 }, {
                     "path": "raw",
@@ -127,7 +124,7 @@
                         "title": "raw"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/raw.html"
+                        "directive": "http://localhost:8283/modules/raw.html"
                     }
                 }, {
                     "path": "general",
@@ -138,7 +135,7 @@
                         "title": "general"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/general.html"
+                        "directive": "http://localhost:8283/modules/general.html"
                     }
                 }, {
                     "path": "text",
@@ -149,7 +146,7 @@
                         "title": "text"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/text.html"
+                        "directive": "http://localhost:8283/modules/text.html"
                     }
                 }, {
                     "path": "lifeCycle",
@@ -157,7 +154,7 @@
                         "title": "lifeCycle"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/lifeCycle.html"
+                        "directive": "http://localhost:8283/modules/lifeCycle.html"
                     }
                 }, {
                     "path": "html",
@@ -165,7 +162,7 @@
                         "title": "html"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/html.html"
+                        "directive": "http://localhost:8283/modules/html.html"
                     }
                 }, {
                     "path": "file",
@@ -173,7 +170,7 @@
                         "title": "file"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/file.html"
+                        "directive": "http://localhost:8283/modules/file.html"
                     }
                 }, {
                     "path": "exist",
@@ -181,7 +178,7 @@
                         "title": "exist"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/exist.html"
+                        "directive": "http://localhost:8283/modules/exist.html"
                     }
                 }, {
                     "path": "each",
@@ -189,7 +186,7 @@
                         "title": "each"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/each.html"
+                        "directive": "http://localhost:8283/modules/each.html"
                     }
                 }, {
                     "path": "value",
@@ -197,7 +194,7 @@
                         "title": "value"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/value.html"
+                        "directive": "http://localhost:8283/modules/value.html"
                     }
                 }, {
                     "path": "checked",
@@ -205,7 +202,7 @@
                         "title": "checked"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/checked.html"
+                        "directive": "http://localhost:8283/modules/checked.html"
                     }
                 }, {
                     "path": "selected",
@@ -213,7 +210,7 @@
                         "title": "selected"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/selected.html"
+                        "directive": "http://localhost:8283/modules/selected.html"
                     }
                 }, {
                     "path": "modules",
@@ -222,8 +219,8 @@
                     },
                     "modules": {
                         "directive": {
-                            "uri": "http://local.controllers.com:8283/modules/modules.html",
-                            "integrity": "oPX2k9am7u4x0hdm6tuvZ2fYau82MkZHs+QS+Ku9egM="
+                            "uri": "http://localhost:8283/modules/modules.html",
+                            "integrity1": "oPX2k9am7u4x0hdm6tuvZ2fYau82MkZHs+QS+Ku9egM="
                         }
                     }
                 }, {
@@ -232,7 +229,7 @@
                         "title": "href"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/href.html",
+                        "directive": "http://localhost:8283/modules/href.html",
                         "component": {
                             "content": "<div>component1</div>",
                             "type": "template"
@@ -244,7 +241,7 @@
                         "title": "iframe"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/iframe.html"
+                        "directive": "http://localhost:8283/modules/iframe.html"
                     }
                 }, {
                     "path": "template",
@@ -252,7 +249,7 @@
                         "title": "template"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/template.html"
+                        "directive": "http://localhost:8283/modules/template.html"
                     }
                 }, {
                     "path": "eventHandler",
@@ -260,7 +257,7 @@
                         "title": "eventHandlers"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/eventHandler.html"
+                        "directive": "http://localhost:8283/modules/eventHandler.html"
                     }
                 }, {
                     "path": "Date",
@@ -268,7 +265,7 @@
                         "title": "Date"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/date.html"
+                        "directive": "http://localhost:8283/modules/date.html"
                     }
                 }, {
                     "path": "custom",
@@ -276,7 +273,7 @@
                         "title": "custom class"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/custom.html"
+                        "directive": "http://localhost:8283/modules/custom.html"
                     }
                 }, {
                     "path": "watch",
@@ -284,7 +281,7 @@
                         "title": "watch"
                     },
                     "modules": {
-                        "directive": "http://local.controllers.com:8283/modules/watch.html"
+                        "directive": "http://localhost:8283/modules/watch.html"
                     }
                 }]}, {
                 "path": "imggallery",

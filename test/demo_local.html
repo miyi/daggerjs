@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html $loading="{ $: 'hello dagger' }">
+<html +loading="{ $: 'hello dagger' }">
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -9,14 +9,13 @@
     <link rel="preload" href="./configs.json" as="fetch" crossorigin="anonymous">
     <!--<link rel="stylesheet" href="css.css" media="print" onload="media = 'all'">-->
     <style>[dg-cloak] { display: none !important; }</style>
-    <script type="module" crossorigin="anonymous" src="http://dagger.core.com:8280/dagger.js" defer></script>
+    <script type="module" crossorigin="anonymous" src="http://localhost:8280/dagger.release.js" defer></script>
     <script type="dagger/configs" src="./configs.json"></script>
     <title $text="`${ $router.schemes.title } demo`">loading...</title>
     <template id="index_template">
-        <custom_tag1>This is custom tag1 defined in "index" namespace.</custom_tag1>
         <div id="plain-previous-sibling"></div>
         <div id="plain-wrapper">
-            <div id="index" $loading="content">
+            <div id="index" +loading="content">
                 <a $each#item:slice="array" $href="`controllers/${ slice.path }${ slice.query ? `?${ slice.query }` : '' }`" $title="`${ slice.path } demo`">${ index + 1 }. ${ slice.path } demo</a>
                 <br/>
             </div>
@@ -58,28 +57,11 @@
     </style>
   </head>
   <body dg-cloak>
-    <!--<div class="raw"></div>
-    <div $class="'connected'">${ Math.PI }</div>
-    <br/>-->
-    <!--<prefix $each="[1, 2, 4]" $exist="(() => { setTimeout(() => {item = 3}, 1000); return item > 2; })()"></prefix>-->
-    <!--<prefix $each="[1, 2, 4]" $exist="item > 1"></prefix>
-    <component></component>
-    <br/>
-    <div @raw id="root-raw" $loading="{}"></div>
-    <div class="root-each" $each="'string'">
-      <div @raw $loading="1234"></div>
-    </div>-->
     <span class="raw">Please click the following links to see directives demo:</span>
     <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
-    <br/>
-    <component></component>
-    <custom_tag0>This is global custom tag0.</custom_tag0>
-    <!--<directive></directive>
-    <template $html="'<directive></directive>'"></template>
-    <template $html="(() => '<directive></directive>')($router.identity)"></template>-->
-    <div +click="true">
-        <div class="mountPoint1" $loading="{ item: 'default-item' }" $html="(() => `<${ $router.schemes.template }></${ $router.schemes.template }>`)($router.identity)" watch="console.clear($router.schemes.template)"></div>
-        <span>This the end!</span>
+    <div>
+      <div class="mountPoint1" +loading="{ item: 'default-item' }" $html#router="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></div>
+      <span>This the end!</span>
     </div>
   </body>
 </html>

@@ -4,8 +4,11 @@
         "text": "introduction",
         "href": "overview/introduction"
     }, {
-        "text": "version",
-        "href": "overview/version"
+        "text": "install",
+        "href": "overview/install"
+    }, {
+        "text": "application",
+        "href": "overview/application"
     }]
 }, {
     "text": "directive",
@@ -13,25 +16,31 @@
         "text": "introduction",
         "href": "directive/introduction"
     }, {
-        "text": "@raw",
-        "href": "directive/raw"
+        "text": "decorator",
+        "href": "directive/decorator"
+    }, {
+        "text": "expression",
+        "href": "directive/expression"
+    }, {
+        "text": "scope",
+        "href": "directive/scope"
     }, {
         "text": "lifeCycle",
         "href": "directive/lifeCycle"
     }, {
-        "text": "$loading",
+        "text": "+loading",
         "href": "directive/loading"
     }, {
-        "text": "$loaded",
+        "text": "+loaded",
         "href": "directive/loaded"
     }, {
-        "text": "$unloading",
+        "text": "+unloading",
         "href": "directive/unloading"
     }, {
-        "text": "$unloaded",
+        "text": "+unloaded",
         "href": "directive/unloaded"
     }, {
-        "text": "$sentry",
+        "text": "+sentry",
         "href": "directive/sentry"
     }, {
         "text": "controller",
@@ -58,6 +67,9 @@
         "text": "$html",
         "href": "directive/html"
     }, {
+        "text": "$result",
+        "href": "directive/result"
+    }, {
         "text": "$selected",
         "href": "directive/selected"
     }, {
@@ -82,8 +94,14 @@
         "text": "eventHandler",
         "href": "directive/eventHandler"
     }, {
-        "text": "decorator",
-        "href": "directive/decorator"
+        "text": "meta",
+        "href": "directive/meta"
+    }, {
+        "text": "@raw",
+        "href": "directive/raw"
+    }, {
+        "text": "@directive",
+        "href": "directive/dynamic"
     }]
 }, {
     "text": "module",
@@ -94,11 +112,11 @@
         "text": "template",
         "href": "module/template"
     }, {
-        "text": "script",
-        "href": "module/script"
-    }, {
         "text": "style",
         "href": "module/style"
+    }, {
+        "text": "script",
+        "href": "module/script"
     }, {
         "text": "json",
         "href": "module/json"

@@ -1,36 +1,23 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-    {
-      "template": {
-        "uri": "#template",
-        "style": "style"
-      },
-      "script": {
-          "uri": "#script",
-          "anonymous": true
-      },
-      "style": "#style"
-    }
-  </script>
   <template id="template">
     <div>
       <br/>
-      <a href="http://localhost:8288/prototype.html#/controllers/checked" +click="console.log('absolute link is clicked')">absolute link</a><br/>
+      <a href="http://localhost:8288/demo_local.html#/controllers/checked" +click="console.log('absolute link is clicked')">absolute link</a><br/>
       <a href="   #controllers/each   " +click="onClick($event)">relative link (without slash)</a><br/>
       <a href="controllers/modules" target ="_blank" +click="onClick($event)">relative link (target="_blank")</a><br/>
       <img src="https://www.w3school.com.cn/i/eg_planets.jpg" width="145" height="126" alt="Planets" usemap="#planetmap">
       <map name="planetmap" id="planetmap">
         <area shape="circle" coords="180,139,14" href="/controllers/modules" target ="_blank" alt="/controllers/modules" title="/controllers/modules" />
         <area shape="circle" coords="129,161,10" href="controllers/each" target ="_blank" alt="/controllers/each" title="/controllers/each" />
-        <area shape="rect" coords="0,0,110,260" href="http://localhost:8288/prototype.html#/controllers/checked" target ="_blank" alt="http://localhost:8288/prototype.html#/controllers/checked" title="http://localhost:8288/prototype.html#/controllers/checked" />
+        <area shape="rect" coords="0,0,110,260" href="http://localhost:8288/demo_local.html#/controllers/checked" target ="_blank" alt="http://localhost:8288/demo_local.html#/controllers/checked" title="http://localhost:8288/demo_local.html#/controllers/checked" />
       </map>
     </div>
   </template>
-  <script id="script" type="dagger/script">
+  <script type="dagger/script">
     export const onClick = event => console.log('link clicked', event);
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     input {
         border: 1px solid red;
     }

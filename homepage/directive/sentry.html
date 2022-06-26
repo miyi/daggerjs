@@ -1,31 +1,19 @@
-<!DOCTYPE html>
-<html>
-  <script type="dagger/configs">
-    {
-      "template": {
-          "uri": "#template",
-          "style": "style"
-      },
-      "style": "#style"
-    }
-  </script>
-  <template id="template">
-    <h2>${ $['directive.sentry'] }</h2>
-    <div class="content">
-      <template $each="$['directive.sentry.sections']">
-        <h3 class="question">${ item.question }</h3>
-        <div class="answer" $html="item.answer"></div>
-      </template>
+<h2>${ $['directive.sentry'] }</h2>
+<div class="content">
+  <template $exist="language == 'zh-cn'">
+    <h3 class="question">+sentry指令的作用</h3>
+    <div class="answer">
+      <div>“+sentry”指令在即将发生页面内路由跳转时由框架触发调用。</div>
+      <div>当前页面中任意一个“+sentry”指令表达式的计算结果为true或等效值时，路由跳转过程将终止。</div>
+      <div>“+sentry”指令表达式中可以使用指向目标<a href="router/introduction">路由</a>对象的上下文参数“$nextRouter”。</div>
     </div>
+    <h3 class="question">+sentry指令示例</h3>
+    <div class="answer">“+sentry”指令示例将在<a href="router/introduction">路由</a>章节中演示。</div>
   </template>
-  <style id="style" type="dagger/style">
-    h3::before {
-        content: "😕";
-        margin-right: 10px;
-    }
-    .answer::before {
-        content: "😄";
-        margin-right: 10px;
-    }
-  </style>
-</html>
+  <template $exist="language == 'en-us'">
+    <template $each="$['directive.sentry.sections']">
+      <h3 class="question">${ item.question }</h3>
+      <div class="answer" $html="item.answer"></div>
+    </template>
+  </template>
+</div>

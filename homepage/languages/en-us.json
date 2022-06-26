@@ -9,7 +9,9 @@
     "reset": "reset",
     "view": "View the result:",
     "overview": "Overview",
+    "overview.application": "Overview/application",
     "directive": "Directive",
+    "directive.dynamic": "Directive/@directive",
     "index": "Index",
     "version": "Version",
     "next": "Next",
@@ -23,7 +25,7 @@
         "answer": "<span>Either as an experienced professional programer or an amateur interested in web development, you will understand dagger.js in a short time in case you have basic background knowledge for <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/HTML'>html</a>/<a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/JavaScript'>javaScript</a>/<a target='_blank' href='https://developer.mozilla.org/en-US/docs/web/CSS'>css</a>. dagger.js works in the form of <a href='directive/introduction'>directive</a> expressions and <a href='miscellaneous/introduction'>configs</a>, in most cases, users do not need to call any framework <a href='api/introduction'>api</a> to complete code development.</span>"
     }, {
         "question": "How to use dagger.js",
-        "answer": "<span>dagger.js is a lightweight and complete client side runtime framework with no dependency on any third-party code or build tools. Users may build a development environment and start coding based on the following steps quickly:<div class=\"sub-answer\">1. To include dagger.js via script tag in your html file:<br/><span style='font-style: italic; background-color: #eeeeee;'>&lt;script type=\"module\" integrity=\"sha256-WWzLwa7l4nbNl7Fbum80foH4n67RpD2hFXPApnbqnNc=\" crossorigin=\"anonymous\" src=\"https://cdn.jsdelivr.net/npm/@peakman/dagger.js@0.9.5/dagger.js\" defer&gt;&lt;/script&gt;</span><br/>2. To insert the <a href='miscellaneous/introduction'>root configs</a> tag under the head tag to declare the <a href='router/introduction'>routing scenarios</a> and the <a href='module/introduction'>module</a> dependency to render views.<br/>3. To declare <a href='directive/introduction'>directives</a> on DOM tags to define the interaction between page elements and data models.</div></span>"
+        "answer": "<span>dagger.js is a lightweight and complete client side runtime framework with no dependency on any third-party code or build tools. Users may build a development environment and start coding based on the following steps quickly:<div class=\"sub-answer\">1. To include dagger.js via script tag in your html file:<br/><span style='font-style: italic; background-color: #eeeeee;'>&lt;script type=\"module\" integrity=\"sha256-WWzLwa7l4nbNl7Fbum80foH4n67RpD2hFXPApnbqnNc=\" crossorigin=\"anonymous\" src=\"https://cdn.jsdelivr.net/npm/@peakman/dagger.release.js@0.9.13/dagger.js\" defer&gt;&lt;/script&gt;</span><br/>2. To insert the <a href='miscellaneous/introduction'>root configs</a> tag under the head tag to declare the <a href='router/introduction'>routing scenarios</a> and the <a href='module/introduction'>module</a> dependency to render views.<br/>3. To declare <a href='directive/introduction'>directives</a> on DOM tags to define the interaction between page elements and data models.</div></span>"
     }, {
         "question": "View the online demo",
         "answer": "<span class='demo'><a target='_blank' href='https://www.w3schools.com/code/tryit.asp?filename=GOO8DTQ95MS7'>w3school</a><a target='_blank' href='https://codepen.io/dagger8224/pen/XWNagBY?editors=1000'>codepen</a></span>"
@@ -41,12 +43,13 @@
     "compatibility": "Compatibility",
     "compatibility.content": "<span>dagger.js is compatible with the browsers supporting <a target='_blank' href='https://262.ecma-international.org/6.0/'>ECMA2015</a> and later version.</span>",
     "directive.introduction": "Directive/introduction",
+    "directive.expression": "Directive/expression",
     "directive.introduction.sections": [{
         "question": "What is directive",
         "answer": "<span>directive is an important concept in dagger.js. Formally, directive is special <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes'>attribute</a> (with specified prefix). At runtime, directives will be converted to expressions under context scopes, and interactive with the related DOM element. In later tutorials, we will see the examples of usage for different directives.</span>"
     }, {
         "question": "The category of directives",
-        "answer": "<span>There are four types of directives: <a href='directive/raw'>meta directive</a> (with symbol \"@\" as prefix, such as \"@raw\"), <a href='directive/lifeCycle'>lifeCycle directives</a> (with symbol \"$\" as prefix, such as \"$loading\"), <a href='directive/controller'>control directives</a> (with symbol \"$\" as prefix, such as \"$value\") and <a href='directive/eventHandler'>event directive</a> (with symbol \"+\" as prefix, such as \"+click\").</span>"
+        "answer": "<span>There are four types of directives: <a href='directive/raw'>meta directive</a> (with symbol \"@\" as prefix, such as \"@raw\"), <a href='directive/lifeCycle'>lifeCycle directives</a> (with symbol \"$\" as prefix, such as \"+loading\"), <a href='directive/controller'>control directives</a> (with symbol \"$\" as prefix, such as \"$value\") and <a href='directive/eventHandler'>event directive</a> (with symbol \"+\" as prefix, such as \"+click\").</span>"
     }, {
         "question": "The structure of directives",
         "answer": "<span>A typical directive is composed of </span><span class='format'>\"prefix + name + decorators (optional) + expression\"</span><span>. <a href='directive/decorator'>decorators</a> are a group of key value pairs separated by symbol \"#\", which are used to customize the behavior of directive. The meta directive is composed of </span><span class='format'>\"prefix + name\"</span><span> only.</span>"
@@ -58,7 +61,7 @@
         "answer": "<span>Any legal single javaScript statement could be used as directive expression (no \"return\" before the statement), including sync/async function, or an object literal. To use inline compound statement, please break it down to multiple comma expression or wrap it as an IIFE. In fact, it is better to put the complex code logic inside a <a href='module/script'>script</a> module, and call it in the directive expression.</span>"
     }, {
         "question": "The variable scopes of directive expressions",
-        "answer": "<span>Directive expression works under the runtime scopes. Except of the top layer javaScript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Glossary/Global_scope'>global scope</a> and the second layer dagger.js <a href='miscellaneous/introduction'>root scope</a>, each element could create context scope dynamically with <a href='directive/loading'>$loading</a> lifeCycle directive. The variable scopes within different layers make up a runtime scope tree, each directive expression could visit the variables defined on the located and upper scopes.</span>"
+        "answer": "<span>Directive expression works under the runtime scopes. Except of the top layer javaScript <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Glossary/Global_scope'>global scope</a> and the second layer dagger.js <a href='miscellaneous/introduction'>root scope</a>, each element could create context scope dynamically with <a href='directive/loading'>+loading</a> lifeCycle directive. The variable scopes within different layers make up a runtime scope tree, each directive expression could visit the variables defined on the located and upper scopes.</span>"
     }, {
         "question": "Is directive required or optional",
         "answer": "<span>All directives are optional, an element without any directive is called plain element.</span>"
@@ -77,55 +80,55 @@
         "answer": "<span>The lifeCycle directives are a group of directives triggered when the related DOM element is creating/destroying or connected state changed.</span>"
     }, {
         "question": "The list of lifeCycle directives",
-        "answer": "<span><a href='directive/loading'>$loading</a><a href='directive/loaded'>$loaded</a><a href='directive/unloading'>$unloading</a><a href='directive/unloaded'>$unloaded</a><a href='directive/sentry'>$sentry</a></span>"
+        "answer": "<span><a href='directive/loading'>+loading</a><a href='directive/loaded'>+loaded</a><a href='directive/unloading'>+unloading</a><a href='directive/unloaded'>+unloaded</a><a href='directive/sentry'>+sentry</a></span>"
     }, {
         "question": "The order of lifeCycle directives when creating elements",
-        "answer": "<span>parent's $loading -> children's $loading -> children's $loaded -> parent's $loaded</span>"
+        "answer": "<span>parent's +loading -> children's +loading -> children's +loaded -> parent's +loaded</span>"
     }, {
         "question": "The order of lifeCycle directives when destroying elements",
-        "answer": "<span>(global $sentry checking) -> parent's $unloading -> children's $unloading -> children's $unloaded -> parent's $unloaded</span>"
+        "answer": "<span>(global +sentry checking) -> parent's +unloading -> children's +unloading -> children's +unloaded -> parent's +unloaded</span>"
     }, {
         "question": "The available elements for lifeCycle directives",
         "answer": "<span>Any DOM element could declare lifeCycle directive.</span>"
     }],
-    "directive.loading": "Directive/$loading",
+    "directive.loading": "Directive/+loading",
     "directive.loading.sections": [{
-        "question": "The effective of $loading directive",
-        "answer": "<span>The $loading directive is triggered by framework before the related element is created. The main usage of $loading is to create a new variable scope in the context.</span>"
+        "question": "The effective of +loading directive",
+        "answer": "<span>The +loading directive is triggered by framework before the related element is created. The main usage of +loading is to create a new variable scope in the context.</span>"
     }, {
-        "question": "The return value of $loading directive expression",
+        "question": "The return value of +loading directive expression",
         "answer": "<span>A context scope would be created based on the return value in case it's a plain object (not include the extended object such as Array), the variables insides the scope could be visited in the other directive expressions (except for the <a href='directive/each'>$each</a> and <a href='directive/exist'>$exist</a> directives) on the related element and all directive expressions of its children. The variables defined in the inner scope will override the variables with the same name defined in outer scopes.</span>"
     }],
-    "directive.loaded": "Directive/$loaded",
+    "directive.loaded": "Directive/+loaded",
     "directive.loaded.sections": [{
-        "question": "The effective of $loaded directive",
-        "answer": "<span>The $loaded directive is triggered by framework after the related element is created (the trigger condition is router changed in case the related element is &lt;html&gt;), which is used to do the initialization work for the related element of scope variables. A context parameter refers to the related element named \"$node\" is available in the $loaded expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
+        "question": "The effective of +loaded directive",
+        "answer": "<span>The +loaded directive is triggered by framework after the related element is created (the trigger condition is router changed in case the related element is &lt;html&gt;), which is used to do the initialization work for the related element of scope variables. A context parameter refers to the related element named \"$node\" is available in the +loaded expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
     }, {
-        "question": "The return value of $loaded directive expression",
-        "answer": "<span>The return value of $loaded directive expression is useless.</span>"
+        "question": "The return value of +loaded directive expression",
+        "answer": "<span>The return value of +loaded directive expression is useless.</span>"
     }],
-    "directive.unloading": "Directive/$unloading",
+    "directive.unloading": "Directive/+unloading",
     "directive.unloading.sections": [{
-        "question": "The effective of $unloading directive",
-        "answer": "<span>The $unloading directive is triggered by framework before the related element is removed (the trigger condition is before router changed in case the related element is &lt;html&gt;), which is used to do the cleanup work for the related element of scope variables. A context parameter refers to the related element named \"$node\" is available in the $unloading expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
+        "question": "The effective of +unloading directive",
+        "answer": "<span>The +unloading directive is triggered by framework before the related element is removed (the trigger condition is before router changed in case the related element is &lt;html&gt;), which is used to do the cleanup work for the related element of scope variables. A context parameter refers to the related element named \"$node\" is available in the +unloading expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
     }, {
-        "question": "The return value of $unloading directive expression",
-        "answer": "<span>The return value of $unloading directive expression is useless.</span>"
+        "question": "The return value of +unloading directive expression",
+        "answer": "<span>The return value of +unloading directive expression is useless.</span>"
     }],
-    "directive.unloaded": "Directive/$unloaded",
+    "directive.unloaded": "Directive/+unloaded",
     "directive.unloaded.sections": [{
-        "question": "The effective of $unloaded directive",
-        "answer": "<span>The $unloaded directive is triggered by framework after the related element is removed (the trigger condition is before router changed in case the related element is &lt;html&gt;), which is used to do the cleanup work for the related element of scope variables. A context parameter refers to the removed related element named \"$node\" is available in the $unloaded expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
+        "question": "The effective of +unloaded directive",
+        "answer": "<span>The +unloaded directive is triggered by framework after the related element is removed (the trigger condition is before router changed in case the related element is &lt;html&gt;), which is used to do the cleanup work for the related element of scope variables. A context parameter refers to the removed related element named \"$node\" is available in the +unloaded expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
     }, {
-        "question": "The return value of $unloaded directive expression",
-        "answer": "<span>The return value of $unloaded directive expression is useless.</span>"
+        "question": "The return value of +unloaded directive expression",
+        "answer": "<span>The return value of +unloaded directive expression is useless.</span>"
     }],
-    "directive.sentry": "Directive/$sentry",
+    "directive.sentry": "Directive/+sentry",
     "directive.sentry.sections": [{
-        "question": "The effective of $sentry directive",
-        "answer": "<span>Each $sentry directive expression registers a global callback, which will be triggered once the router attempts to change. The framework will determine if the router should change or not based on the return value of these callbacks. A context parameter refers to the related element named \"$nextRouter\" is available in the $sentry expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
+        "question": "The effective of +sentry directive",
+        "answer": "<span>Each +sentry directive expression registers a global callback, which will be triggered once the router attempts to change. The framework will determine if the router should change or not based on the return value of these callbacks. A context parameter refers to the related element named \"$nextRouter\" is available in the +sentry expression (the parameter name could be customized with <a href='directive/decorator'>directive decorator</a>).</span>"
     }, {
-        "question": "The return value of $sentry directive expression",
+        "question": "The return value of +sentry directive expression",
         "answer": "<span>The router will stop changing once the expression return true or equivalent value.</span>"
     }],
     "directive.controller": "Directive/controller",
@@ -143,7 +146,7 @@
         "answer": "<span>The return value of control directive (except for $watch directive) expression would have specified impact on the property or behavior of the related element.</span>"
     }, {
         "question": "The trigger opportunity of control directive expression",
-        "answer": "<span>Most of the control directives (except for $each and $exist directives) are triggered by framework firstly after the $loading directive (in case there is), and before the $loaded directive (in case there is). The control directives might be triggered multiple times during the lifetime of related element if the dependency variables of directive expression updated. In case there are multiple control directives declared on the same element, the first time trigger order is the same as the order of declaration.</span>"
+        "answer": "<span>Most of the control directives (except for $each and $exist directives) are triggered by framework firstly after the +loading directive (in case there is), and before the +loaded directive (in case there is). The control directives might be triggered multiple times during the lifetime of related element if the dependency variables of directive expression updated. In case there are multiple control directives declared on the same element, the first time trigger order is the same as the order of declaration.</span>"
     }, {
         "question": "The available elements to apply control directives",
         "answer": "<span>Unless specified in the document, all DOM elements but &lt;html&gt; tag are available for control directives.</span>"
@@ -190,7 +193,7 @@
         "answer": "<span>The related element will be created in case the directive expression return true or equivalent value, otherwise it will be destroyed.</span>"
     }, {
         "question": "The relationship between $exist directive and lifeCycle directives",
-        "answer": "<span>Each time when the return value of $exist directive expression toggled, the lifeCycle directives will be triggered (\"$loading/$loaded\" for creating, \"$unloading/$unloaded\" for destroying).</span>"
+        "answer": "<span>Each time when the return value of $exist directive expression toggled, the lifeCycle directives will be triggered (\"+loading/+loaded\" for creating, \"+unloading/+unloaded\" for destroying).</span>"
     }],
     "directive.file": "Directive/$file",
     "directive.file.sections": [{
@@ -222,6 +225,7 @@
         "question": "The return value of $html directive expression",
         "answer": "<span>The return value of directive expression will be treated as the inner html of the related element. The directives declared on the html template will take effect after the child related element created, the variable scopes are inherited from the parent's scope chain.</span>"
     }],
+    "directive.result": "Directive/$result",
     "directive.selected": "Directive/$selected",
     "directive.selected.sections": [{
         "question": "The effective of $selected directive",
@@ -331,7 +335,7 @@
         "answer": "<span>The directives work under \"insensitive\" mode by default. That is, during the proceeding of directive expression, any update on variables won't trigger the related directive expressions immediately, instead, the expressions will be pushed into a pending proceeding queue which to be triggered after the proceeding of current directive expression.<br/>You may declare \"sensitive(:true)\" decorator to set the work mode as sensitive, under which the framework will break to proceed the related directive expressions once detecting update on variables, and getting back to the stopped call stack after the process finished.</span>"
     }, {
         "question": "The predefined lifeCycle directive decorator",
-        "answer": "<span>The decorator \"next\" is used to specify the name of callback parameter referring to the target <a href='router/introduction'>router</a> object for \"<a href='directive/sentry'>$sentry</a>\" lifeCycle directive, the default value is \"$nextRouter\"; The decorator \"node\" is used to set the name of callback parameter referring to the related element for \"<a href='directive/loaded'>$loaded</a>\", \"<a href='directive/unloading'>$unloading</a>\", \"<a href='directive/unloaded'>$unloaded</a>\", the default value is \"$node\".</span>"
+        "answer": "<span>The decorator \"next\" is used to specify the name of callback parameter referring to the target <a href='router/introduction'>router</a> object for \"<a href='directive/sentry'>+sentry</a>\" lifeCycle directive, the default value is \"$nextRouter\"; The decorator \"node\" is used to set the name of callback parameter referring to the related element for \"<a href='directive/loaded'>+loaded</a>\", \"<a href='directive/unloading'>+unloading</a>\", \"<a href='directive/unloaded'>+unloaded</a>\", the default value is \"$node\".</span>"
     }, {
         "question": "The predefined control directive decorators",
         "answer": "<span>The $value directive supports the following decorators: <div class=\"sub-answer\">1. number, which is used to convert the input string to number;<br/>2. trim, which is used to remove whitespace from both ends of the input string;<br/>3. input, which is used to update the input content to the return value of directive expression right after user input, by default the update is triggered after the input element lost focus (response on \"change\" event).</div>The $each directive supports the following decorators: <div class=\"sub-answer\">1. item, which is used to set the name of the slice variable (the default name is \"item\"); <br/>2. index, which is used to set the name of index (with type number) of the the slice variable (the default name is \"index\"); <br/>3. key, which is used to set the name of field key (with type string) of the the slice variable (the default name is \"key\").</div>The $checked directive supports decorator \"scope\", which is used to specify the parent element selector of the checkable group (by default is the parentNode of related element).<br/>The $focus directive support decorator \"prevent\", which is used to specify <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/API/HTMLOrForeignElement/focus'> whether or not the browser should scroll the document to bring the newly-focused element into view</a>.</span>"
@@ -366,7 +370,7 @@
         "answer": "<span>The root module config is defined in the \"modules\" field of the <a href='router/introduction'>router config</a>, children module configs are declared under the parent module configs nested.</span>"
     }, {
         "question": "The way to visit module objects",
-        "answer": "<span>The global module resource tree of the current <a href='router/introduction'>routing scenarios</a> could be visited via the \"$modules\" object under the <a href='miscellaneous/introduction'>root scope</a>, which could also be visited anonymously. For instance, a module named \"script\" under \"$modules\" may referred as \"$modules.script\" or \"script\" directly.</span>"
+        "answer": "<span>The global module resource tree of the current <a href='router/introduction'>routing scenarios</a> could be visited via the \"$module\" object under the <a href='miscellaneous/introduction'>root scope</a>, which could also be visited anonymously. For instance, a module named \"script\" under \"$module\" may referred as \"$module.script\" or \"script\" directly.</span>"
     }, {
         "question": "The order of module loading and view rendering",
         "answer": "<span>The framework will load and parse the modules declared within current router scenarios at the time of page loading or router changing. The view will start rendering right after all the modules loaded. The resolved modules will be cached at runtime and won't be loaded and parsed again when router changed.</span>"
@@ -388,7 +392,7 @@
     "module.namespace": "Module/namespace",
     "module.namespace.sections": [{
         "question": "What is namespace module",
-        "answer": "<span>Namespace is a module set composed of sub modules. Each namespace constitutes a new module scope, to visit the variables or methods under the sub modules of a namespace, both the absolute way (via the \"$modules\" object under the <a href='miscellaneous/introduction'>root scope</a>) or relative way (via the relative path to the namespace) are supported.</span>"
+        "answer": "<span>Namespace is a module set composed of sub modules. Each namespace constitutes a new module scope, to visit the variables or methods under the sub modules of a namespace, both the absolute way (via the \"$module\" object under the <a href='miscellaneous/introduction'>root scope</a>) or relative way (via the relative path to the namespace) are supported.</span>"
     }, {
         "question": "The infer rule of namespace module",
         "answer": "<span>The module without specified type would be inferred as namespace module in case the <a target='_blank' href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type'>Content-Type</a> of remote response contains \"text/html\" and the root element of the resource document is the html tag (otherwise will be inferred as \"template\").</span>"
@@ -455,7 +459,7 @@
         "answer": "<span>The routing configs are declared via \"routing\" field of the root <a href='miscellaneous/introduction'>configs</a>.</span>"
     }, {
         "question": "The way to redirect routing",
-        "answer": "<span>Clicking on the links with the \"href\" attribute refer to the hash value (the relative path starts with \"./\" or \"/\" would be recognized as url path but not hash), or executing the statement \"location.hash = 'xxx';\" in javaScript methods would update the hash state. Once the routing configs matched with the target hash value found, the declared modules and other resources would be loaded and resolved. The framework will initialize the context variable scopes, and work together with the \"<a href='directive/html'>$html</a>\" directive to render the context view.<br/>Please note that the routing redirect will trigger the validation of \"<a href='directive/sentry'>$sentry</a>\", and the redirect would be blocked in case the validation failed.</span>"
+        "answer": "<span>Clicking on the links with the \"href\" attribute refer to the hash value (the relative path starts with \"./\" or \"/\" would be recognized as url path but not hash), or executing the statement \"location.hash = 'xxx';\" in javaScript methods would update the hash state. Once the routing configs matched with the target hash value found, the declared modules and other resources would be loaded and resolved. The framework will initialize the context variable scopes, and work together with the \"<a href='directive/html'>$html</a>\" directive to render the context view.<br/>Please note that the routing redirect will trigger the validation of \"<a href='directive/sentry'>+sentry</a>\", and the redirect would be blocked in case the validation failed.</span>"
     }],
     "router.structure": "Routing/structure",
     "router.structure.sections": [{
@@ -485,7 +489,7 @@
     "miscellaneous.introduction": "Miscellaneous/introduction",
     "miscellaneous.introduction.sections": [{
         "question": "The root scope",
-        "answer": "<span>The root scope of dagger.js is the variable scope defined at the top level of the runtime closure, the variables and methods under the root scope can be visited within the directive expressions on any element. The root scope includes the <a href='router/structure'>routing</a> object \"$router\", the <a href='module/introduction'>module</a> resource tree object \"$modules\", and the data validation method in debug mode \"$validator\".</span>"
+        "answer": "<span>The root scope of dagger.js is the variable scope defined at the top level of the runtime closure, the variables and methods under the root scope can be visited within the directive expressions on any element. The root scope includes the <a href='router/structure'>routing</a> object \"$router\", the <a href='module/introduction'>module</a> resource tree object \"$module\", and the data validation method in debug mode \"$validator\".</span>"
     }, {
         "question": "$validator",
         "answer": "<span>\"$validator\" is a builtin javaScript method under root scope, which supports the following parameters:<div class=\"sub-answer\">1. \"data\" (any), to specify the variable data to be validated;<br/>2. \"path\" (string), to specify the path or name of the validate data;<br/>3. \"validators\", the validator content, including:<div class=\"sub-answer\">a. \"type\", used to validate the type(s) of the variable;<br/>b. \"assert\" the assert method(s), accept data as input parameter, return true as validate successfully, otherwise validate failed;<br/>c. \"required\"，be true means that the data to be validated must be a valid value (should not b null, undefined or NaN).</div></div></span>"

@@ -1,0 +1,41 @@
+<h2>${ $['directive.dynamic'] }</h2>
+<div class="content">
+  <template $exist="language == 'zh-cn'">
+    <h3 class="question">@directive指令的作用</h3>
+    <div class="answer">在某些情况下，您可能需要根据不同条件来动态构造指令或指令修饰符的内容，此时您可以使用“@directive”指令。</div>
+    <h3 class="question">@directive的执行结果</h3>
+    <div class="answer">
+      <div>dagger.js将“@directive”指令的执行结果转换为宿主元素上的指令。</div>
+      <div>“@directive”指令的执行结果支持多种形式：
+        <div class="margin">1. 字符串类型。框架将字符串的内容作为一条完整的指令声明来处理。我们来看例子：
+          <iframe height="300" style="width: 100%;" scrolling="no" title="[dagger-demo] @directive directive (string)" src="https://codepen.io/dagger8224/embed/oNEoaZo?default-tab=html%2Cresult&editable=true&theme-id=dark" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
+            See the Pen <a href="https://codepen.io/dagger8224/pen/oNEoaZo">
+            [dagger-demo] @directive directive (string)</a> by Tony Peakman (<a href="https://codepen.io/dagger8224">@dagger8224</a>)
+            on <a href="https://codepen.io">CodePen</a>.
+          </iframe>
+        </div>
+        <div class="margin">2. 对象类型。对象中需要包含“name”和“value”两个字段，分别指向指令名（包含前缀和修饰符），和指令表达式的内容。我们来看例子：
+          <iframe height="300" style="width: 100%;" scrolling="no" title="[dagger-demo] @directive directive (object)" src="https://codepen.io/dagger8224/embed/ExQbOpO?default-tab=html%2Cresult&editable=true&theme-id=dark" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
+            See the Pen <a href="https://codepen.io/dagger8224/pen/ExQbOpO">
+            [dagger-demo] @directive directive (object)</a> by Tony Peakman (<a href="https://codepen.io/dagger8224">@dagger8224</a>)
+            on <a href="https://codepen.io">CodePen</a>.
+          </iframe>
+        </div>
+        <div class="margin">3. 数组类型。您也可以混合使用以上两种方式，只要数组中的项目是合法的动态指令内容即可。我们来看例子：
+          <iframe height="300" style="width: 100%;" scrolling="no" title="[dagger-demo] @directive directive (mixed)" src="https://codepen.io/dagger8224/embed/qBxVJop?default-tab=html%2Cresult&editable=true&theme-id=dark" frameborder="no" loading="lazy" allowtransparency="true" allowfullscreen="true">
+            See the Pen <a href="https://codepen.io/dagger8224/pen/qBxVJop">
+            [dagger-demo] @directive directive (mixed)</a> by Tony Peakman (<a href="https://codepen.io/dagger8224">@dagger8224</a>)
+            on <a href="https://codepen.io">CodePen</a>.
+          </iframe>
+        </div>
+      </div>
+      <div>请注意，元指令本身是不支持动态创建的。这意味着您不能使用“@directive”指令来声明“<a target="_blank" href="directive/raw">@raw</a>”或者另一个“@directive”指令。</div>
+    </div>
+  </template>
+  <template $exist="language == 'en-us'">
+    <template $each="$['directive.controller.sections']">
+      <h3 class="question">${ item.question }</h3>
+      <div class="answer" $html="item.answer"></div>
+    </template>
+  </template>
+</div>
