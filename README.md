@@ -19,6 +19,7 @@ There is also a small nodejs server for demo usage in the ***"mock_server"*** fo
 ### demo videos:  
 
 #### [anime.js powered by dagger.js](https://codepen.io/dagger8224/pen/eYMpzvB)
-<video src="https://assets.codepen.io/5782383/anime_pc.mp4"></video>  
+https://user-images.githubusercontent.com/66679262/179399278-44fb753c-eef9-423c-bc48-dfde866558ce.mp4
+
 
 Please refer to https://codepen.io/dagger8224 for more demos.
