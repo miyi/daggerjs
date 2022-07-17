@@ -16,4 +16,9 @@ You may refer to the nginx.conf under the root folder before start up the homepa
 
 There is also a small nodejs server for demo usage in the ***"mock_server"*** folder, start it up with the commands ***"npm install"*** and ***"npm run nodemon"***.
 
+### demo videos:  
+
+#### [anime.js powered by dagger.js](https://codepen.io/dagger8224/pen/eYMpzvB)
+<video src="https://assets.codepen.io/5782383/anime_pc.mp4"></video>  
+
 Please refer to https://codepen.io/dagger8224 for more demos.
