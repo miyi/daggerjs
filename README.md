@@ -2,9 +2,9 @@ dagger.js is a lightweight html-based runtime web frontend framework.
 
 The current version is V0.9.13
 
-Please find the document and examples ***[here](https://daggerjs.org)***.
+Please find the document and examples at ***https://daggerjs.org***.
 
-Please find the ***npm*** link ***[here](https://www.npmjs.com/package/@peakman/dagger.js)***.
+Please find the ***npm*** link at ***https://www.npmjs.com/package/@peakman/dagger.js***.
 
 Please find the dagger.js source code in the ***"src"*** folder.
 
