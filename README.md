@@ -33,6 +33,9 @@ https://user-images.githubusercontent.com/66679262/179399677-2a8972ce-0fdf-4ba6-
 #### [Circular Progress Bar](https://codepen.io/dagger8224/pen/dympJXz?editors=1010)
 https://user-images.githubusercontent.com/66679262/179399893-e99969a8-4329-4fb0-b4d7-a573d95c91f6.mp4
 
+#### [Color Picker](https://codepen.io/dagger8224/pen/vYRmGJp?editors=1010)
+https://user-images.githubusercontent.com/66679262/180006750-83e9427b-1a71-4178-b808-d5b6ccf94577.mp4
+
 #### [Text Animation](https://codepen.io/dagger8224/pen/JjLXppg)
 https://user-images.githubusercontent.com/66679262/179400179-5d50cbba-98e6-470a-b58b-cdee007b71e3.mp4
 
