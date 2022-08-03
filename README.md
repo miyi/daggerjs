@@ -14,7 +14,9 @@ Please find the demo in the ***"test"*** folder.
 
 You may refer to the nginx.conf under the root folder before start up the homepage & demo site.
 
-There is also a small nodejs server for demo usage in the ***"mock_server"*** folder, start it up with the commands ***"npm install"*** and ***"npm run nodemon"***.
+There is also a small nodejs server for demo usage in the ***"mock_server"*** folder, start it up with the commands ***"npm install"*** and ***"npm run nodemon"***.  
+
+### Try dagger.js [online](https://codepen.io/dagger8224/pen/ZErWBpB)  
 
 ### demo videos:  
 
