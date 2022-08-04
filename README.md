@@ -1,6 +1,10 @@
 dagger.js is a lightweight html-based runtime web frontend framework.
 
-The current version is V0.9.13
+The current version is V0.9.13  
+
+### Just insert the following two script tags insides the head section of the entry html page of your application to setup dagger.js:  
+#### <script type="module" crossorigin="anonymous" src="https://assets.codepen.io/5782383/dagger.release.js" defer></script>
+#### <script type="dagger/configs"></script><!-- dagger configs -->
 
 Please find the document and examples at ***https://daggerjs.org***.
 
