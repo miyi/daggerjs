@@ -24,6 +24,9 @@ There is also a small nodejs server for demo usage in the ***"mock_server"*** fo
 
 ### demo videos:  
 
+#### [3D Tic Tac Toe](https://codepen.io/dagger8224/pen/RwMedQx)
+https://user-images.githubusercontent.com/66679262/184640434-2cc17b9a-2fce-4f4c-adc4-ffe059bb56b2.mp4
+
 #### [Tesla](https://codepen.io/dagger8224/pen/RwMGvPv?editors=1010)
 https://user-images.githubusercontent.com/66679262/179399791-241e3ca0-802a-4d15-bde1-28d2ca0f0f1a.mp4
 
