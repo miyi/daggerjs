@@ -27,6 +27,9 @@ There is also a small nodejs server for demo usage in the ***"mock_server"*** fo
 #### [3D Tic Tac Toe](https://codepen.io/dagger8224/pen/RwMedQx)
 https://user-images.githubusercontent.com/66679262/184640434-2cc17b9a-2fce-4f4c-adc4-ffe059bb56b2.mp4
 
+#### [integrate with jquery orgchart plugin](https://codepen.io/dagger8224/pen/YzaMKmB)
+https://user-images.githubusercontent.com/66679262/186324639-de5f4099-dfe5-4ad1-925e-f6797015d667.mp4
+
 #### [Tesla](https://codepen.io/dagger8224/pen/RwMGvPv?editors=1010)
 https://user-images.githubusercontent.com/66679262/179399791-241e3ca0-802a-4d15-bde1-28d2ca0f0f1a.mp4
 
