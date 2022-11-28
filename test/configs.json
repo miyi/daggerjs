@@ -10,12 +10,11 @@
     },
     "rootSelectors": ["title", "body"],
     "routing": {
+        "mode": "history",
         "aliases": {
-            "/index2": "/index"
+            "/": "/index"
         },
         "default": "/default",
-        "hashPrefix": "#",
-        "overrideRelativeLinks": true,
         "redirects": {
             "/": "/index"
         },
