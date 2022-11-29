@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <template id="template">
-    <div +loading="$module.loading($router.schemes.enabled)">
+    <div +loading="$module.loading($router.schemes.boolean)">
       <input $disabled="!enabled">
       <br/>
       <button +click="enabled = !enabled">toggle</button>

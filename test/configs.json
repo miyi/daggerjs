@@ -11,16 +11,17 @@
     "rootSelectors": ["title", "body"],
     "routing": {
         "mode": "history",
+        "prefix": "/index6",
         "aliases": {
-            "/": "/index"
+            "/1": "/index1"
         },
-        "default": "/default",
+        "default": "/index1",
         "redirects": {
-            "/": "/index"
+            "/": "/index1"
         },
         "scenarios": {
             "//": "path/constants/variables/tailable/modules/children",
-            "tailable": true,
+            "tailable": false,
             "variables": {},
             "constants": {
                 "title": "default, should be overwritten"
@@ -43,7 +44,7 @@
                 }
             },
             "children": [{
-                "path": "index",
+                "path": "index1",
                 "constants": {
                     "title": "index",
                     "template": "index"

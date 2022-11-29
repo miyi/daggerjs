@@ -1089,12 +1089,12 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     const { mode, aliases, prefix, redirects } = routerOptions, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path] || redirects[path];
     if (redirectPath) {
         route = query ? `${ redirectPath }?${ query }` : redirectPath;
-        aliases[path] || history.replaceState({ path: route }, '', `${ Object.is(mode, 'history') ? '' : prefix }${ route }`);
+        aliases[path] || history.replaceState({ path: route }, '', `${ prefix }${ route }`);
         return routeChangeResolver(route);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
-    if (!rootRouter.match(routers, scenarios, paths)) { return routeChangeResolver(routerOptions.default); }
+    if (!rootRouter.match(routers, scenarios, paths)) { return routeChangeResolver(routerOptions.default); } // TODO: assert
     resolvedRouters = routers.slice().reverse();
     forEach(resolvedRouters, router => router.initialize());
     const queries = {}, variables = Object.assign({}, ...resolvedRouters.map(router => router.variables)), constants = Object.assign({}, ...resolvedRouters.map(router => router.constants));
@@ -1180,7 +1180,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         rootNamespace = Reflect.construct(ModuleProfile, [{ content: rootModules, type: resolvedType.namespace }, base]);
         rootNamespace.resolve().then(() => styleModuleSet.forEach(style => (style.disabled = false)) || serializer([new NodeContext(new NodeProfile(document.documentElement)).promise, () => {
             forEach([...new Set(daggerOptions.rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat())], rootNode => Reflect.construct(NodeProfile, [rootNode, [], rootNodeProfiles, null, true]));
-            window.addEventListener(Object.is(routerOptions.mode, 'history') ? 'popstate' : 'hashchange', () => routeChangeResolver());
+            window.addEventListener('popstate', () => routeChangeResolver());
             routeChangeResolver();
         }]));
     };

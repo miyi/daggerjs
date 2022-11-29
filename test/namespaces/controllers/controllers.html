@@ -1,4 +1,4 @@
-<a $href="Object.is($router.mode, 'history') ? '/index' : '#/index'">return to index</a>
+<a $href="`${ $router.prefix }/index`">return to index</a>
 <!--<directive></directive>-->
 <template $html="'<directive></directive>'"></template>
 <!--<template $html="(() => '<directive></directive>')($router.identity)"></template>-->
