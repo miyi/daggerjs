@@ -715,7 +715,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         child ? (this.childrenController = this.resolveController(child)) : forEach(children, (child, index) => new NodeContext(child, this, index));
     }
     resolveController ({ name, decorators = emptyObject, processor }) {
-        const node = this.node, subscribable = !decorators.once, controller = {
+        const node = this.node, subscribable = !decorators.once || decorators.lazy, controller = {
             name,
             owner: this,
             decorators,
@@ -814,10 +814,10 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
 }) => {
     NodeContext.prototype.updateController = ((queueingControllerSet = new Set(), processor = (nodeContext, controller, force) => {
         if (!nodeContext.profile) { return; }
-        const { decorators: { once, remove, router }, topologySet, updater } = controller, subscribable = !once;
+        const { decorators: { once, remove, router, lazy }, topologySet, updater, name } = controller, subscribable = !once || lazy;
         if (force || (topologySet && [...topologySet].some(topology => !Object.is(topology.oldValue, topology.value)))) {
             if (topologySet && topologySet.size) {
-                topologySet.forEach(topology => topology.unsubscribe(controller));
+                topologySet.forEach(topology => topology.unsubscribe(controller)); // TODO: optimize with cache
                 originalSetClear.call(topologySet);
             }
             const suspendedController = currentController;
@@ -825,6 +825,11 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             const data = controller.processor(nodeContext.node);
             subscribable && router && routerTopology.subscribe();
             currentController = suspendedController;
+            if (lazy && !name) { // lazy watch
+                controller.processor = data;
+                controller.decorators.lazy = false;
+                return;
+            }
             (data instanceof Promise) ? data.then(data => (remove && nodeContext.removeDirectives(data, remove), updater && updater(data, nodeContext.node, nodeContext, controller))) : (remove && nodeContext.removeDirectives(data, remove), updater && updater(data, nodeContext.node, nodeContext, controller));
         }
     }) => function (controller, force) {
@@ -939,7 +944,11 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 directives.eventHandlers.push(directiveResolver(value, fields, '$node, $event'));
             }
         } else {
-            Object.is(name, 'watch') || (fields.name = name);
+            const isWatch = Object.is(name, 'watch');
+            isWatch || (fields.name = name);
+            if (isWatch && decorators.lazy) {
+                value = `${ value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).trim() || 'null' }, $node => ${ value }`;  // TODO: assert invalid expression, should be function call only.
+            }
             const directive = directiveResolver(value, fields);
             if (Object.is(name, 'each')) {
                 directives.each = directive;
