@@ -233,7 +233,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             const fragment = templateResolver(content), pipeline = [], styles = this.config.style;
             styles && pipeline.push(Promise.all((Array.isArray(styles) ? styles : [styles]).map(path => this.parent.fetch(path).then(style => style.module && style.module.getAttribute('name')))).then(names => selectorInjector(fragment, names.filter(name => name))));
             pipeline.push(() => {
-                const parentPath = this.parent.path, nodeProfile = new NodeProfile(fragment, parentPath ? parentPath.split('.') : []);
+                const parentPath = this.parent.path, nodeProfile = new NodeProfile(fragment, parentPath ? parentPath.split('.') : [], null, null, false, {});
                 return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
             });
             return serializer(pipeline);
@@ -609,9 +609,12 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             if (sliceScope) {
                 this.sliceScope = this.resolveScope(sliceScope, plainSliceScope, each.decorators.root);
                 (parent.children.length > index + 1) && forEach(parent.children, (sibling, siblingIndex) => sibling && (siblingIndex > index) && (sibling.index++));
-            } else if (each) {
-                this.children = [], this.childrenMap = new Map(), this.controller = this.resolveController(each);
-                return this;
+            } else {
+                profile.slotScope && (this.slotScope = this.resolveScope(Object.assign({}, profile.slotScope), true));
+                if (each) {
+                    this.children = [], this.childrenMap = new Map(), this.controller = this.resolveController(each);
+                    return this;
+                }
             }
             if (exist) {
                 this.state = 'unloaded';
@@ -764,9 +767,9 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             this.resolver || (this.promise = new Promise(resolver => (this.resolver = resolver)));
         } else { callback && callback(promise); }
     }
-    resolveScope (scope, plainSliceScope, root) {
+    resolveScope (scope, plain, root) {
         // TODO: assert existed prototype: Object.getPrototypeOf(scope)[meta]
-        plainSliceScope || (scope = proxyResolver(scope));
+        plain || (scope = proxyResolver(scope));
         this.scope = Object.setPrototypeOf(scope, root ? rootScope : this.scope);
         return scope;
     }
@@ -867,8 +870,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {
-    constructor (node, basePaths = [], rootNodeProfiles = null, parent = null, unique = false) {
-        this.node = node, this.unique = unique, this.paths = basePaths, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = null;
+    constructor (node, basePaths = [], rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
+        this.node = node, this.unique = unique, this.paths = basePaths, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
         const type = node.nodeType;
         if (Object.is(type, Node.TEXT_NODE)) {
             const resolvedTextContent = node.textContent.trim();
@@ -888,8 +891,18 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 node.removeAttribute(rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = tagName.toLowerCase(), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ((node instanceof HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective];
-                if (isVirtualElement || Object.is(name, 'template')) {
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = tagName.toLowerCase(), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ((node instanceof HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                if (node.hasAttribute(slotDirective)) { // TODO: optimize
+                    const slotName = `_$slot_${ node.getAttribute(slotDirective).trim() }`;
+                    node.removeAttribute(slotDirective);
+                    if (this.defaultSlotScope) {
+                        this.defaultSlotScope[slotName] = node.innerHTML;
+                        node.removeAttribute('$html');
+                        node.removeAttribute('$text');
+                        this.resolveDirective('$html',  slotName, directives); // TODO: assert any other directive
+                    }
+                }
+                if (isVirtualElement || isTemplate) {
                     this.virtual = true;
                     this.resolveLandmark(node);
                 }
@@ -1006,10 +1019,23 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             cachedFields = emptier();
             const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : moduleProfile.children.find(moduleProfile => Object.is(moduleProfile.name, 'template')).module; // TODO: assert
             cachedFields.children = template.children;
+            cachedFields.defaultSlotScope = template.defaultSlotScope;
             originalWeakMapSet.call(templateCacheMap, module, cachedFields);
             isTemplate || originalWeakMapSet.call(templateCacheMap, template, cachedFields);
         }
         Object.assign(this, cachedFields);
+        if (Object.keys(this.defaultSlotScope).length) {
+            const slotScope = {}, emptySlot = '_$slot_', slotDirective = '@slot';
+            forEach(this.node.children, container => {
+                if (container.hasAttribute(slotDirective)) {
+                    const slotName = `${ emptySlot }${ container.getAttribute(slotDirective).trim() }`;
+                    container.removeAttribute(slotDirective);
+                    slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
+                }
+            });
+            (emptySlot in this.defaultSlotScope) && !(emptySlot in slotScope) && (slotScope[emptySlot] = this.node.innerHTML);
+            this.slotScope = Object.assign({}, this.defaultSlotScope, slotScope);
+        }
         return '';
     }
 }) => NodeProfile)(), Topology = class {
@@ -1024,7 +1050,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         Object.is(source, dispatchSource.mutation) || (this.parent && this.parent.parent && this.parent.dispatch(dispatchSource.bubble));
         const force = Object.is(source, dispatchSource.bubble);
         (this.value && this.value[meta]) ? this.value[meta].forEach(topology => topology.trigger(force)) : this.trigger(force);
-        
     }
     fetch (name, value) {
         const topology = this.children[name] || new Topology(this, name, value);
