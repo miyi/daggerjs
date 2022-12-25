@@ -24,6 +24,9 @@ There is also a small nodejs server for demo usage in the ***"mock_server"*** fo
 
 ### demo videos:  
 
+#### [CSS Mechanical Keyboard](https://codepen.io/dagger8224/pen/bGKPNwN)
+https://user-images.githubusercontent.com/66679262/209468342-c70c18e8-7500-406c-a527-6cfea233ead6.mp4
+
 #### [3D Tic Tac Toe](https://codepen.io/dagger8224/pen/RwMedQx)
 https://user-images.githubusercontent.com/66679262/184640434-2cc17b9a-2fce-4f4c-adc4-ffe059bb56b2.mp4
 
