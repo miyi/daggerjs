@@ -1,6 +1,6 @@
 /* ************************************************************************
  *  <copyright file="dagger.release.js" company="DAGGER TEAM">
- *  Copyright (c) 2016, 2022 All Right Reserved
+ *  Copyright (c) 2016, 2023 All Right Reserved
  *
  *  THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
  *  KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
@@ -26,7 +26,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     return { base, content: defaultConfigContent };
 })(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return ${ expression };`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
-    if (resolver instanceof Promise) { // TODO
+    if (resolver instanceof Promise) {
         return resolver.then(resolver => serializer([resolver, ...nextResolvers], token));
     } else if (resolver instanceof Function) {
         return serializer([resolver(null, token), ...nextResolvers], token);
@@ -41,7 +41,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         directive.processor = processor;
     });
     directiveObjects.length = 0;
-}, processorWrapper = originalMethod => function (...parameters) { // TODO: Array?
+}, processorWrapper = originalMethod => function (...parameters) {
     const controller = currentController;
     currentController = null;
     const result = originalMethod.apply(this, parameters);
@@ -73,7 +73,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
 }, proxyResolver = ((hasOwnProperty = Object.prototype.hasOwnProperty, invalidSymbols = new Set([...Reflect.ownKeys(Symbol).map(key => Symbol[key]).filter(item => Object.is(typeof item, 'symbol')), context, meta]), resolvedDataMap = new WeakMap(), validConstructorSet = new Set([void(0), Array, Object]), proxyHandler = {
     get: (target, property) => {
         const value = target[property];
-        if (currentController && !invalidSymbols.has(property) && (Object.is(value) || hasOwnProperty.call(target, property))) { // TODO
+        if (currentController && !invalidSymbols.has(property) && (Object.is(value) || hasOwnProperty.call(target, property))) {
             const topologySet = currentController.topologySet;
             forEach([...target[meta]].filter(topology => !topology.parent || topologySet.has(topology)), topology => topology.fetch(property, value).subscribe());
         }
@@ -100,7 +100,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
 }) => (target, property) => {
     const isRootScope = property == null;
     let data = isRootScope ? target : target[property];
-    if (data instanceof Object) {
+    if ((data instanceof Object) || (data && !data.constructor)) {
         const resolvedData = resolvedDataMap.get(data);
         if (resolvedData) {
             data = resolvedData;
@@ -172,12 +172,10 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             this.path = name, this.baseElement = document;
         }
         const { integrity, uri, type } = config;
-        let isTypeValid = resolvedType[type];
         if (Reflect.has(config, 'content')) {
             this.content = config.content;
         } else if (uri) {
             this.URIs = uri;
-            isTypeValid || (isTypeValid = !type);
         }
         type && (this.type = type);
         daggerOptions.integrity && integrity && (this.integrity = integrity);
@@ -207,7 +205,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         this.state = 'resolving';
         let pipeline = null;
         if (this.content == null) {
-            pipeline = [...this.URIs.map(uri => (data, token) => (token.stop = !!data) || this.resolveURI(uri || '')), data => data || (this.valid = false) || this.resolved(null)]; // TODO: assert !data && this.config.optional
+            pipeline = [...this.URIs.map(uri => (data, token) => (token.stop = !!data) || this.resolveURI(uri)), moduleProfile => moduleProfile || (this.valid = false) || this.resolved(null)];
         } else {
             const content = this.content;
             if ([resolvedType.namespace, resolvedType.json].includes(this.type)) {
@@ -376,19 +374,14 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     },
     value: ({ type, value, valueAsNumber }, { number, trim }, { detail }) => {
         if (detail) { return null; }
-        if (Object.is(type, 'date') || Object.is(type, 'datetime-local')) {
-            return new Date(valueAsNumber || 0);
-        } else if (Object.is(type, 'number')) {
-            return valueAsNumber;
-        } else if (number) {
-            return Number.parseFloat(value);
-        } else if (trim) {
-            return value.trim();
-        }
+        if (['date', 'datetime-local'].includes(type)) { return new Date(valueAsNumber || 0); }
+        if (['number', 'range'].includes(type)) { return valueAsNumber; }
+        if (number) { return Number.parseFloat(value); }
+        if (trim) { return value.trim(); }
         return value;
     }
-}, nameFilters = ['draggable'], generalUpdater = (data, node, nodeContext, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
-    $boolean: (data, node, nodeContext, { name }) => node.toggleAttribute(name, !!data),
+}, nameFilters = ['draggable'], generalUpdater = (data, node, _, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
+    $boolean: (data, node, _, { name }) => node.toggleAttribute(name, !!data),
     checked: (data, node, { parentNode }, { decorators }) => {
         const { tagName, type } = node, isOption = Object.is(tagName, 'OPTION'), isCheckbox = Object.is(type, 'checkbox');
         if (isOption || (Object.is(tagName, 'INPUT') && (isCheckbox || Object.is(type, 'radio')))) {
@@ -454,7 +447,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         }
         const newMatchedArray = newChildrenMap.get(value);
         newMatchedArray ? newMatchedArray.push(matchedNodeContext) : originalMapSet.call(newChildrenMap, value, [matchedNodeContext]);
-    }, originalMapDelete = Map.prototype.delete) => (data, node, nodeContext, { decorators }) => {
+    }, originalMapDelete = Map.prototype.delete) => (data, _, nodeContext, { decorators }) => {
         data = data || {};
         const valueSet = new Set(data.values instanceof Function ? data.values() : Object.values(data)), entries = [...(data.entries instanceof Function ? data.entries() : Object.entries(data))], { children, childrenMap, profile, parentNode } = nodeContext, topologySet = data[meta];
         topologySet && forEach(entries, ([key, value]) => value && value[meta] && topologySet.forEach(topology => topology.fetch(key, value)));
@@ -470,9 +463,9 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         childrenMap.forEach(array => forEach(array, nodeContext => (nodeContext.parent = null, nodeContext.destructor(true))));
         nodeContext.childrenMap = newChildrenMap;
     })(),
-    exist: (data, node, nodeContext) => data ? (Object.is(nodeContext.state, 'unloaded') && nodeContext.loading()) : nodeContext.unloading(true),
-    file: () => {}, // TODO: assert
-    focus: (data, node, nodeContext, { decorators: { prevent = false } }) => data ? node.focus({ preventScroll: prevent }) : node.blur(),
+    exist: (data, _, nodeContext) => data ? (Object.is(nodeContext.state, 'unloaded') && nodeContext.loading()) : nodeContext.unloading(true),
+    file: () => {},
+    focus: (data, node, _, { decorators: { prevent = false } }) => data ? node.focus({ preventScroll: prevent }) : node.blur(),
     html: (data, node, nodeContext, { decorators: { root = false } }) => {
         data = textResolver(data);
         nodeContext.removeChildren(true);
@@ -489,7 +482,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         }
         node ? node.appendChild(fragment) : nodeContext.parentNode.insertBefore(fragment, nodeContext.landmark);
     },
-    result: () => {}, // TODO: assert
+    result: () => {},
     selected: ((selectedResolver = (node, data, multiple) => {
         const value = valueResolver(node);
         return multiple ? (data || []).some(item => Object.is(item, value)) : Object.is(data, value);
@@ -533,7 +526,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         nodeContext.value = data;
         const { tagName, type } = node, isInput = Object.is(tagName, 'INPUT');
         if (isInput) {
-            const isDate = Object.is(type, 'date') || Object.is(type, 'datetime-local');
+            const isDate = ['date', 'datetime-local'].includes(type);
             if (data instanceof Date) {
                 if (isDate || Object.is(type, 'week')) {
                     node.valueAsNumber = data;
@@ -746,7 +739,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 baseLandmark = parent.node ? null : parent.landmark;
             }
             this.landmark = parentNode.insertBefore(textNode.cloneNode(false), baseLandmark);
-        } else { // TODO
+        } else {
             this.landmark = landmark;
         }
         (virtual || (this.directives || {}).each) && (this.upperBoundary = parentNode.insertBefore(textNode.cloneNode(false), this.landmark));
@@ -802,8 +795,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     updateEventHandler (event, name, processor, decorators) {
         if (!name) {
-            const { current, every, some, prevent, stop, stopImmediate } = decorators;
-            if (!((!current || Object.is(event.target, event.currentTarget)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
+            const { current, inside, every, some, prevent, stop, stopImmediate } = decorators, { target, currentTarget } = event, isCurrent = Object.is(target, currentTarget); // TODO: outside
+            if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();
             stopImmediate && event.stopImmediatePropagation();
@@ -858,7 +851,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     const directive = Object.assign({}, fields, { processor: processor || expression });
     processor || directiveObjects.push(directive);
     return directive;
-})(), templateResolver = (tagName, namespace) => { // TODO: assert namespace
+})(), templateResolver = (tagName, namespace) => {
     let isVirtualElement = !namespace, promise = (namespace || {}).promise;
     if (namespace) {
         promise = namespace.fetch(tagName);
@@ -892,14 +885,14 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
                 const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = tagName.toLowerCase(), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ((node instanceof HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
-                if (node.hasAttribute(slotDirective)) { // TODO: optimize
+                if (node.hasAttribute(slotDirective)) {
                     const slotName = `_$slot_${ node.getAttribute(slotDirective).trim() }`;
                     node.removeAttribute(slotDirective);
                     if (this.defaultSlotScope) {
                         this.defaultSlotScope[slotName] = node.innerHTML;
                         node.removeAttribute('$html');
                         node.removeAttribute('$text');
-                        this.resolveDirective('$html',  slotName, directives); // TODO: assert any other directive
+                        this.resolveDirective('$html', slotName, directives);
                     }
                 }
                 if (isVirtualElement || isTemplate) {
@@ -907,7 +900,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                     this.resolveLandmark(node);
                 }
                 forEach([...attributes], ({ name, value }) => this.resolveDirective(name, value, directives));
-                if (dynamic) { // TODO: assert empty dynamic attributes
+                if (dynamic) {
                     this.directives = directives, this.dynamic = directiveResolver(dynamic.value);
                     node.removeAttribute(dynamicDirective);
                 } else {
@@ -918,7 +911,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 if (this.html) { return processorResolver(); }
                 this.plain = !(this.directives || this.landmark);
                 rootNodeProfiles && (this.plain ? (node.hasAttribute(cloak) && forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak)) : (rootNodeProfiles.push(this) && (rootNodeProfiles = null)));
-                isVirtualElement ? this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile))) : (directives.child || this.resolveChildren(node, rootNodeProfiles)); // TODO: add debug error message
+                isVirtualElement ? this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile))) : (directives.child || this.resolveChildren(node, rootNodeProfiles));
             }
             if (parent) {
                 parent.children.push(this);
@@ -959,9 +952,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         } else {
             const isWatch = Object.is(name, 'watch');
             isWatch || (fields.name = name);
-            if (isWatch && decorators.lazy) {
-                value = `${ value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).trim() || 'null' }, $node => ${ value }`;  // TODO: assert invalid expression, should be function call only.
-            }
+            isWatch && decorators.lazy && (value = `${ value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).trim() || 'null' }, $node => ${ value }`);
             const directive = directiveResolver(value, fields);
             if (Object.is(name, 'each')) {
                 directives.each = directive;
@@ -1017,7 +1008,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         let cachedFields = templateCacheMap.get(module);
         if (!cachedFields) {
             cachedFields = emptier();
-            const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : moduleProfile.children.find(moduleProfile => Object.is(moduleProfile.name, 'template')).module; // TODO: assert
+            const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : moduleProfile.children.find(moduleProfile => Object.is(moduleProfile.name, 'template')).module;
             cachedFields.children = template.children;
             cachedFields.defaultSlotScope = template.defaultSlotScope;
             originalWeakMapSet.call(templateCacheMap, module, cachedFields);
@@ -1033,14 +1024,14 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                     slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
                 }
             });
-            (emptySlot in this.defaultSlotScope) && !(emptySlot in slotScope) && (slotScope[emptySlot] = this.node.innerHTML);
+            Reflect.has(this.defaultSlotScope, emptySlot) && !Reflect.has(slotScope, emptySlot) && (slotScope[emptySlot] = this.node.innerHTML);
             this.slotScope = Object.assign({}, this.defaultSlotScope, slotScope);
         }
         return '';
     }
 }) => NodeProfile)(), Topology = class {
     constructor (parent, name, value) {
-        this.value = this.oldValue = value, this.parent = null, this.controllerSet = new Set(), this.children = emptier(), this.name = name, this.path = parent ? `${ parent.path }.${ name }` : name; // TODO
+        this.value = this.oldValue = value, this.parent = null, this.controllerSet = new Set(), this.children = emptier(), this.name = name;
         if (parent) {
             parent.children[name] = this;
             this.parent = parent;
@@ -1099,7 +1090,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
 })(), routeChangeResolver = ((routerChangeResolver = ((rootNamespaceResolver = nextRouter => {
     processorResolver();
-    rootScope.$router = nextRouter; // TODO: freeze it
+    rootScope.$router = nextRouter;
     if (!currentStyleSet) {
         rootNodeProfiles.map(nodeProfile => new NodeContext(nodeProfile));
         routerTopology = [...rootScope.$router[meta]][0];
@@ -1112,7 +1103,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
 }) => nextRouter => {
     rootNamespace.childrenCache = emptier();
     // originalMapClear.call(templateCacheMap);
-    styleModuleSet = styleModules[nextRouter.path] || (styleModules[nextRouter.path] = new Set());
+    const path = nextRouter.path;
+    styleModuleSet = styleModules[path] || (styleModules[path] = new Set());
     const rootModules = Object.assign(emptier(), ...resolvedRouters.map(router => router.modules));
     forEach(Object.keys(rootModules), key => (rootModules[key] instanceof ModuleProfile) || (rootModules[key] = routers.find(router => router.resolveModule(key, base)).modules[key]));
     rootNamespace = new ModuleProfile({ content: rootModules, type: resolvedType.namespace }, base);
@@ -1128,7 +1120,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
-    if (!rootRouter.match(routers, scenarios, paths)) { return routeChangeResolver(routerOptions.default); } // TODO: assert
+    if (!rootRouter.match(routers, scenarios, paths)) { return routeChangeResolver(routerOptions.default); }
     resolvedRouters = routers.slice().reverse();
     forEach(resolvedRouters, router => router.initialize());
     const queries = {}, variables = Object.assign({}, ...resolvedRouters.map(router => router.variables)), constants = Object.assign({}, ...resolvedRouters.map(router => router.constants));
@@ -1136,14 +1128,14 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     forEach(Object.keys(variables), key => {
         if (Reflect.has(queries, key) && !Reflect.has(constants, key)) {
             try {
-                const type = typeof variables[key];
-                variables[key] = Object.is(type, 'string') ? queries[key] : window[`${ type[0].toUpperCase() }${ type.substring(1) }`](JSON.parse(queries[key]));
+                const type = typeof variables[key], query = queries[key];
+                variables[key] = Object.is(type, 'string') ? query : window[`${ type[0].toUpperCase() }${ type.substring(1) }`](JSON.parse(query));
             } catch (error) {}
-        } // TODO: assert
+        }
     });
-    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign(emptier(), variables, constants) };
+    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
     Promise.all([...sentrySet].map(sentry => sentry(nextRouter))).then(array => array.some(rejected => rejected) ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter));
-})(), resetEventHandler = ((resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken)) => event => Object.is(event.target.tagName, 'FORM') && forEach(document.querySelectorAll('input, textarea'), child => {
+})(), resetEventHandler = ((resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken)) => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true), child => {
     child.dispatchEvent(inputEvent);
     child.dispatchEvent(changeEvent);
 }))(), Router = class {
@@ -1192,8 +1184,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         Reflect.defineProperty(resolvedMethod, 'name', { configurable: true, value: name });
         Reflect.defineProperty(prototype, name, { get: () => resolvedMethod });
     }) => (target, names) => forEach(names, name => resolver(target.prototype, name)))();
-    const mapMethodNames = ['set', 'delete', 'clear'], setMethodNames = ['add', 'delete', 'clear'];
-    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, mapMethodNames) || register(Set, setMethodNames) || register(WeakMap, mapMethodNames) || register(WeakSet, setMethodNames);
+    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
     JSON.stringify = processorWrapper(JSON.stringify);
     forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
     const runtime = (configs = { base: document.baseURI, content: {} }) => { // TODO: base
@@ -1220,4 +1211,4 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     };
     window.$dagger = Object.freeze(Object.assign(emptier(), { register, runtime, version: '1.0.0 - RC' }));
     return runtime;
-})()) => document.querySelector('script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();
+})()) => querySelector(document, 'script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();

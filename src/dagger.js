@@ -1,59 +1,77 @@
 /* ************************************************************************
-*  <copyright file="dagger.js" company="DAGGER TEAM">
-*  Copyright (c) 2016, 2021 All Right Reserved
-*
-*  THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
-*  KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-*  IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-*  PARTICULAR PURPOSE.
-*  </copyright>
-*  ***********************************************************************/
+ *  <copyright file="dagger.js" company="DAGGER TEAM">
+ *  Copyright (c) 2016, 2023 All Right Reserved
+ *
+ *  THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+ *  KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+ *  PARTICULAR PURPOSE.
+ *  </copyright>
+ *  ***********************************************************************/
 
-export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emptier = () => Object.create(null), forEach = (iterators, processor) => {
+export default (({ asserter, logger, warner } = ((messageFormatter = (message, normalStyle, specialStyle) => {
+    const doubleQuotes = '"', offset = message.startsWith(doubleQuotes) ? 1 : 0, messages = [], styles = [];
+    return forEach(message.split(doubleQuotes).filter(snippet => snippet), (snippet, index) => ((index + offset) % 2) ? (messages.push(`%c"${ snippet }"`) && styles.push(specialStyle)) : (messages.push(`%c${ snippet }`) && styles.push(normalStyle))) || [messages.join(''), ...styles];
+}, vendor = (messages, condition, method, normalStyle, specialStyle, breaking = false) => {
+    if (condition) { return; }
+    const messageSuffix = ', please double check.';
+    if (Array.isArray(messages)) {
+        const [message, ...objects] = messages, suffix = '%c"%o"', length = objects.length;
+        let array = [], resolvedMessage = '';
+        forEach(`${ message }${ messageSuffix }`.split('"%o"'), (snippet, index) => {
+            const [message, ...formatter] = messageFormatter(snippet, normalStyle, specialStyle);
+            resolvedMessage += message;
+            array = [...array, ...formatter];
+            if (index < length) {
+                resolvedMessage += suffix;
+                array = [...array, specialStyle, objects[index]];
+            }
+        });
+        method(resolvedMessage, ...array);
+    } else { method(...messageFormatter(`${ messages }${ messageSuffix }`, normalStyle, specialStyle)); }
+    if (breaking) { throw new Error('dagger AssertionError occurred!'); }
+}) => ({
+    asserter: (messages, condition) => vendor(messages, condition, console.assert.bind(console, false), 'color: #ff0000', 'color: #b22222', true),
+    logger: message => console.log(...messageFormatter(message, 'color: #337ab7', 'color: #9442d0')),
+    warner: (messages, condition) => vendor(messages, condition, console.warn, 'color: #ff0000', 'color: #b22222')
+}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true, rootSelectors: ['title', 'body'], routing: { mode: 'history', aliases: {}, default: '', prefix: '', redirects: {}, scenarios: {} } }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, rootNamespace = null, rootNodeProfiles = [], rootScope = null, emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
-}, freezer = object => {
-    if (object && is(typeof object, 'object')) {
-        forEach(ownKeys(object), key => freezer(object[key]));
-        try { Object.freeze(object); } catch (error) {} // unable to freeze js module
-    }
-    return object;
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), head = document.head, htmlScope = emptier(), isWritable = false, meta = Symbol('meta'), queueingControllerSet = new Set(), rootScope = Object.assign(emptier(), { $modules: emptier(), $router: emptier(), $validator: (data, path, { type, assert, required } = {}) => {
-    if ((data == null) || Number.isNaN(data)) { asserter([`The data "${ path }" should be assigned a valid value instead of "%o" before using`, data], !required); }
-    type && (Array.isArray(type) ? asserter([`The type of data "${ path }" should be one of "%o" instead of "%o"`, type, (data.constructor || {}).name], type.some(type => isInstanceOf(data, type))) : asserter([`The type of data "${ path }" should be "%o" instead of "%o"`, type, (data.constructor || {}).name], isInstanceOf(data, type)));
-    if (!assert) { return; }
-    if (isInstanceOf(assert, Function)) {
-        asserter(`The assert of "${ path }" is falsy`, assert(data));
-    } else if (Array.isArray(assert)) {
-        forEach(assert, item => {
-            asserter(`The type of assert should be "function" instead of "${ typeof item }"`, isInstanceOf(item, Function));
-            asserter(`The assert of "${ path }" is falsy`, item(data));
-        });
-    } else { asserter(`The type of assert should be "function" or "function array" instead of "${ typeof assert }"`); }
-}}), runtimeContext = emptier(), sentrySet = new Set(), templateCache = new Map(), runtimeContextResolver = ((defaultContext = { controller: null, sensitive: false, topology: null }) => (context = null) => Object.assign(runtimeContext, defaultContext, context))(), closureResolver = (expression, count = 1) => {
-    if (is(count, 1)) {
-        return `_$$_dg_scope => { with (_$$_dg_scope) { return ${ expression }; } }`;
-    } else {
-        const scopeNames = new Array(count).fill().map((item, index) => `_$$_dg_scope_${ index }`);
-        return `(${ scopeNames.join(', ') }) => { ${ scopeNames.map(name => `with (${ name })`).join(' ') } { return ${ expression }; } }`;
+}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { template: { uri: ['#template'], type: resolvedType.template, style: 'style', optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, optional: true } }, configExtender = (base, content, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent, content) : content })) => (baseElement, base) => {
+    const configContainer = querySelector(baseElement, 'script[type="dagger/configs"]', false, true);
+    if (configContainer) {
+        const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
+        configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
+        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, JSON.parse(content), extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? JSON.parse(configContainer.textContent) : {}, extendsDefaultConfig);
     }
-}, configResolver = (baseElement, base = document.baseURI) => {
-    const configContainer = querySelector(baseElement, 'script[type="dagger/configs"]'), src = configContainer.getAttribute('src');
-    configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
-    return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity, true).then(({ content }) => ({ base, content: jsonResolver(content) })) : { base, content: jsonResolver(configContainer.textContent) };
-}, destructor = target => forEach(Reflect.ownKeys(target), key => Reflect.deleteProperty(target, key)), directiveAttributeUpdater = (node, name, value) => daggerOptions.directiveAttribute && node.setAttribute(`${ name }-debug`, value), functionResolver = expression => new Function(`return ${ expression };`)(), is = (object1, object2) => Object.is(object1, object2), isInstanceOf = (object, constructor = Object) => (object instanceof constructor), isString = object => is(typeof object, 'string'), jsonResolver = content => { try { return JSON.parse(content); } catch (error) { asserter(`Failed to parse string "${ content }" as JSON`); } }, ownKeys = target => Reflect.ownKeys(target).filter(key => !is(key, meta)), quoteResolver = string => `'${ string }'`, serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
+    return { base, content: defaultConfigContent };
+})(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return ${ expression };`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
-    if (isInstanceOf(resolver, Promise)) {
+    if (resolver instanceof Promise) {
         return resolver.then(resolver => serializer([resolver, ...nextResolvers], token));
-    } else if (isInstanceOf(resolver, Function)) {
+    } else if (resolver instanceof Function) {
         return serializer([resolver(null, token), ...nextResolvers], token);
     } else {
         return nextResolvers.length ? serializer([nextResolvers.shift()(resolver, token), ...nextResolvers], token) : resolver;
     }
+}, originalStringifyMethod = JSON.stringify, originalSetAdd = Set.prototype.add, originalSetClear = Set.prototype.clear, originalSetDelete = Set.prototype.delete, originalMapClear = Map.prototype.clear, originalMapSet = Map.prototype.set, originalWeakMapSet = WeakMap.prototype.set, processorResolver = () => {
+    if (!directiveObjects.length) { return; }
+    forEach(functionResolver(`[${ directiveObjects.map(directive => directive.processor).join(', ') }]`), (processor, index) => {
+        const directive = directiveObjects[index];
+        processorCaches[directive.processor] = processor;
+        directive.processor = processor;
+    });
+    directiveObjects.length = 0;
+}, processorWrapper = originalMethod => function (...parameters) {
+    const controller = currentController;
+    currentController = null;
+    const result = originalMethod.apply(this, parameters);
+    currentController = controller;
+    return result;
 }, querySelector = (baseElement, selector, all = false, ignoreMismatch = false) => {
     const element = baseElement[all ? 'querySelectorAll' : 'querySelector'](selector);
     ignoreMismatch || asserter(`Failed to get element matched selector "${ selector }"`, all ? element.length : element);
@@ -68,96 +86,388 @@ export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emp
     }
 }).catch(() => {
     const info = `Failed to fetch remote module from "${ url }"`;
-    required ? asserter(info) : (daggerOptions.moduleLog && warner(info));
-}), safeDataResolver = expression => { try { return JSON.parse(expression.replace(/'/g, '"')); } catch (error) { return expression; } }, templateResolver = content => {
+    required ? asserter(info) : warner(info);
+}), templateResolver = content => {
     const template = document.createElement('template');
     template.innerHTML = content;
     return template.content;
 }, selectorInjector = (element, selectors) => forEach(element.children, child => {
-    if (is(child.tagName, 'TEMPLATE')) {
+    if (Object.is(child.tagName, 'TEMPLATE')) {
         child.getAttribute('$html') && child.setAttribute('dg_scoped_styles', selectors.join(','));
         selectorInjector(child.content, selectors);
-    } else if (isInstanceOf(child, HTMLElement)) {
+    } else if (child instanceof HTMLElement) {
         forEach(selectors, selector => child.setAttribute(selector, ''));
     }
 }), textResolver = (data, trim = true) => {
     if (!isString(data)) {
         if ((data == null) || Number.isNaN(data)) { return ''; }
-        if (isInstanceOf(data)) { return JSON.stringify(data); }
+        if (data instanceof Object) { return originalStringifyMethod(data); }
         data = String(data);
     }
     return trim ? data.trim() : data;
-}, valueResolver = node => node && Reflect.has(node[meta] || {}, 'value') ? node[meta].value : (node.value || node.textContent), { asserter, logger, warner } = ((messageFormatter = (message, normalStyle, specialStyle) => {
-    const doubleQuotes = '"', offset = message.startsWith(doubleQuotes) ? 1 : 0, messages = [], styles = [];
-    return forEach(message.split(doubleQuotes).filter(snippet => snippet), (snippet, index) => ((index + offset) % 2) ? (messages.push(`%c"${ snippet }"`) && styles.push(specialStyle)) : (messages.push(`%c${ snippet }`) && styles.push(normalStyle))) || [messages.join(''), ...styles];
-}, vendor = (messages, condition, method, normalStyle, specialStyle, breaking = false) => {
-    if (condition) { return; }
-    const messageSuffix = ', please double check.';
-    if (Array.isArray(messages)) {
-        const [message, ...objects] = messages, suffix = '%c"%o"';
-        let array = [], resolvedMessage = '';
-        forEach(`${ message }${ messageSuffix }`.split('"%o"'), (snippet, index) => {
-            const [message, ...formatter] = messageFormatter(snippet, normalStyle, specialStyle);
-            resolvedMessage += message;
-            array = [...array, ...formatter];
-            if (index < objects.length) {
-                resolvedMessage += suffix;
-                array = [...array, specialStyle, objects[index]];
+}, proxyResolver = ((hasOwnProperty = Object.prototype.hasOwnProperty, invalidSymbols = new Set([...Reflect.ownKeys(Symbol).map(key => Symbol[key]).filter(item => Object.is(typeof item, 'symbol')), context, meta]), resolvedDataMap = new WeakMap(), validConstructorSet = new Set([void(0), Array, Object]), proxyHandler = {
+    get: (target, property) => {
+        const value = target[property];
+        if (currentController && !invalidSymbols.has(property) && (Object.is(value) || hasOwnProperty.call(target, property))) {
+            const topologySet = currentController.topologySet;
+            forEach([...target[meta]].filter(topology => !topology.parent || topologySet.has(topology)), topology => topology.fetch(property, value).subscribe());
+        }
+        return value;
+    },
+    set: (target, property, newValue) => {
+        target[property] = newValue;
+        if (!invalidSymbols.has(property) && hasOwnProperty.call(target, property)) {
+            const topologySet = target[meta];
+            currentController && topologySet.forEach(topology => topology.unsubscribe(currentController));
+            newValue = proxyResolver(target, property);
+            topologySet.forEach(topology => topology.fetch(property).update(newValue, dispatchSource.self));
+        }
+        return true;
+    },
+    deleteProperty: (target, property) => {
+        const exist = Reflect.has(target, property);
+        if (Reflect.deleteProperty(target, property)) {
+            exist && isString(property) && target[meta].forEach(topology => topology.fetch(property).update(void(0), dispatchSource.self));
+            return true;
+        }
+        return false;
+    }
+}) => (target, property) => {
+    const isRootScope = property == null;
+    let data = isRootScope ? target : target[property];
+    if ((data instanceof Object) || (data && !data.constructor)) {
+        const resolvedData = resolvedDataMap.get(data);
+        if (resolvedData) {
+            data = resolvedData;
+        } else {
+            data[meta] = new Set();
+            if (validConstructorSet.has(data.constructor)) {
+                const resolvedData = new Proxy(data, proxyHandler);
+                originalWeakMapSet.call(resolvedDataMap, data, resolvedData);
+                forEach(ownKeys(data), key => proxyResolver(data, key));
+                data = resolvedData;
             }
+            originalWeakMapSet.call(resolvedDataMap, data, data);
+        }
+    }
+    isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
+    return data;
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[a-zA-Z-_]{1}[\w-$]*$/, pathRegExp = /^[a-zA-Z-_]{1}[\w-$]*(\.[$a-zA-Z-_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+    if (Object.is(type, resolvedType.script)) {
+        (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
+    } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
+        config.anonymous ? Object.assign(parentModule, module) : (parentModule[name] = module);
+    } else if (Object.is(type, resolvedType.string)) {
+        parentModule[name] = module;
+    }
+}, configNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
+    (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
+    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
+    Object.assign(config, (config.candidates || []).find(item => { try { return (item instanceof Object) && (!Reflect.has(item, 'match') || matchMedia(item.match).matches || functionResolver(item.match)); } catch (error) { return false; } }));
+    config.type || (config.type = type);
+    config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
+    return config;
+}) => config => forEach(Object.keys(config), key => resolvedTypes[key] && (config[key] instanceof Object) ? (forEach(Object.entries(config[key]), ([name, value]) => {
+    asserter([`The module "${ name }" already exists in "%o"`, config], !Reflect.has(config, name));
+    config[name] = normalizer(value, key.substring(1));
+}) || Reflect.deleteProperty(config, key)) : (config[key] = normalizer(config[key]))) || config)(), dependencyResolver = ((resolver = (moduleProfile, dependencies, parent) => parent && ((moduleProfile.integrity && (Object.is(moduleProfile.integrity, parent.integrity) || resolver(moduleProfile, dependencies, parent.parent)) && !dependencies.includes(moduleProfile.path)) || (moduleProfile.dependencies && (moduleProfile.dependencies.includes(parent) || moduleProfile.dependencies.some(moduleProfile => resolver(moduleProfile, dependencies, parent))))) && dependencies.push(moduleProfile.path)) => (moduleProfile, parent) => {
+    if (!parent) { return; }
+    parent.dependencies || (parent.dependencies = []);
+    parent.dependencies.push(moduleProfile);
+    const dependencies = [];
+    resolver(moduleProfile, dependencies, parent);
+    const path = parent.path;
+    asserter(`Failed to resolve template module "${ path }" with recursive or circular reference "${ [path, ...dependencies.reverse(), path].join(' -> ') }"`, !dependencies.length);
+})(), scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
+    if (rule instanceof CSSKeyframesRule) {
+        const originalName = rule.name;
+        rule.name = `${ originalName }-${ name }`;
+        sheet.insertRule(rule.cssText, iterator.index++);
+        rule.name = originalName;
+    }
+    if (rule.cssRules) {
+        forEach(rule.cssRules, rule => scopedRuleResolver(sheet, rule, name, iterator));
+    } else if (rule.selectorText) {
+        const style = rule.style, originalAnimationName = style.animationName;
+        originalAnimationName && (style.animationName = `${ originalAnimationName }-${ name }`);
+        sheet.insertRule(`${ rule.selectorText.split(',').map(selector => (selector = selector.trim()) && `${ selectorRegExp.test(selector) ? selector.replace(selectorRegExp, `[${ name }]$1`) : `${ selector }[${ name }]` }, [${ name }] ${ selector }`).join(', ') }{${ style.cssText }}`, iterator.index++);
+        originalAnimationName && (style.animationName = originalAnimationName);
+    }
+})(), scriptModuleResolver = (module, resolvedModule) => {
+    try {
+        forEach(ownKeys(module), key => {
+            const value = module[key];
+            const isFunction = value instanceof Function;
+            resolvedModule[key] = isFunction ? processorWrapper(value) : value;
+            (value instanceof Object) && !isFunction && scriptModuleResolver(value, value);
         });
-        method(resolvedMessage, ...array);
-    } else { method(...messageFormatter(`${ messages }${ messageSuffix }`, normalStyle, specialStyle)); }
-    if (breaking) { throw new Error('dagger AssertionError occurred!'); }
-}) => ({
-    asserter: (messages, condition) => vendor(messages, condition, console.assert.bind(console, false), 'color: #ff0000', 'color: #b22222', true),
-    logger: message => console.log(...messageFormatter(message, 'color: #337ab7', 'color: #9442d0')),
-    warner: (messages, condition) => vendor(messages, condition, console.warn, 'color: #ff0000', 'color: #b22222')
-}))(), Controller = ((generalUpdater = (data, node, nodeContext, { name }) => is(data) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data)), nodeUpdater = ((changeEvent = new Event('change'), eachResolver = (index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, sliceClosures, parentNode) => {
-    let matchedNodeContext = null;
-    const matchedArray = childrenMap.get(value);
-    if (matchedArray) {
-        matchedNodeContext = matchedArray.shift();
-        matchedArray.length || childrenMap.delete(value);
-        if (index > 0) { // move & replace node
-            const previousNodeContext = children[index - 1], landmark = matchedNodeContext.landmark;
-            if (is(previousNodeContext.landmark.compareDocumentPosition(landmark), Node.DOCUMENT_POSITION_PRECEDING)) {
-                const upperBoundary = matchedNodeContext.upperBoundary, array = [upperBoundary];
-                let node = upperBoundary;
-                while (!is(node, landmark)) {
-                    node = node.nextSibling;
-                    array.push(node);
+    } catch (error) {} finally { return resolvedModule; }
+}, styleResolver = (content, name, disabled) => {
+    const style = document.createElement('style');
+    content && (style.textContent = content);
+    document.head.appendChild(style);
+    style.disabled = disabled;
+    style.setAttribute('name', name);
+    style.setAttribute('router-debug', location.href);
+    style.setAttribute('active-debug', !disabled);
+    return style;
+}, ModuleProfile = class {
+    constructor (config = {}, base = '', name = '', parent = null) {
+        asserter(`The module name should be valid string matched RegExp "${ nameRegExp.toString() }" instead of "${ name }"`, !parent || nameRegExp.test(name));
+        this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = null;
+        if (parent) {
+            this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.baseElement = parent.baseElement;
+        } else {
+            this.path = name, this.baseElement = document;
+        }
+        const { integrity, uri, type } = config;
+        if (type) {
+            asserter(`The type of module "${ this.path }" should be one of "json, namespace, script, style, string, template" instead of "${ type }"`, resolvedType[type]);
+            this.type = type;
+        }
+        if (Reflect.has(config, 'content')) {
+            this.content = config.content;
+            asserter(`The type of module "${ this.path }" should be specified as one of "json, namespace, script, style, string, template" instead of "${ type }"`, type);
+        } else if (uri) {
+            this.URIs = uri;
+        } else {
+            asserter([`Failed to parse the config "%o" for module "${ this.path }" as there is no valid "content" or "uri" definition`, config]);
+        }
+        daggerOptions.integrity && integrity && (this.integrity = integrity);
+        this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
+    }
+    fetch (paths) {
+        paths = paths.split('.');
+        const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path)));
+        asserter(`Failed to fetch module "${ path }" within namespace "${ this.path || '[root]' }"`, !Object.is(moduleProfile));
+        return moduleProfile && moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetchSync(paths));
+    }
+    fetchSync (paths) {
+        if (!paths.length) { return this; }
+        const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
+        asserter(`Failed to fetch module "${ path }" within namespace "${ this.path || '[root]' }"`, !Object.is(moduleProfile));
+        dependencyResolver(moduleProfile, this);
+        return moduleProfile && moduleProfile.fetchSync(paths);
+    }
+    resolve () {
+        const type = this.type;
+        if (!Object.is(this.state, 'unresolved')) {
+            if (this.valid && Object.is(this.state, 'resolved')) {
+                if (Object.is(type, resolvedType.style)) {
+                    this.resolveModule(this.resolvedContent);
+                } else if (Object.is(type, resolvedType.namespace)) {
+                    forEach(this.children, child => child.resolve());
                 }
-                const fragment = document.createDocumentFragment();
-                fragment.append(...array);
-                parentNode.insertBefore(fragment, previousNodeContext.landmark.nextSibling);
+            }
+            return this.promise;
+        }
+        this.state = 'resolving';
+        logger(`The module "${ this.path || '[root]' }" is "resolving..."`);
+        let pipeline = null;
+        if (this.content == null) {
+            pipeline = [...this.URIs.map(uri => {
+                asserter([`The "uri" of module "${ this.path }" should be valid "string" instead of "%o"`, uri], isString(uri));
+                return (data, token) => (token.stop = !!data) || this.resolveURI(uri);
+            }), moduleProfile => {
+                if (!moduleProfile) {
+                    asserter([`Failed to resolve uri of module "${ this.path }" from "%o"`, this.URIs], this.config.optional);
+                    (this.valid = false) || this.resolved(null);
+                }
+            }];
+        } else {
+            const content = this.content;
+            if ([resolvedType.namespace, resolvedType.json].includes(type)) {
+                asserter([`The content of module "${ this.path }" with type "${ type }" should be valid "object" instead of "%o"`, content], content && Object.is(typeof content, 'object'));
+                pipeline = [Object.is(type, resolvedType.namespace) ? this.resolveNamespace(content) : content];
+            } else {
+                pipeline = [this.resolveContent(content)];
+            }
+            pipeline = [...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)];
+        }
+        serializer(pipeline);
+        return this.promise;
+    }
+    resolveContent (content) {
+        isString(content) || (content = originalStringifyMethod(content));
+        this.content = content.trim();
+        const type = this.type;
+        if (Object.is(type, resolvedType.namespace)) {
+            this.baseElement = templateResolver(content);
+            return serializer([configResolver(this.baseElement, this.base), ({ base, content }) => this.resolveNamespace(content, base)]);
+        } else if (Object.is(type, resolvedType.script)) {
+            return import(`data:text/javascript, ${ encodeURIComponent(content.replace(relativePathRegExp, (match, url1, url2) => match.replace(url1 || url2, new URL(url1 || url2, this.base)))) }`).catch(() => asserter(`Failed to import dynamic script module "${ this.path }" with resolved content "${ content }"`));
+        } else if (Object.is(type, resolvedType.template)) {
+            const fragment = templateResolver(content), pipeline = [], styles = this.config.style;
+            styles && pipeline.push(Promise.all((Array.isArray(styles) ? styles : [styles]).map(path => this.parent.fetch(path).then(style => {
+                asserter(`Failed to fetch style module "${ path }" within namespace "${ this.parent.path }"`, style && Object.is(style.type, resolvedType.style));
+                return style.module && style.module.getAttribute('name');
+            }))).then(names => selectorInjector(fragment, names.filter(name => name))));
+            pipeline.push(() => {
+                const parentPath = this.parent.path, nodeProfile = new NodeProfile(fragment, parentPath ? parentPath.split('.') : [], null, null, false, {});
+                return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
+            });
+            return serializer(pipeline);
+        } else if (Object.is(type, resolvedType.style)) {
+            return styleResolver(content, `dg_style_module_content-${ this.path.replace(/\./g, '_') }`, true);
+        } else if (Object.is(type, resolvedType.json)) {
+            return JSON.parse(content);
+        } else if (Object.is(type, resolvedType.string)) {
+            return this.content;
+        } else {
+            asserter(`Failed to resolve module "${ this.path }" of unknown type "${ type }"`);
+        }
+    }
+    resolved (module) {
+        this.module = module;
+        this.state = 'resolved';
+        this.resolver(this);
+        logger(`The "${ this.type }" module "${ this.path || '[root]' }" is "resolved".`);
+        return this;
+    }
+    resolveEmbeddedType (element) {
+        if (this.type) { return; }
+        const { tagName, type } = element, isScript = Object.is(tagName, 'SCRIPT');
+        if (Object.is(tagName, 'TEMPLATE')) {
+            this.type = resolvedType.template;
+        } else if (isScript && Object.is(type, embeddedType.namespace)) {
+            this.type = resolvedType.namespace;
+            return this.resolveNamespace(JSON.parse(element.innerHTML), element.getAttribute('base') || this.base);
+        } else if (isScript && Object.is(type, embeddedType.script)) {
+            this.type = resolvedType.script;
+        } else if (isScript && Object.is(type, embeddedType.json)) {
+            this.type = resolvedType.json;
+        } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
+            this.type = resolvedType.style;
+        } else {
+            this.type = resolvedType.string;
+        }
+    }
+    resolveModule (resolvedContent) {
+        this.resolvedContent = resolvedContent;
+        let module = resolvedContent;
+        const type = this.type;
+        if (Object.is(type, resolvedType.namespace)) {
+            module = emptier();
+            this.children = this.resolvedContent;
+            forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile));
+            this.parent && this.parent.resolve().then(moduleProfile => Object.setPrototypeOf(module, moduleProfile.module));
+        } else if (Object.is(type, resolvedType.script)) {
+            module = scriptModuleResolver(module, emptier());
+        } else if (Object.is(type, resolvedType.style)) {
+            if (!Reflect.has(this.config, 'scoped') || this.config.scoped) {
+                asserter(`It's invalid to use "$" in style module path "${ this.path }"`, !this.path.includes('$'));
+                const name = `dg_style_module-${ this.path.replace(/\./g, '_') }`, style = styleResolver('', name, true), sheet = style.sheet, iterator = { index: 0 };
+                forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, name, iterator));
+                module = style;
+            }
+            originalSetAdd.call(styleModuleSet, module);
+        } else if (Object.is(type, resolvedType.template)) {
+            asserter(`It's invalid to use '-' in template module path "${ this.path }"`, !this.path.includes('-'));
+        }
+        return module;
+    }
+    resolveNamespace (config, base = this.base) {
+        this.parent && configNormalizer(config);
+        this.children = Object.entries(config).map(([key, value]) => this.parent ? new ModuleProfile(value, base, key, this) : ((value.parent = this) && value));
+        return Promise.all(this.children.map(child => dependencyResolver(child, this) || child.resolve()).filter((_, index) => {
+            const child = this.children[index];
+            const prefetch = child.config.prefetch;
+            return !prefetch || new RegExp(prefetch).test(Object.is(daggerOptions.routing.mode, 'history') ? location.pathname : location.hash);
+        }));
+    }
+    resolveRemoteType (content, type, url) {
+        this.base = url;
+        if (this.type) { return; }
+        if (url.endsWith('.js') || url.endsWith('.mjs') || mimeType.script.some(scriptType => type.includes(scriptType))) {
+            this.type = resolvedType.script;
+        } else if (url.endsWith('.css') || type.includes(mimeType.style)) {
+            this.type = resolvedType.style;
+        } else if (url.endsWith('.html') || type.includes(mimeType.html)) {
+            content = content.trim();
+            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? resolvedType.namespace : resolvedType.template;
+        } else if (url.endsWith('.json') || type.includes(mimeType.json)) {
+            this.type = resolvedType.json;
+        } else {
+            this.type = resolvedType.string;
+        }
+    }
+    resolveURI (uri) {
+        uri = uri.trim();
+        if (!uri) { return; }
+        if (pathRegExp.test(uri)) {
+            return this.parent.fetch(uri).then(moduleProfile => (this.resolvedContent = moduleProfile.resolvedContent, (this.type || (this.type = moduleProfile.type)) && (!Object.is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module)));
+        }
+        let pipeline = null;
+        if (remoteUrlRegExp.test(uri)) {
+            const cachedProfile = integrityProfileCache[this.integrity];
+            if (cachedProfile) {
+                pipeline = [cachedProfile.resolve(), () => (this.type = cachedProfile.type) && cachedProfile.resolvedContent];
+            } else {
+                daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
+                const base = new URL(uri, this.base).href;
+                pipeline = [(data, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
+            }
+        } else {
+            const element = querySelector(this.baseElement, uri);
+            const cachedProfile = elementProfileCacheMap.get(element);
+            if (cachedProfile) {
+                warner([`The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
+                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
+            } else {
+                originalMapSet.call(elementProfileCacheMap, element, this);
+                pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
             }
         }
-        matchedNodeContext.index = index;
-        children[index] = matchedNodeContext;
-        matchedNodeContext.resolvedSliceScope[keyName] = key;
-        matchedNodeContext.resolvedSliceScope[indexName] = index;
-    } else {
-        matchedNodeContext = new NodeContext(profile, sliceClosures, nodeContext, index, { [keyName]: key, [itemName]: value, [indexName]: index });
+        return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }
-    const newMatchedArray = newChildrenMap.get(value);
-    newMatchedArray ? newMatchedArray.push(matchedNodeContext) : newChildrenMap.set(value, [matchedNodeContext]);
-}, selectedResolver = (node, data, multiple) => {
-    const value = valueResolver(node);
-    return multiple ? (data || []).some(item => is(item, value)) : is(data, value);
-}, styleUpdater = (resolvedStyles, content) => {
-    if (!content) { return; }
-    const [key, value = ''] = content.split(':').map(item => item.trim());
-    asserter(`The content "${ content }" is not a valid style declaration`, key && value);
-    resolvedStyles[key] = value;
-}, timeNormalizer = (data, padLength = 2) => String(data).padStart(padLength, '0')) => ({ // data -> node
-    $boolean: (data, node, nodeContext, { name }) => data ? node.setAttribute(name, '') : node.removeAttribute(name), // toggleAttribute
+}) => {
+    styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false);
+    ModuleProfile.normalizeConfig = configNormalizer;
+    return ModuleProfile;
+})(), NodeContext = ((dataUpdater = {
+    checked: node => Object.is(node.tagName, 'OPTION') ? node.selected : node.checked,
+    file: node => (node.multiple ? [...node.files] : node.files[0]) || null,
+    focus: node => node.isSameNode(document.activeElement),
+    result: ((processor = (file, { buffer, data, encoding }) => {
+        let result = { file, loaded: 0, progress: 0, state: 'initialized', content: null };
+        const fileReader = new FileReader();
+        fileReader.onloadstart = () => (result = (result && result[meta] && [...result[meta]][0].value) || result, result.state = 'loading');
+        fileReader.onprogress = ({ loaded }) => (result.loaded = loaded, result.progress = Math.floor(loaded / file.size * 100));
+        fileReader.onload = () => (result.state = 'loaded', result.content = fileReader.result);
+        fileReader.onerror = () => (result.state = 'error');
+        fileReader.onabort = () => (result.state = 'abort');
+        if (buffer) {
+            fileReader.readAsArrayBuffer(file);
+        } else if (data) {
+            fileReader.readAsDataURL(file);
+        } else {
+            fileReader.readAsText(file, encoding || 'utf-8');
+        }
+        return result;
+    }) => (node, decorators) => node.multiple ? [...node.files].map(file => processor(file, decorators)) : processor(node.files[0], decorators))(),
+    selected: node => {
+        const { name, type, tagName } = node, isSelect = Object.is(tagName, 'SELECT');
+        asserter([`Please specify valid "name" attribute on input node "%o" to support "$selected" directive`, node], isSelect || name);
+        const data = [...(isSelect ? node.selectedOptions : querySelector(document.body, `input[type="${ type }"][name="${ name }"]:checked`, true))].map(node => valueResolver(node)), multiple = isSelect ? node.multiple : Object.is(type, 'checkbox');
+
+        return multiple ? data : data[0];
+    },
+    value: ({ type, value, valueAsNumber }, { number, trim }, { detail }) => {
+        if (detail) { return null; }
+        if (['date', 'datetime-local'].includes(type)) { return new Date(valueAsNumber || 0); }
+        if (['number', 'range'].includes(type)) { return valueAsNumber; }
+        if (number) { return Number.parseFloat(value); }
+        if (trim) { return value.trim(); }
+        return value;
+    }
+}, nameFilters = ['draggable'], generalUpdater = (data, node, _, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
+    $boolean: (data, node, _, { name }) => node.toggleAttribute(name, !!data),
     checked: (data, node, { parentNode }, { decorators }) => {
-        const { tagName, type } = node, isOption = is(tagName, 'OPTION'), isRadio = is(type, 'radio');
-        if (isOption || (is(tagName, 'INPUT') && (isRadio || is(type, 'checkbox')))) {
+        const { tagName, type } = node, isOption = Object.is(tagName, 'OPTION'), isCheckbox = Object.is(type, 'checkbox');
+        if (isOption || (Object.is(tagName, 'INPUT') && (isCheckbox || Object.is(type, 'radio')))) {
             let nodes = null;
-            data = !!data;
             if (isOption) {
-                if (is(data, node.selected)) { return; }
+                if (Object.is(data, node.selected)) { return; }
                 node.selected = data;
                 const select = parentNode;
                 if (select) {
@@ -168,10 +478,11 @@ export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emp
                     }
                 }
             } else {
-                node.checked = data;
-                isRadio && data && (nodes = querySelector(decorators.scope ? querySelector(document, decorators.scope) : parentNode, `input[type="radio"][name="${ node.name }"]`, true, true));
+                isCheckbox && decorators.indeterminate && (node.indeterminate = data == null);
+                node.indeterminate || (node.checked = data);
+                isCheckbox || (data && (nodes = querySelector(document.body, `input[type="radio"][name="${ node.name }"]`, true)));
             }
-            nodes && forEach(nodes, node => node.dispatchEvent(changeEvent));
+            nodes && promisor.then(() => forEach(nodes, node => node.dispatchEvent(changeEvent)));
         } else {
             generalUpdater(data, node, null, { name: 'checked' });
         }
@@ -180,1052 +491,788 @@ export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emp
         if (data) {
             const classNameSet = new Set(classNames);
             if (Array.isArray(data)) {
-                forEach(data, className => classNameSet.add(textResolver(className)));
-            } else if (isInstanceOf(data)) {
-                forEach(Object.entries(data), ([key, value]) => value && classNameSet.add(key.trim()));
+                forEach(data, className => originalSetAdd.call(classNameSet, textResolver(className)));
+            } else if (data instanceof Object) {
+                forEach(Object.keys(data), key => data[key] && originalSetAdd.call(classNameSet, key.trim()));
             } else {
-                classNameSet.add(textResolver(data));
+                originalSetAdd.call(classNameSet, textResolver(data));
             }
-            node.className = [...classNameSet].join(' ').trim();
+            node.setAttribute('class', [...classNameSet].join(' ').trim());
         } else {
-            classNames ? (node.className = classNames.join(' ')) : node.removeAttribute('class');
+            classNames ? node.setAttribute('class', classNames.join(' ')) : node.removeAttribute('class');
         }
     },
-    each: (data, node, nodeContext, { decorators }) => {
-        data = Object.entries(data || emptyObject);
-        const { children, childrenMap = new Map(), profile, parentNode } = nodeContext;
-        if (!data.length) { return childrenMap.clear() || nodeContext.removeChildren(); }
-        let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index' } = decorators;
-        is(itemName, true) && (itemName = 'item');
-        is(keyName, true) && (keyName = 'key');
-        is(indexName, true) && (indexName = 'index');
-        warner(['duplication found in slice scope schemes "%o"', { item: itemName, key: keyName, index: indexName }], !is(keyName, indexName) && !is(keyName, itemName) && !is(itemName, indexName));
-        const newChildrenMap = new Map(), sliceClosures = nodeContext.closures.slice;
-        forEach(data, ([key, value], index) => eachResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, sliceClosures, parentNode));
-        children.length = data.length;
+    each: ((sliceResolver = (index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, plainSliceScope, nodeContext, profile, parentNode) => {
+        let matchedNodeContext = null;
+        const matchedArray = childrenMap.get(value);
+        if (matchedArray) {
+            matchedNodeContext = matchedArray.shift();
+            matchedArray.length || originalMapDelete.call(childrenMap, value);
+            if (!Object.is(index, matchedNodeContext.index)) {
+                const { landmark, upperBoundary } = matchedNodeContext, array = [upperBoundary];
+                let node = upperBoundary;
+                while (!Object.is(node, landmark)) {
+                    node = node.nextSibling;
+                    array.push(node);
+                }
+                forEach(array.reverse(), node => parentNode.insertBefore(node, (index ? (children[index - 1].landmark || {}) : nodeContext.upperBoundary).nextSibling));
+                children.includes(matchedNodeContext) && children.splice(matchedNodeContext.index, 1);
+                matchedNodeContext.index = index;
+                children[index] = matchedNodeContext;
+            }
+            matchedNodeContext.scope[keyName] = key;
+            matchedNodeContext.scope[indexName] = index;
+        } else {
+            matchedNodeContext = new NodeContext(profile, nodeContext, index, { [indexName]: index, [keyName]: key, [itemName]: value }, plainSliceScope);
+        }
+        const newMatchedArray = newChildrenMap.get(value);
+        newMatchedArray ? newMatchedArray.push(matchedNodeContext) : originalMapSet.call(newChildrenMap, value, [matchedNodeContext]);
+    }, originalMapDelete = Map.prototype.delete) => (data, _, nodeContext, { decorators }) => {
+        data = data || {};
+        const valueSet = new Set(data.values instanceof Function ? data.values() : Object.values(data)), entries = [...(data.entries instanceof Function ? data.entries() : Object.entries(data))], { children, childrenMap, profile, parentNode } = nodeContext, topologySet = data[meta];
+        topologySet && forEach(entries, ([key, value]) => value && value[meta] && topologySet.forEach(topology => topology.fetch(key, value)));
+        if (!entries.length) { return originalMapClear.call(childrenMap) || nodeContext.removeChildren(true); }
+        childrenMap.forEach((array, value) => valueSet.has(value) || forEach(array, nodeContext => nodeContext.destructor(true)) || originalMapDelete.call(childrenMap, value));
+        const newChildrenMap = new Map();
+        let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index', plain } = decorators;
+        Object.is(itemName, true) && (itemName = 'item');
+        Object.is(keyName, true) && (keyName = 'key');
+        Object.is(indexName, true) && (indexName = 'index');
+        warner(['duplication found in slice scope schemes "%o"', { item: itemName, key: keyName, index: indexName }], !Object.is(keyName, indexName) && !Object.is(keyName, itemName) && !Object.is(itemName, indexName));
+        forEach(entries, ([key, value], index) => sliceResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, plain, nodeContext, profile, parentNode));
+        children.length = entries.length;
+        childrenMap.forEach(array => forEach(array, nodeContext => (nodeContext.parent = null, nodeContext.destructor(true))));
         nodeContext.childrenMap = newChildrenMap;
-        childrenMap.forEach(array => forEach(array, nodeContext => nodeContext.destructor()));
-        childrenMap.clear();
-    },
-    exist: (data, node, nodeContext) => data ? (node || nodeContext.create()) : nodeContext.destroy(),
-    file: data => asserter([`The data bound to directive "$file" should either be "File" or "FileList" instead of "%o"`, data], !data || isInstanceOf(data, File) || isInstanceOf(data, FileList)),
-    focus: (data, node, nodeContext, { decorators: { prevent = false } }) => data ? node.focus({ preventScroll: prevent }) : node.blur(),
-    html: (data, node, nodeContext) => {
+    })(),
+    exist: (data, _, nodeContext) => data ? (Object.is(nodeContext.state, 'unloaded') && nodeContext.loading()) : nodeContext.unloading(true),
+    file: (data, node) => asserter([`The data bound to directive "$file" of element "%o" should be "File${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && Array.every(file => (file instanceof File))) : (data instanceof File))),
+    focus: (data, node, _, { decorators: { prevent = false } }) => data ? node.focus({ preventScroll: prevent }) : node.blur(),
+    html: (data, node, nodeContext, { decorators: { root = false } }) => {
         data = textResolver(data);
-        nodeContext.removeChildren();
+        nodeContext.removeChildren(true);
         if (!data) { return; }
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
-        if (!node) { // template node
+        if (!node) {
             const styles = profile.node.getAttribute('dg_scoped_styles');
             styles && selectorInjector(fragment, styles.split(','));
         }
-        Reflect.construct(NodeProfile, [fragment, profile.namespace, rootNodeProfiles, null, true]);
+        Reflect.construct(NodeProfile, [fragment, root ? [] : profile.paths, rootNodeProfiles, null, true]);
         if (rootNodeProfiles.length) {
-            const scopes = nodeContext.scopes, count = scopes.length;
-            forEach(rootNodeProfiles, (nodeProfile, index) => Promise.all(nodeProfile.promises || []).then(() => new NodeContext(nodeProfile, functionResolver(closureResolver(nodeProfile.closures, count))(...scopes), nodeContext, index, null, scopes, (nodeProfile.landmark || nodeProfile.node).parentNode)));
+            processorResolver();
+            Promise.all(rootNodeProfiles.map(nodeProfile => Promise.all(nodeProfile.promises || []))).then(() => forEach(rootNodeProfiles, (nodeProfile, index) => nodeContext.profile && Reflect.construct(NodeContext, [nodeProfile, root ? null : nodeContext, index, null, false, (nodeProfile.landmark || nodeProfile.node).parentNode])));
         }
         node ? node.appendChild(fragment) : nodeContext.parentNode.insertBefore(fragment, nodeContext.landmark);
     },
-    selected: (data, node) => {
-        const { type, tagName } = node, isSelect = is(tagName, 'SELECT');
-        if (isSelect || (is(tagName, 'INPUT') && (is(type, 'checkbox') || is(type, 'radio')))) {
-            const multiple = isSelect ? node.multiple : is(type, 'checkbox');
+    result: (data, node) => asserter([`The data bound to directive "$result" of element "%o" should be "object${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && Array.every(file => (file instanceof Object))) : (data instanceof Object))),
+    selected: ((selectedResolver = (node, data, multiple) => {
+        const value = valueResolver(node);
+        return multiple ? (data || []).some(item => Object.is(item, value)) : Object.is(data, value);
+    }) => (data, node) => {
+        const { type, tagName } = node, isSelect = Object.is(tagName, 'SELECT');
+        if (isSelect || (Object.is(tagName, 'INPUT') && (Object.is(type, 'checkbox') || Object.is(type, 'radio')))) {
+            const multiple = isSelect ? node.multiple : Object.is(type, 'checkbox');
             multiple && asserter([`The data bound to directive "$selected" of element "%o" should be "array" instead of "%o"`, node, data], (data == null) || Array.isArray(data));
             if (isSelect) {
-                const nodes = querySelector(node, 'option', true);
-                forEach(nodes, option => (option.selected = selectedResolver(option, data, multiple)));
-                multiple || forEach(nodes, node => node.dispatchEvent(changeEvent));
+                promisor.then(() => forEach(querySelector(node, 'option', true), option => (option.selected = selectedResolver(option, data, multiple))));
             } else {
                 node.checked = selectedResolver(node, data, multiple);
             }
         } else {
             generalUpdater(data, node, null, { name: 'selected' });
         }
-    },
-    style: (data, node, { profile: { inlineStyle, styles } }) => {
+    })(),
+    style: ((styleUpdater = (resolvedStyles, content) => {
+        if (!content) { return; }
+        const [key, value = ''] = content.split(':').map(item => item.trim());
+        asserter(`The content "${ content }" is not a valid style declaration`, key && value);
+        resolvedStyles[key] = value;
+    }) => (data, node, { profile: { inlineStyle, styles } }) => {
         if (data) {
-            const resolvedStyles = { ...styles };
+            const resolvedStyles = Object.assign({}, styles);
             if (Array.isArray(data)) {
                 forEach(data, item => styleUpdater(resolvedStyles, textResolver(item)));
-            } else if (isInstanceOf(data)) {
-                forEach(Object.entries(data), ([key, value]) => (resolvedStyles[key.trim()] = textResolver(value)));
+            } else if (data instanceof Object) {
+                forEach(Object.keys(data), key => (resolvedStyles[key.trim()] = textResolver(data[key])));
             } else {
                 forEach(textResolver(data).split(';'), item => styleUpdater(resolvedStyles, item.trim()));
             }
-            node.style.cssText = Object.entries(resolvedStyles).filter(([key, value]) => value).map(([key, value]) => `${ key }: ${ value }; `).join('').trim();
+            node.style.cssText = Object.keys(resolvedStyles).filter(key => resolvedStyles[key]).map(key => `${ key }: ${ resolvedStyles[key] }; `).join('').trim();
         } else {
             inlineStyle ? node.setAttribute('style', inlineStyle) : node.removeAttribute('style');
         }
-    },
+    })(),
     text: (data, node) => {
         data = textResolver(data);
-        is(data, node.textContent) || (node.textContent = data);
+        Object.is(data, node.textContent) || (node.textContent = data);
     },
-    value: (data, node, nodeContext, { decorators }) => {
+    value: ((timeNormalizer = (data, padLength = 2) => String(data).padStart(padLength, '0')) => (data, node, nodeContext, { decorators: { trim = false } }) => {
         nodeContext.value = data;
-        const { tagName, type } = node, isInput = is(tagName, 'INPUT');
-        asserter([`It's illegal to use directive "$value" on element "%o"`, node], !(isInput && is(type, 'file')));
+        const { tagName, type } = node, isInput = Object.is(tagName, 'INPUT');
+        asserter([`It's illegal to use directive "$value" on element "%o"`, node], !(isInput && Object.is(type, 'file')));
         if (isInput) {
-            const isDate = is(type, 'date') || is(type, 'datetime-local');
-            if (isInstanceOf(data, Date)) {
-                if (isDate || is(type, 'week')) {
+            const isDate = ['date', 'datetime-local'].includes(type);
+            if (data instanceof Date) {
+                if (isDate || Object.is(type, 'week')) {
                     node.valueAsNumber = data;
-                } else if (is(type, 'month')) {
+                } else if (Object.is(type, 'month')) {
                     node.value = `${ data.getUTCFullYear() }-${ timeNormalizer(data.getUTCMonth() + 1) }`;
-                } else if (is(type, 'time')) {
+                } else if (Object.is(type, 'time')) {
                     const step = node.step || 0;
                     let value = `${ timeNormalizer(data.getUTCHours()) }:${ timeNormalizer(data.getUTCMinutes()) }`;
                     if (step % 60) {
-                        value = `${ value }:${ timeNormalizer(data.getUTCSeconds()) }`; // show seconds
-                        (step % 1) && (value = `${ value }.${ timeNormalizer(data.getUTCMilliseconds(), 3) }`); // show milliseconds
+                        value = `${ value }:${ timeNormalizer(data.getUTCSeconds()) }`;
+                        (step % 1) && (value = `${ value }.${ timeNormalizer(data.getUTCMilliseconds(), 3) }`);
                     }
                     node.value = value;
                 } else {
                     node.value = data;
                 }
             } else {
-                data = textResolver(data, decorators.trim || false);
+                data = textResolver(data, trim);
                 isDate ? (node.valueAsNumber = new Date(data)) : (node.value = data);
             }
         } else {
-            node.value = textResolver(data, decorators.trim || false);
+            node.value = textResolver(data, trim);
         }
-    }
-}))(), lazyDirectiveNames = hashTableResolver('checked', 'focus', 'selected'), Controller = class {
-    constructor (nodeContext, { name, decorators = emptyObject, processor }) {
-        this.nodeContext = nodeContext, this.decorators = decorators, this.processor = processor, this.topologySet = new Set(), this.visitedTopologySet = new Set();
-        if (name) {
-            this.name = name;
-            lazyDirectiveNames[name] && (this.lazy = true);
-            const node = nodeContext.node;
-            this.updater = nodeUpdater[name] || (node && is(typeof node[name], 'boolean') && nodeUpdater.$boolean) || generalUpdater;
-            if (is(name, 'selected') && node && is(node.tagName, 'SELECT')) { // watch children update
-                this.observer = new MutationObserver(() => this.trigger());
-                this.observer.observe(node, { childList: true });
-            }
-        }
-    }
-    destructor () {
-        this.topologySet.forEach(topology => topology.unsubscribe(this));
-        this.topologySet.clear();
-        this.visitedTopologySet.clear();
-        this.observer && this.observer.disconnect();
-        destructor(this);
-    }
-    trigger (force = true) {
-        queueingControllerSet.delete(this);
-        if (force || (this.topologySet && [...this.topologySet].some(topology => !is(topology[meta].oldValue, topology[meta].value)))) {
-            if (!this.processor) { return; }
-            this.topologySet.clear();
-            this.visitedTopologySet.clear();
-            const stashedContext = { ...runtimeContext };
-            runtimeContextResolver({ controller: this, sensitive: this.decorators.sensitive || false });
-            serializer([this.processor(), data => runtimeContextResolver(stashedContext) && this.update(data)]);
-        }
-        queueMicrotask(() => this.topologySet && this.topologySet.forEach(topology => Reflect.deleteProperty(topology[meta], 'oldValue')));
-        return this;
-    }
-    update (data) {
-        if (!this.updater) { return; }
-        const nodeContext = this.nodeContext, node = nodeContext.node;
-        (this.decorators.immutable && is(data, this.data)) || serializer([(!(node || {}).isConnected && this.lazy) ? queueMicrotask(() => this.updater(data, node, nodeContext, this)) : this.updater(data, node, nodeContext, this), () => (this.data = data)]);
-    }
-}) => Controller)(), ModuleProfile = ((elementProfileCache = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z-_]{1}[\w-$]*$/, pathRegExp = /^[$a-zA-Z-_]{1}[\w-$]*(\.[$a-zA-Z-_]{1}[\w-$]*)*$/, relativePathRegExp = /'BASE\(([-\w@:%.\/+~#=$]+)\)'|"BASE\(([-\w@:%.\/+~#=$]+)\)"/g, resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, status = { resolved: 'resolved', resolving: 'resolving', unresolved: 'unresolved' }, configNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
-    (Array.isArray(config) || !isInstanceOf(config)) && (config = { uri: config, candidates: config });
-    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => isInstanceOf(item) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches) && (!Reflect.has(item, 'condition') || (item.condition && (functionResolver(item.condition))))));
-    config.type || (config.type = type);
-    config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
-    return config;
-}) => config => forEach(Object.keys(config), key => resolvedTypes[key] && isInstanceOf(config[key]) ? (forEach(Object.entries(config[key]), ([name, value]) => {
-    asserter([`The module named "${ name }" already exists in "%o"`, config], !Reflect.has(config, name));
-    config[name] = normalizer(value, key.substr(1));
-}) || Reflect.deleteProperty(config, key)) : (config[key] = normalizer(config[key]))) || config)(), dependencyResolver = ((resolver = (moduleProfile, dependencies, baseModuleProfile = null) => baseModuleProfile && ((moduleProfile.integrity && (is(moduleProfile.integrity, baseModuleProfile.integrity) || resolver(moduleProfile, dependencies, baseModuleProfile.parent)) && !dependencies.includes(moduleProfile.path)) || (moduleProfile.dependencies && (moduleProfile.dependencies.includes(baseModuleProfile) || moduleProfile.dependencies.some(moduleProfile => resolver(moduleProfile, dependencies, baseModuleProfile))))) && dependencies.push(moduleProfile.path)) => (moduleProfile, baseModuleProfile = null) => {
-    if (!baseModuleProfile) { return; }
-    baseModuleProfile.dependencies || (baseModuleProfile.dependencies = []);
-    baseModuleProfile.dependencies.push(moduleProfile);
-    const dependencies = [];
-    resolver(moduleProfile, dependencies, baseModuleProfile);
-    const path = baseModuleProfile.path;
-    asserter(`Failed to resolve template module "${ path }" with recursive or circular reference "${ [path, ...dependencies.reverse(), path].join(' -> ') }"`, !dependencies.length);
-})(), ruleResolver = (sheet, rule, name) => rule.cssRules ? forEach(rule.cssRules, rule => ruleResolver(sheet, rule, name)) : sheet.insertRule(`${ rule.selectorText.split(',').map(selector => (selector = selector.trim()) && `${ selectorRegExp.test(selector) ? selector.replace(selectorRegExp, `[${ name }]$1`) : `${ selector }[${ name }]` }, [${ name }] ${ selector }`).join(', ') }{${ rule.style.cssText }}`), selectorRegExp = /([\s:+>~])/, styleResolver = (content, name = '', disabled = false) => {
-    const style = document.createElement('style');
-    content && (style.textContent = content);
-    head.appendChild(style);
-    style.disabled = disabled;
-    style.setAttribute('name', name);
-    directiveAttributeUpdater(style, 'router', location.hash);
-    directiveAttributeUpdater(style, 'active', !disabled);
-    return style;
-}, ModuleProfile = class {
-    constructor (config = {}, base = '', name = '', parent = null) {
-        this.name = name;
-        this.module = { [meta]: this };
-        this.state = status.unresolved;
+    })()
+}))(), modifierResolver = ((resolver = (event, modifier) => {
+    modifier = String(modifier);
+    const positive = !modifier.startsWith('!');
+    positive || (modifier = modifier.substring(1));
+    const modifierRegExp = new RegExp(modifier), result = (event.getModifierState && event.getModifierState(modifier)) || [event.code, event.key, event.button].some(value => modifierRegExp.test(value));
+    return positive == result;
+}) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
+    constructor (profile, parent = null, index = 0, sliceScope = null, plainSliceScope = false, parentNode = null) {
+        this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.promise = this.resolver = this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
         if (parent) {
-            this.resolveParent(parent);
-            this.path = parent.path ? `${ parent.path }.${ name }` : name, this.baseElement = parent.baseElement;
+            this.parent = parent;
+            this.parentNode = parentNode || parent.node || parent.parentNode;
+            const paths = profile.paths;
+            this.module = Object.is(paths, parent.profile.paths) ? parent.module : rootNamespace.fetchSync([...paths]).module;
+            this.scope = parent.scope;
+            parent.children.splice(index, 0, this);
         } else {
-            this.path = name, this.baseElement = head;
-        }
-        const { integrity, uri, type } = config;
-        let isTypeValid = resolvedType[type];
-        if (Reflect.has(config, 'content')) {
-            this.content = config.content;
-        } else if (uri) {
-            this.URIs = uri;
-            isTypeValid || (isTypeValid = !type);
-        } else {
-            asserter([`Failed to parse the config "%o" for module "${ this.path }" as there is no valid "content" or "uri" definition`, config]);
-        }
-        asserter(`The type of module "${ this.path }" should be one of "json, namespace, script, style, template" instead of "${ type }"`, isTypeValid);
-        type && (this.type = type);
-        daggerOptions.integrity && integrity && (this.integrity = integrity);
-        this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
-        (Reflect.has(config, 'scoped') && !config.scoped) || (this.scoped = true);
-    }
-    extract (styleModuleSet = null) {
-        if (!this.extracted) {
-            if (is(this.type, resolvedType.style)) {
-                this.parent.styleModules.push(this.module);
-                this.extracted = true;
-            } else if (!is(this.type, resolvedType.template)) {
-                const isNamespace = is(this.type, resolvedType.namespace);
-                if (isNamespace) {
-                    this.styleModules || (this.styleModules = []);
-                    this.extracted = Object.assign(emptier(), ...this.children.map(moduleProfile => moduleProfile.extract()));
-                } else {
-                    this.extracted = (!isInstanceOf(this.module) || Array.isArray(this.module)) ? this.module : Object.assign(emptier(), this.module);
-                }
-                this.extracted = (!isNamespace && this.config.anonymous) ? this.extracted : Object.assign(emptier(), { [this.name]: this.extracted });
-            }
-        }
-        this.parent ? (this.styleModules || []).length && (this.parent.styleModules = [...(this.parent.styleModules || []), ...this.styleModules]) : (styleModuleSet && forEach(this.styleModules, module => styleModuleSet.add(module)));
-        return this.extracted;
-    }
-    fetch (paths, baseModuleProfile = null) { // namespace only
-        Array.isArray(paths) || (paths = paths.split('.'));
-        const path = paths.shift().trim(), moduleProfile = (this.children || []).find(child => is(child.name, path));
-        asserter(`Failed to fetch module "${ path }" within namespace "${ this.path || '[root]' }"`, !is(moduleProfile));
-        dependencyResolver(moduleProfile, baseModuleProfile);
-        return paths.length ? moduleProfile.resolve().then(moduleProfile => moduleProfile.fetch(paths, baseModuleProfile)) : moduleProfile.resolve();
-    }
-    resolve () {
-        if (!is(this.state, status.unresolved)) { return this.promise; }
-        this.resolveState(status.resolving);
-        let pipeline = [resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)];
-        if (!Reflect.has(this, 'content')) { // alias/remote/embedded module
-            pipeline = [...this.URIs.map(uri => {
-                asserter([`The "uri" of module "${ this.path }" should be valid "string" instead of "%o"`, uri], isString(uri));
-                return (data, token) => (token.stop = !!data) || this.resolveURI(uri);
-            }), () => asserter([`Failed to resolve uri of module "${ this.path }" from "%o"`, this.URIs], is(this.state, status.resolved))];
-        } else {
-            const content = this.content;
-            if ([resolvedType.namespace, resolvedType.json].includes(this.type)) { // inline resolved json/namespace
-                asserter(`The config content of module "${ this.path }" with type "${ this.type }" should be valid "object"`, isInstanceOf(content));
-                pipeline = [is(this.type, resolvedType.namespace) ? this.resolveNamespace(content) : content, ...pipeline];
-            } else { // other inline module
-                pipeline = [this.resolveContent(content), ...pipeline];
-            }
-        }
-        serializer(pipeline);
-        return this.promise;
-    }
-    resolveContent (content) {
-        this.content = content.trim();
-        const type = this.type;
-        if (is(type, resolvedType.namespace)) {
-            this.baseElement = templateResolver(content);
-            return serializer([configResolver(this.baseElement, this.base), ({ base, content }) => this.resolveNamespace(content, base)]);
-        } else if (is(type, resolvedType.script)) {
-            const resolvedContent = content.replace(relativePathRegExp, (match, url) => quoteResolver(new URL(url, this.base)));
-            return import(`data:text/javascript, ${ encodeURIComponent(resolvedContent) }`).catch(error => asserter(`Failed to import dynamic script module "${ this.path }" with resolved content "${ resolvedContent }"`));
-        } else if (is(type, resolvedType.template)) {
-            const fragment = templateResolver(content), pipeline = [], styles = this.config.style;
-            styles && pipeline.push(Promise.all((Array.isArray(styles) ? styles : [styles]).map(path => this.parent.fetch(path).then(style => {
-                asserter(`Failed to fetch style module "${ path }" within namespace "${ this.parent.path }"`, style && is(style.type, resolvedType.style));
-                return style.module.getAttribute('name');
-            }))).then(names => selectorInjector(fragment, names.filter(name => name))));
-            pipeline.push(() => {
-                fragment[meta] = this;
-                const nodeProfile = new NodeProfile(fragment, this.parent);
-                return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
-            });
-            return serializer(pipeline);
-        } else if (is(type, resolvedType.style)) {
-            return styleResolver(content, `dg_style_module_content-${ this.path.replace(/\./g, '_') }`, true);
-        } else if (is(type, resolvedType.json)) {
-            return jsonResolver(content);
-        } else if (is(type, resolvedType.string)) {
-            return this.content;
-        } else {
-            asserter(`Failed to resolve module "${ this.path }" with unknown type "${ type }"`);
-        }
-    }
-    resolved (module) {
-        this.module = module;
-        this.resolveState(status.resolved);
-        this.resolver(this);
-        return this;
-    }
-    resolveEmbeddedType (element) {
-        if (this.type) { return; }
-        const { tagName, type } = element, isScript = is(tagName, 'SCRIPT');
-        if (is(tagName, 'TEMPLATE')) {
-            this.type = resolvedType.template;
-        } else if (isScript && is(type, embeddedType.namespace)) {
-            this.type = resolvedType.namespace;
-            return this.resolveNamespace(jsonResolver(element.innerHTML), element.getAttribute('base') || this.base);
-        } else if (isScript && is(type, embeddedType.script)) {
-            this.type = resolvedType.script;
-        } else if (isScript && is(type, embeddedType.json)) {
-            this.type = resolvedType.json;
-        } else if (is(tagName, 'STYLE') && is(type, embeddedType.style)) {
-            this.type = resolvedType.style;
-        } else {
-            this.type = resolvedType.string;
-        }
-    }
-    resolveModule (resolvedContent) {
-        this.resolvedContent = resolvedContent;
-        let module = resolvedContent;
-        const type = this.type;
-        if (is(type, resolvedType.namespace)) {
-            module = emptier();
-            this.children = resolvedContent;
-            forEach(resolvedContent, moduleProfile => (module[moduleProfile.name] = moduleProfile.module));
-        } else if (is(type, resolvedType.style)) {
-            if (this.scoped) {
-                asserter(`It's invalid to use '$' in style module path "${ this.path }"`, !this.path.includes('$'));
-                const name = `dg_style_module-${ this.path.replace(/\./g, '_') }`, style = styleResolver('', name, true), sheet = style.sheet;
-                forEach(module.sheet.cssRules, rule => ruleResolver(sheet, rule, name));
-                module = style;
-            }
-        } else if (is(type, resolvedType.template)) {
-            asserter(`It's invalid to use '-' in template module path "${ this.path }"`, !this.path.includes('-'));
-        } else if (!is(type, resolvedType.string) && this.config.converter) { // script/json
-            module = functionResolver(`$module => (${ this.config.converter })`)(module);
-        }
-        return module;
-    }
-    resolveNamespace (config, base = this.base) {
-        this.parent && configNormalizer(config);
-        this.children = Object.entries(config).map(([key, value]) => this.parent ? new ModuleProfile(value, base, key, this) : value.resolveParent(this));
-        const customTags = this.config.customTags;
-        if (customTags) {
-            asserter([`The "customTags" should be "string array" instead of "%o"`, customTags], Array.isArray(customTags) && customTags.every(tag => isString(tag)));
-            this.customTagSet = new Set(customTags);
-        }
-        return Promise.all(this.children.map(child => dependencyResolver(child, this) || child.resolve()).filter((promise, index) => {
-            const prefetch = this.children[index].config.prefetch;
-            return !prefetch || new RegExp(prefetch).test(location.hash);
-        }));
-    }
-    resolveRemoteType (content, type, url) {
-        this.base = url;
-        if (this.type) { return; }
-        if (mimeType.script.some(scriptType => type.includes(scriptType))) {
-            this.type = resolvedType.script;
-        } else if (type.includes(mimeType.style)) {
-            this.type = resolvedType.style;
-        } else if (type.includes(mimeType.html)) {
-            content = content.trim();
-            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? resolvedType.namespace : resolvedType.template;
-        } else if (type.includes(mimeType.json)) {
-            this.type = resolvedType.json;
-        } else {
-            this.type = resolvedType.string;
-        }
-    }
-    resolveParent (parent) {
-        const name = this.name;
-        asserter(`The module name should be valid string matched RegExp "${ nameRegExp.toString() }" instead of "${ name }"`, nameRegExp.test(name));
-        parent.module[name] = this.module;
-        this.parent = parent;
-        return this;
-    }
-    resolveState (state) {
-        this.state = state;
-        daggerOptions.moduleLog && logger(`The module "${ this.path || '[root]' }" is "${ state }".`);
-    }
-    resolveURI (uri = '') {
-        uri = uri.trim();
-        if (!uri) { return; }
-        if (pathRegExp.test(uri)) { // alias
-            return this.parent.fetch(uri, this).then(moduleProfile => (this.type || (this.type = moduleProfile.type)) && (!is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module));
-        } else {
-            let pipeline = null;
-            if (remoteUrlRegExp.test(uri)) { // remote
-                const cachedProfile = integrityProfileCache[this.integrity];
-                if (cachedProfile) {
-                    pipeline = [cachedProfile.resolve(), () => (this.type = cachedProfile.type) && cachedProfile.resolvedContent];
-                } else {
-                    daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
-                    const base = new URL(uri, this.base).href;
-                    pipeline = [(data, token) => serializer([remoteResourceResolver(base, this.integrity), result => result ? result : (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
-                }
-            } else { // embedded
-                const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCache.get(element);
-                if (cachedProfile) {
-                    daggerOptions.moduleLog && warner([`The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
-                    pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
-                } else {
-                    elementProfileCache.set(element, this);
-                    pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
-                }
-            }
-            return serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
-        }
-    }
-}) => {
-    styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style');
-    ModuleProfile.resolvedType = resolvedType;
-    ModuleProfile.normalizeConfig = configNormalizer;
-    return ModuleProfile;
-})(), NodeContext = ((dataUpdater = { // node -> data
-    checked: node => is(node.tagName, 'OPTION') ? node.selected : node.checked,
-    file: node => (node.multiple ? node.files : node.files[0]) || null,
-    selected: (node, { scope }) => {
-        const { name, type, tagName } = node, isSelect = is(tagName, 'SELECT'), data = [...(isSelect ? node.selectedOptions : querySelector(scope ? querySelector(document, scope) : document.body, `input[type="${ type }"][name="${ name }"]:checked`, true, true))].map(node => valueResolver(node)), multiple = isSelect ? node.multiple : is(type, 'checkbox');
-        return multiple ? data : data[0];
-    },
-    value: ({ type, value, valueAsNumber }, { number, trim }, { detail }) => {
-        if (detail) { return null; } // reset
-        if (is(type, 'date') || is(type, 'datetime-local')) {
-            return new Date(valueAsNumber || 0);
-        } else if (number) {
-            return Number.parseFloat(value || 0);
-        } else if (trim) {
-            return value.trim();
-        }
-        return value;
-    }
-}, mouseEventDecoratorMapper = { 1: 'Left', 2: 'Right', 4: 'Middle', 8: 'Back', 16: 'Forward' }, eventHandlerResolver = (event, processor, decorators) => {
-    const { current, modifier, prevent, stop, stopImmediate } = decorators;
-    prevent && event.preventDefault();
-    stop && event.stopPropagation();
-    stopImmediate && event.stopImmediatePropagation();
-    if ((current && !is(event.target, event.currentTarget)) || (modifier && event.getModifierState && (Array.isArray(modifier) ? modifier : [modifier]).some(modifier => !event.getModifierState(modifier)))) { return; }
-    const isKeyboardEvent = isInstanceOf(event, KeyboardEvent);
-    if (isKeyboardEvent || isInstanceOf(event, MouseEvent)) {
-        const { code, key } = decorators;
-        if (isKeyboardEvent && code && !(Array.isArray(code) ? code : [code]).every(expression => new RegExp(expression).test(event.code))) { return; }
-        if (key) {
-            const eventKey = isKeyboardEvent ? event.key : mouseEventDecoratorMapper[event.buttons];
-            if (eventKey && !(Array.isArray(key) ? key : [key]).every(expression => new RegExp(expression).test(eventKey))) { return; }
-        }
-    }
-    const stashedContext = { ...runtimeContext };
-    runtimeContextResolver({ sensitive: decorators.sensitive || false });
-    processor(event);
-    runtimeContextResolver(stashedContext);
-}, NodeContext = class {
-    constructor (profile, closures = {}, parent = null, index = -1, sliceScope = null, scopes = parent ? parent.scopes : [rootScope, htmlScope], parentNode = null) {
-        this.profile = profile;
-        this.scopes = scopes;
-        this.baseScopes = scopes;
-        if (parent) {
-            this.parent = parent, this.parentNode = parentNode || parent.node || parent.parentNode;
-            parent.children[index] = this;
-        } else { // root
             this.parentNode = profile.node.parentNode || profile.landmark.parentNode;
+            this.module = rootNamespace.module;
+            this.scope = (htmlNodeContext || {}).scope || rootScope;
         }
-        const { node, plain, moduleScope, raw, text, unique } = profile;
-        if (is(node.tagName, 'HTML')) {
-            this.closures = closures;
-            return this.create();
-        } else if (raw) { // comment/raw/script/style/template
-            return this.resolveNode(unique ? node : node.cloneNode(true));
-        } else if (plain) {
-            moduleScope ? this.resolveClosures(moduleScope, closures) : (this.closures = closures);
-            return this.resolveNode(unique ? node : node.cloneNode(false), () => this.resolveChildren());
+        const dynamic = profile.dynamic;
+        if (dynamic) {
+            const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
+            this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
+            forEach(Array.isArray(expressions) ? expressions : [expressions], expression => {
+                if (isString(expression)) { // assert invalid expression
+                    const index = expression.indexOf('='), withoutEqual = index < 0;
+                    expression = { name: withoutEqual ? expression : expression.substring(0, index), value: withoutEqual ? '' : expression.substring(index + 1) };
+                }
+                profile.resolveDirective(expression.name, expression.value || '', this.directives);
+            });
+            processorResolver();
+        }
+        const { plain, text, html, raw } = profile;
+        if (html) {
+            htmlNodeContext = this;
+            return this.loading();
+        }
+        if (raw || plain) { // comment/raw/script/style/template
+            this.resolveNode();
+            this.node.removeAttribute && this.node.removeAttribute('dg-cloak');
+            plain && this.resolveChildren();
         } else if (text) {
-            this.closures = closures, this.controller = new Controller(this, closures);
-            return this.resolveNode(unique ? node : document.createTextNode(''), () => this.controller.trigger());
-        }
-        if (sliceScope) { // each child
-            this.index = index, this.sliceScope = sliceScope, this.resolvedSliceScope = Topology.resolveScope(sliceScope);
-            this.resolveClosures(this.resolvedSliceScope, closures);
+            this.resolveNode(() => (this.controller = this.resolveController(text)));
         } else {
-            moduleScope ? this.resolveClosures(moduleScope, closures) : (this.closures = closures);
-            const each = this.closures.each;
-            if (each) { // each parent
-                this.children = [];
-                this.resolveLandmark();
-                this.controller = new Controller(this, each);
-                this.controller.trigger();
-                return this;
+            const { each, exist } = this.directives || {};
+            (each || exist || profile.virtual) && this.resolveLandmark(sliceScope);
+            if (sliceScope) {
+                this.sliceScope = this.resolveScope(sliceScope, plainSliceScope, each.decorators.root);
+                (parent.children.length > index + 1) && forEach(parent.children, (sibling, siblingIndex) => sibling && (siblingIndex > index) && (sibling.index++));
+            } else {
+                profile.slotScope && (this.slotScope = this.resolveScope(Object.assign({}, profile.slotScope), true));
+                if (each) {
+                    this.children = [], this.childrenMap = new Map(), this.controller = this.resolveController(each);
+                    return this;
+                }
+            }
+            if (exist) {
+                this.state = 'unloaded';
+                this.existController = this.resolveController(exist);
+            } else {
+                this.loading();
             }
         }
-        this.baseClosures = this.closures;
-        const exist = this.closures.exist;
-        if (exist) {
-            this.resolveLandmark();
-            this.existController = new Controller(this, exist);
-            this.existController.trigger();
-        } else {
-            this.create();
-        }
     }
-    destructor () {
-        const { plain, raw } = this.profile;
-        if (raw) {
-            this.node.remove();
-        } else {
-            this.destroy();
-            if (!plain) {
+    destructor (isRoot) {
+        this.unloading(isRoot);
+        const { plain, text } = this.profile;
+        if (!plain && !text) {
+            if (isRoot) {
                 this.landmark && this.landmark.remove();
                 this.upperBoundary && this.upperBoundary.remove();
-                this.existController && this.existController.destructor();
+            }
+            this.existController && this.removeController(this.existController);
+            const siblings = (this.parent || {}).children;
+            if (isRoot && siblings) {
+                forEach(siblings, (sibling, siblingIndex) => (siblingIndex > this.index) && (sibling.index--));
+                siblings.splice(this.index, 1);
             }
         }
-        destructor(this);
+        forEach(Reflect.ownKeys(this), key => { this[key] = null; });
     }
-    create () {
-        let pipeline = [() => this.initialize()];
-        const loading = this.closures.loading;
-        loading && (pipeline = [loading.processor(), data => this.postLoad(data), ...pipeline]);
-        serializer(pipeline);
-    }
-    destroy () {
-        const node = this.node, { unloading, unloaded } = this.closures.directives || {};
-        this.sentry && sentrySet.delete(this.sentry);
-        Reflect.deleteProperty(this, 'sentry');
-        unloading && unloading.processor(node);
-        this.removeChildren();
-        if (!this.profile.plain) {
-            this.controller && (this.controller.destructor() || Reflect.deleteProperty(this, 'controller')); // text/each
-            this.childrenController && (this.childrenController.destructor() || Reflect.deleteProperty(this, 'childrenController'));
-            forEach(this.controllers, controller => controller.destructor()) || Reflect.deleteProperty(this, 'controllers');
-            forEach(this.eventHandlers, ({ target, parameters }) => target.removeEventListener(...parameters)) || Reflect.deleteProperty(this, 'eventHandlers');
+    initialize (scope, root) {
+        if (scope) {
+            const constructor = scope.constructor;
+            (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) && this.resolveScope(scope, false, root);
         }
-        node && (this.landmark ? node.replaceWith(this.landmark) : node.remove());
-        delete this.node;
-        unloaded && unloaded.processor(node);
-        this.baseClosures && (this.closures = this.baseClosures);
-        this.scopes = this.baseScopes;
+        const { html, virtual } = this.profile;
+        html ? (this.node = html) : (virtual || this.resolveNode());
+        this.loaded();
+        html || this.resolveChildren();
     }
-    initialize () {
-        if (!this.profile) { return; }
-        const { node, unique, virtual } = this.profile, { child, loaded, sentry } = this.closures.directives || {};
-        if (sentry) {
-            this.sentry = { ...sentry, owner: this };
-            sentrySet.add(this.sentry);
+    loading () {
+        this.state = 'loading';
+        const loading = (this.directives || {}).loading;
+        loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => Object.is(this.state, 'loading') && this.initialize(scope, loading.decorators.root)) : this.initialize();
+    }
+    loaded () {
+        const loaded = (this.directives || {}).loaded;
+        this.resolvePromise(loaded && loaded.processor(this.module, this.scope, this.node), () => Object.is(this.state, 'loading') && this.postLoaded());
+    }
+    postLoaded () {
+        if (this.resolver) {
+            this.resolver();
+            this.resolver = null;
         }
-        if (is(node.tagName, 'HTML')) {
-            htmlScope = this.scopes[2] || Topology.resolveScope({});
-            rootNodeProfiles.map(nodeProfile => new NodeContext(nodeProfile, functionResolver(closureResolver(nodeProfile.closures, 2))(rootScope, htmlScope)));
-            loaded && loaded.processor();
-        } else {
-            child && (this.childrenController = new Controller(this, child));
-            this.resolveNode(!virtual && (unique ? node : node.cloneNode(false)), () => this.resolveChildren() || this.resolveControllers());
-            loaded && loaded.processor(this.node);
+        this.state = 'loaded';
+        this.node && this.node.removeAttribute('dg-cloak');
+        if (this.directives) {
+            const { controllers, eventHandlers, sentry } = this.directives;
+            if (sentry) {
+                this.sentry = Object.assign({}, sentry, { owner: this, processor: sentry.processor.bind(null, this.module, this.scope) });
+                originalSetAdd.call(sentrySet, this.sentry);
+            }
+            eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
+                const target = decorators.target || this.node, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators);
+                asserter([`The target of "+${ event }" directive defined on element "%o" is invalid`, this.node || this.profile.node], target);
+                target.addEventListener(event, handler, options);
+                return { target, event, handler, options, decorators };
+            }));
+            controllers && (this.controllers = controllers.map(controller => this.resolveController(controller)).filter(controller => controller));
         }
     }
-    postLoad (data) {
-        let resolvedData = emptyObject;
-        data && (is(data.constructor, Object) || (!data.constructor && is(typeof data, 'object'))) && (resolvedData = data);
-        this.closures && this.resolveClosures(Topology.resolveScope(resolvedData), this.closures.postLoad || this.closures);
-    }
-    removeChildren () {
+    removeChildren (isRoot) {
+        if (isRoot) {
+            if (this.node) {
+                this.node.innerHTML = '';
+            } else if (this.upperBoundary) {
+                let node = this.upperBoundary.nextSibling;
+                while (node && !Object.is(node, this.landmark)) {
+                    const nextSibling = node.nextSibling;
+                    node.remove();
+                    node = nextSibling;
+                }
+            }
+        }
         if ((this.children || []).length) {
-            forEach(this.children, child => child && child.destructor());
+            forEach(this.children, child => child && child.destructor(false));
             this.children.length = 0;
         }
-        if (this.node) {
-            this.node.innerHTML = '';
-        } else if (this.upperBoundary) {
-            let node = this.upperBoundary.nextSibling;
-            while (node && !is(node, this.landmark)) {
-                const nextSibling = node.nextSibling;
-                node.remove();
-                node = nextSibling;
-            }
-        }
+    }
+    removeController (controller) {
+        controller.topologySet.forEach(topology => topology.unsubscribe(controller));
+        originalSetClear.call(controller.topologySet);
+        controller.observer && controller.observer.disconnect();
+        Object.is(controller, this.childrenController) && (this.childrenController = null);
+        Object.is(controller, this.existController) && (this.existController = null);
+    }
+    removeDirectives (data, targetNames) { // TODO: assert
+        if (!data) { return; }
+        Array.isArray(targetNames) || (targetNames = [targetNames]);
+        directivesRemover(targetNames, [...this.controllers, this.childrenController, this.existController], controller => this.removeController(controller));
+        directivesRemover(targetNames, this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options));
     }
     resolveChildren () {
-        const children = this.profile.children;
-        !this.children && (children || is((this.childrenController || {}).name, 'html')) && (this.children = []);
-        this.childrenController ? this.childrenController.trigger() : forEach(children, (child, index) => new NodeContext(child, (this.closures.children || [])[index], this, index));
+        const children = this.profile.children, child = (this.directives || {}).child;
+        !this.children && (children || (child && Object.is(child.name, 'html'))) && (this.children = []);
+        child ? (this.childrenController = this.resolveController(child)) : forEach(children, (child, index) => new NodeContext(child, this, index));
     }
-    resolveClosures (scope, closures) {
-        this.closures = closures(scope);
-        this.scopes = [...this.scopes, scope];
+    resolveController ({ name, decorators = emptyObject, processor }) {
+        const node = this.node, subscribable = !decorators.once || decorators.lazy, controller = {
+            name,
+            owner: this,
+            decorators,
+            processor: processor.bind(null, this.module, this.scope),
+            topologySet: subscribable ? new Set() : null,
+            observer: null,
+            updater: name && (nodeUpdater[name] || (node && !nameFilters.includes(name) && Object.is(typeof node[name], 'boolean') && nodeUpdater.$boolean) || generalUpdater)
+        };
+        subscribable && node && Object.is(name, 'selected') && Object.is(node.tagName, 'SELECT') && (controller.observer = new MutationObserver(() => this.updateController(controller, true))).observe(node, { childList: true });
+        this.updateController(controller, true);
+        return subscribable && controller;
     }
-    resolveControllers () {
-        const { controllers = [], eventHandlers = [] } = this.closures.directives || {};
-        this.controllers = controllers.map(controller => new Controller(this, controller).trigger());
-        this.eventHandlers = eventHandlers.map(eventHandler => this.resolveEventHandler(eventHandler));
-    }
-    resolveEventHandler ({ event, decorators = {}, processor, name, options = !!name }) { // name is valid for two-way data binding
-        const target = decorators.target || this.node;
-        asserter([`The target of event "${ event }" defined on element "%o" is invalid`, this.node || this.profile.node], target);
-        const parameters = [event, name ? event => this.update(event, name, processor, decorators) : event => eventHandlerResolver(event, processor, decorators), options];
-        target.addEventListener(...parameters);
-        return { target, parameters };
-    }
-    resolveLandmark () {
-        if (this.landmark) { return; }
-        const { index, parent, parentNode, profile } = this;
-        let baseLandmark = null;
-        if (is(index, 0)) { // first each child, insert right after parent.upperBoundary
-            baseLandmark = parent.upperBoundary.nextSibling;
-        } else if (parentNode.contains(profile.landmark || null)) {
-            baseLandmark = profile.landmark;
+    resolveLandmark (sliceScope) {
+        const { index, parent, parentNode, profile: { landmark, virtual } } = this;
+        if (parent) {
+            let baseLandmark = null;
+            const nextSibling = parent.children[index + 1];
+            if (nextSibling) {
+                baseLandmark = nextSibling.upperBoundary || nextSibling.node || nextSibling.landmark;
+            } else if (sliceScope) {
+                baseLandmark = parent.landmark;
+            } else if (parentNode.contains(landmark || null)) {
+                baseLandmark = landmark;
+            } else {
+                baseLandmark = parent.node ? null : parent.landmark;
+            }
+            this.landmark = parentNode.insertBefore(textNode.cloneNode(false), baseLandmark);
         } else {
-            baseLandmark = parent && (parent.node ? null : parent.landmark);
+            this.landmark = landmark;
         }
-        this.landmark = parentNode.insertBefore(document.createTextNode(''), baseLandmark);
-        (profile.each || profile.virtual) && (this.upperBoundary = parentNode.insertBefore(document.createTextNode(''), this.landmark));
+        (virtual || (this.directives || {}).each) && (this.upperBoundary = parentNode.insertBefore(textNode.cloneNode(false), this.landmark));
     }
-    resolveNode (node, callback = null) {
-        this.resolveLandmark();
-        if (node) {
-            this.node = node;
-            node[meta] = this;
-            callback && callback();
-            node.isConnected || this.parentNode.insertBefore(node, this.landmark);
-            node.removeAttribute && node.removeAttribute('dg-cloak');
-        } else if (callback) {
-            callback();
-        }
-    }
-    update (event, name, processor, decorators) {
-        const stashedContext = { ...runtimeContext };
-        runtimeContextResolver();
-        processor(dataUpdater[name](this.node, decorators, event));
-        runtimeContextResolver(stashedContext);
-    }
-}) => runtimeContextResolver() && NodeContext)(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), blockResolver = content => `{ ${ content } }`, caseResolver = content => content.trim().replace(/-[a-z]/g, string => string[1].toUpperCase()).replace(/-[A-Z]/g, string => `-${ string[1].toLowerCase() }`), decoratorResolver = (decorator, resolvedDecorators) => {
-    const [name, value = true] = decorator.split(':').map(content => decodeURIComponent(caseResolver(content)));
-    resolvedDecorators[name] = safeDataResolver(value);
-    return `${ name }: ${ isString(resolvedDecorators[name]) && !is(name, 'target') ? `\`${ value }\`` : value }`;
-}, directiveAttributeResolver = (node, name, value = '') => {
-    node.removeAttribute(name);
-    directiveAttributeUpdater(node, `${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/[^\w]/g, '-') }`, value);
-}, directiveResolver = (expression, fields = emptyObject, signature = '()') => `{ processor: ${ signature } => { 'use strict';\r\nreturn ${ expression.trim() }; }, ${ Object.entries(fields).map(([key, value]) => `${ key }: ${ value }`).join(', ') } }`, NodeProfile = class {
-    constructor (node, namespace = null, rootNodeProfiles = null, parent = null, unique = false, moduleProfile = null) {
-        !parent && !rootNodeProfiles && (this.root = true);
+    resolveNode (callback) {
+        const { node: baseNode, unique, raw } = this.profile, node = unique ? baseNode : baseNode.cloneNode(raw);
         this.node = node;
-        unique && (this.unique = unique);
+        node[context] = this;
+        callback && callback();
+        if (!node.isConnected) {
+            const landmark = this.landmark || (this.parent && (this.parent.node ? null : this.parent.landmark));
+            this.parentNode.insertBefore(node, landmark && Object.is(this.parentNode, landmark.parentNode) ? landmark : null);
+        }
+    }
+    resolvePromise (promise, callback) {
+        if (promise instanceof Promise) {
+            callback && (promise = promise.then(callback));
+            this.resolver || (this.promise = new Promise(resolver => (this.resolver = resolver)));
+        } else { callback && callback(promise); }
+    }
+    resolveScope (scope, plain, root) {
+        // TODO: assert existed prototype: Object.getPrototypeOf(scope)[meta]
+        plain || (scope = proxyResolver(scope));
+        this.scope = Object.setPrototypeOf(scope, root ? rootScope : this.scope);
+        return scope;
+    }
+    unloading (isRoot) {
+        if (Object.is(this.state, 'unloaded')) { return; }
+        this.controller && (this.removeController(this.controller) || (this.controller = null));
+        if (this.profile.text) {
+            this.state = 'unloaded';
+        } else {
+            this.state = 'unloading';
+            if (this.profile.plain || this.childrenMap) { return this.removeChildren(isRoot); }
+            this.childrenController && this.removeController(this.childrenController);
+            forEach(this.controllers, controller => this.removeController(controller)) || (this.controllers = null);
+            forEach(this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options)) || (this.eventHandlers = null);
+            if (this.sentry) {
+                originalSetDelete.call(sentrySet, this.sentry);
+                this.sentry = null;
+            }
+            const unloading = (this.directives || {}).unloading;
+            unloading && unloading.processor(this.module, this.scope, this.node);
+            const node = this.node;
+            isRoot && node && node.remove();
+            this.node = null;
+            this.removeChildren(isRoot);
+            this.scope = this.sliceScope || (this.parent || htmlNodeContext).scope;
+            const unloaded = (this.directives || {}).unloaded;
+            unloaded && unloaded.processor(this.module, this.scope, null);
+            this.state = 'unloaded';
+        }
+    }
+    updateEventHandler (event, name, processor, decorators) {
+        if (!name) {
+            const { current, inside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget); // TODO: outside support
+            warner([`Please avoid using "current" and "inside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !(current && inside));
+            if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
+            prevent && event.preventDefault();
+            stop && event.stopPropagation();
+            stopImmediate && event.stopImmediatePropagation();
+        }
+        const suspendedController = currentController, remove = decorators.remove;
+        currentController = null;
+        const data = processor(this.node, name ? dataUpdater[name](this.node, decorators, event) : event);
+        remove && ((data instanceof Promise) ? data.then(data => this.removeDirectives(data, remove)) : this.removeDirectives(data, remove));
+        currentController = suspendedController;
+    }
+}) => {
+    NodeContext.prototype.updateController = ((queueingControllerSet = new Set(), processor = (nodeContext, controller, force) => {
+        if (!nodeContext.profile) { return; }
+        const { decorators: { once, remove, router, lazy }, topologySet, updater, name } = controller, subscribable = !once || lazy;
+        if (force || (topologySet && [...topologySet].some(topology => !Object.is(topology.oldValue, topology.value)))) {
+            if (topologySet && topologySet.size) {
+                topologySet.forEach(topology => topology.unsubscribe(controller)); // TODO: optimize with cache
+                originalSetClear.call(topologySet);
+            }
+            const suspendedController = currentController;
+            currentController = subscribable ? controller : null;
+            const data = controller.processor(nodeContext.node);
+            subscribable && router && routerTopology.subscribe();
+            currentController = suspendedController;
+            if (lazy && !name) { // lazy watch
+                controller.processor = data;
+                controller.decorators.lazy = false;
+                return;
+            }
+            (data instanceof Promise) ? data.then(data => (remove && nodeContext.removeDirectives(data, remove), updater && updater(data, nodeContext.node, nodeContext, controller))) : (remove && nodeContext.removeDirectives(data, remove), updater && updater(data, nodeContext.node, nodeContext, controller));
+        }
+    }) => function (controller, force) {
+        if (!queueingControllerSet.has(controller)) {
+            originalSetAdd.call(queueingControllerSet, controller);
+            promisor.then(() => {
+                originalSetDelete.call(queueingControllerSet, controller);
+                processor(this, controller, force);
+            });
+        }
+    })();
+    return NodeContext;
+})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('-') ? content.trim().replace(/-[a-z]/g, string => string[1].toUpperCase()).replace(/-[A-Z]/g, string => `-${ string[1].toLowerCase() }`) : content, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), decoratorsResolver = expression => ((safeDataResolver = expression => { try { return expression ? (window[expression] || functionResolver(expression)) : expression; } catch (error) { return expression; } }) => {
+    const [name, ...rawDecorators] = caseResolver(expression).split('#'), decorators = emptier();
+    forEach(rawDecorators.filter(decorator => decorator), decorator => {
+        const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
+        decorators[name] = value ? safeDataResolver(value) : true;
+    });
+    return { name, decorators };
+})(), directiveAttributeResolver = (node, name, value = '') => {
+    node.removeAttribute(name);
+    node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/[^\w]/g, '-') }-debug`, value);
+}, directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields, signature = '$node') => {
+    expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict'; return ${ expression }; })(); }`;
+    const processor = processorCaches[expression];
+    const directive = Object.assign({}, fields, { processor: processor || expression });
+    processor || directiveObjects.push(directive);
+    return directive;
+})(), templateResolver = (tagName, namespace) => {
+    asserter(`There is no valid module named "${ tagName }" found`, namespace);
+    let isVirtualElement = false, promise = namespace.promise;
+    if (namespace) {
+        promise = namespace.fetch(tagName);
+        if (promise) {
+            isVirtualElement = true;
+        } else {
+            return templateResolver(tagName, namespace.parent);
+        }
+    }
+    return { promise, isVirtualElement };
+}, NodeProfile = class {
+    constructor (node, basePaths = [], rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
+        this.node = node, this.unique = unique, this.paths = basePaths, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
         const type = node.nodeType;
-        this.promises = [];
-        if (is(type, Node.TEXT_NODE)) {
+        if (Object.is(type, Node.TEXT_NODE)) {
             const resolvedTextContent = node.textContent.trim();
             if (!resolvedTextContent) { return; }
             if (resolvedTextContent.includes('${') && resolvedTextContent.includes('}')) {
-                this.text = true;
-                rootNodeProfiles && (this.root = true) && rootNodeProfiles.push(this) && (rootNodeProfiles = null);
-                this.closures = directiveResolver(`\`${ resolvedTextContent }\``, { name: quoteResolver('text') });
-                this.resolveLandmark(node, 'string template replaced');
+                rootNodeProfiles && rootNodeProfiles.push(this);
+                this.text = directiveResolver(`\`${ resolvedTextContent }\``, { name: 'text' }, ''), this.promises = [], this.node = this.resolveLandmark(node, 'string template replaced');
             } else {
                 this.raw = true;
             }
-        } else if (is(type, Node.ELEMENT_NODE)) {
-            const cloak = 'dg-cloak', { attributes, nodeName: name } = node, rawDirective = '@raw', raw = attributes[rawDirective];
-            if (raw || rawElementNames[name]) { // script/style/template
-                this.raw = true;
-                rootNodeProfiles && node.removeAttribute(cloak);
+            parent.children.push(this);
+        } else if (Object.is(type, Node.ELEMENT_NODE)) {
+            this.promises = [];
+            const cloak = 'dg-cloak', { attributes, tagName } = node, rawDirective = '@raw', raw = attributes[rawDirective];
+            this.html = node.isSameNode(document.documentElement) && node, this.raw = !!(raw || rawElementNames[tagName]);
+            if (this.raw) {
                 raw && directiveAttributeResolver(node, rawDirective);
+                rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                this.directives = { controllers: [], eventHandlers: [] };
-                const directiveNameSet = new Set(), resolvedTagName = caseResolver(name.toLowerCase()), isVirtualElement = !(namespace && namespace.customTagSet && namespace.customTagSet.has(resolvedTagName)) && (isInstanceOf(node, HTMLUnknownElement) || /[A-Z-]/g.test(resolvedTagName));
-                (isVirtualElement || is(node.tagName, 'TEMPLATE')) && (this.virtual = true);
-                forEach([...attributes], ({ name, value }) => this.resolveDirective(node, namespace, name, value, directiveNameSet));
-                if (this.virtual) {
-                    this.resolveLandmark(node, 'virtual node removed');
-                } else if (directiveNameSet.has('style')) {
-                    const style = node.style, styleKeys = [...style];
-                    if (styleKeys.length) {
-                        this.inlineStyle = node.getAttribute('style');
-                        this.styles = emptier();
-                        forEach(styleKeys, key => {
-                            const value = style[key], priority = style.getPropertyPriority(key);
-                            this.styles[key] = priority ? `${ value } !${ priority }` : value;
-                        });
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = tagName.toLowerCase(), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ((node instanceof HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                if (node.hasAttribute(slotDirective)) {
+                    const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
+                    directiveAttributeResolver(node, slotDirective, slotValue);
+                    if (this.defaultSlotScope) {
+                        this.defaultSlotScope[slotName] = node.innerHTML;
+                        warner([`Please avoid adding "$html" or "$text" directive on element "%o" as it's defined "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
+                        node.removeAttribute('$html');
+                        node.removeAttribute('$text');
+                        this.resolveDirective('$html', slotName, directives);
                     }
                 }
-                if (this.landmark || this.loading || !is(Object.keys(this.directives).length, 2) || this.directives.controllers.length || this.directives.eventHandlers.length) {
-                    rootNodeProfiles && (this.root = true) && rootNodeProfiles.push(this) && (rootNodeProfiles = null);
+                if (isVirtualElement || isTemplate) {
+                    this.virtual = true;
+                    this.resolveLandmark(node, 'virtual node removed');
+                }
+                forEach([...attributes], ({ name, value }) => this.resolveDirective(name, value, directives));
+                if (dynamic) {
+                    this.directives = directives, this.dynamic = directiveResolver(dynamic.value);
+                    node.removeAttribute(dynamicDirective);
                 } else {
-                    this.plain = true;
-                    rootNodeProfiles && node.hasAttribute(cloak) && (forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak));
+                    controllers.length || (directives.controllers = null);
+                    eventHandlers.length || (directives.eventHandlers = null);
+                    (directives.controllers || directives.eventHandlers || (Object.values(directives).length > 2)) && (this.directives = directives);
                 }
+                if (this.html) { return processorResolver(); }
+                this.plain = !(this.directives || this.landmark);
+                rootNodeProfiles && (this.plain ? (node.hasAttribute(cloak) && forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak)) : (rootNodeProfiles.push(this) && (rootNodeProfiles = null)));
                 if (isVirtualElement) {
-                    asserter(`It is illegal to use "$html" or "$text" directive on template module "${ resolvedTagName }"`, !this.directives.child);
-                    this.promises.push(namespace.fetch(resolvedTagName, moduleProfile).then(moduleProfile => this.resolveTemplate(moduleProfile)));
-                } else if (!this.directives.child && !is(node.tagName, 'HTML')) {
-                    this.resolveChildren(node, namespace, rootNodeProfiles, moduleProfile);
+                    asserter(`It is illegal to use "$html" or "$text" directive on template module "${ name }"`, !directives.child); // TODO
+                    this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile)))
+                } else if (!directives.child) {
+                    this.resolveChildren(node, rootNodeProfiles);
                 }
             }
-        } else if (is(type, Node.DOCUMENT_FRAGMENT_NODE)) { // template module
-            this.resolveChildren(node, namespace, rootNodeProfiles, node[meta]);
-        } else if (is(type, Node.COMMENT_NODE)) {
-            if (daggerOptions.commentNode) {
-                this.raw = true;
-            } else {
-                return this.resolveLandmark(node, 'comment node removed');
+            if (parent) {
+                parent.children.push(this);
+                this.promises.length && parent.promises.push(Promise.all(this.promises));
             }
+        } else if (Object.is(type, Node.DOCUMENT_FRAGMENT_NODE)) {
+            this.promises = [];
+            this.resolveChildren(node, rootNodeProfiles);
+        } else if (Object.is(type, Node.COMMENT_NODE)) {
+            this.raw = true;
         } else {
             asserter(`The node type "${ type }" is not supported`);
         }
-        parent && parent.children.push(this);
-        if (this.promises.length) {
-            const promise = Promise.all(this.promises).then(() => {
-                this.root && this.resolveClosures();
-                return 'closures resolved';
-            });
-            parent && parent.promises.push(promise);
-        } else {
-            this.root && this.resolveClosures();
-            delete this.promises;
-        }
     }
-    resolveChildren (node, namespace, rootNodeProfiles, moduleProfile = null) {
+    resolveChildren (node, rootNodeProfiles) {
         const childNodes = this.virtual ? node.content.childNodes : node.childNodes;
         if (childNodes.length) {
             this.children = [];
-            forEach(childNodes, childNode => new NodeProfile(childNode, namespace, rootNodeProfiles, this, !!this.unique, moduleProfile));
-            this.plain && this.children.every(child => child.raw) && (this.raw = true) && Reflect.deleteProperty(this, 'plain');
+            forEach(childNodes, childNode => Reflect.construct(NodeProfile, [childNode, this.paths, rootNodeProfiles, this, !!this.unique]));
+            this.plain && this.children.every(child => child.raw) && (this.raw = true) && (this.plain = false);
+        } else if (this.plain) {
+            (this.raw = true) && (this.plain = false);
         }
+        this.raw && (this.children = null);
         return this;
     }
-    resolveClosures (moduleScope = null) {
-        if (!this.closures) {
-            let closures = '';
-            if (!this.raw) {
-                const comma = ', ', ownClosures = this.plain ? '' : Object.entries(this.directives || {}).map(([key, value]) => `${ key }: ${ Array.isArray(value) ? `[${ value.join(comma) }]` : value }`).join(comma);
-                closures = `${ ownClosures ? `directives: ${ blockResolver(ownClosures) }, ` : '' }${ this.children ? `children: [${ this.children.map(child => child.resolveClosures(this.innerModuleScope)).join(comma) }]` : '' }`;
-                if (this.loading) {
-                    const postLoadClosure = closures ? closureResolver(blockResolver(closures)) : '';
-                    closures = `loading: ${ this.loading }, ${ postLoadClosure && `postLoad: ${ postLoadClosure }` }`;
-                }
-                this.exist && (closures = `exist: ${ this.exist }, ${ closures }`);
-                this.each && (closures = `each: ${ this.each }, ${ closures ? `slice: ${ closureResolver(blockResolver(closures)) }` : '' }`);
-                if (closures) {
-                    closures = blockResolver(closures);
-                    moduleScope && (closures = closureResolver(closures)) && (this.moduleScope = moduleScope);
-                } else {
-                    (this.raw = true) && Reflect.deleteProperty(this, 'plain');
-                }
-                this.root && (this.closures = closures);
-            }
-            return closures;
-        }
-        return this.closures;
-    }
-    resolveDirective (node, namespace, attributeName, value, directiveNameSet) {
+    resolveDirective (attributeName, value, directives) {
         const resolvedType = directiveType[attributeName[0]];
         if (!resolvedType) { return; }
-        this.virtual || directiveAttributeResolver(node, attributeName, value);
-        const fields = emptier(), [name, ...rawDecorators] = attributeName.substr(1).split('#'), resolvedDecorators = emptier(), decorators = rawDecorators.filter(decorator => decorator).map(decorator => decoratorResolver(decorator, resolvedDecorators)).join(', ');
-        decorators && (fields.decorators = blockResolver(decorators));
-        if (is(resolvedType, 'event')) {
-            fields.event = quoteResolver(name);
-            const { capture, once, passive } = resolvedDecorators;
-            (capture || once || passive) && (fields.options = `{ capture: ${ capture || false }, once: ${ once || false }, passive: ${ passive || false } }`);
-            this.directives.eventHandlers.push(directiveResolver(value, fields, isString(resolvedDecorators.event) ? resolvedDecorators.event : '$event'));
-        } else if (is(name, 'loading')) {
-            this.loading = directiveResolver(value, fields);
-        } else if (lifeCycleDirectiveNames[name]) {
-            const isSentry = is(name, 'sentry');
-            const decoratorName = isSentry ? 'next' : 'node';
-            const defaultParameterName = isSentry ? '$nextRouter' : '$node';
-            this.directives[name] = directiveResolver(value, fields, isString(resolvedDecorators[decoratorName]) ? resolvedDecorators[decoratorName] : defaultParameterName);
-        } else {
-            is(name, 'watch') || (fields.name = quoteResolver(name));
-            const directive = directiveResolver(value, fields);
-            if (is(name, 'each')) {
-                asserter([`It is illegal to use "$each" directive with "id" attribute together on node "%o"`, node], !node.hasAttribute('id'));
-                this.each = directive;
-                this.resolveLandmark(node, '"$each" node replaced');
-                delete this.unique;
-            } else if (is(name, 'exist')) {
-                this.exist = directive;
-                this.resolveLandmark(node, '"$exist" node replaced');
-            } else if (is(name, 'html') || is(name, 'text')) {
-                this.namespace = namespace;
-                this.directives.child = directive;
+        const node = this.node;
+        directiveAttributeResolver(node, attributeName, value);
+        node.removeAttribute(attributeName);
+        const fields = {}, { name, decorators } = decoratorsResolver(attributeName.substring(1));
+        fields.decorators = decorators;
+        if (Object.is(resolvedType, 'event')) {
+            fields.event = name;
+            if (lifeCycleDirectiveNames[name]) {
+                directives[name] = directiveResolver(value, fields, Object.is(name, 'sentry') ? '$nextRouter' : '$node');
             } else {
-                this.directives.controllers.push(directive);
-                if (is(name, 'class')) {
-                    node.classList.length && (this.classNames = [...node.classList].map(className => className.trim()));
-                } else if (interactiveDirectiveNames[name]) { // two-way data binding
-                    const { tagName, type } = node, isCheckedDirective = is(name, 'checked'), isValueDirective = is(name, 'value'), isSelectedDirective = is(name, 'selected'), isCheckedType = is(type, 'checkbox') || is(type, 'radio'), isFileType = is(type, 'file');
-                    if ((is(tagName, 'INPUT') && ((isFileType && is(name, 'file')) || (isCheckedType && (isCheckedDirective || isSelectedDirective)) || (!isCheckedType && !isFileType && isValueDirective))) || ((is(tagName, 'OPTION') && isCheckedDirective) || (is(tagName, 'SELECT') && isSelectedDirective) || (is(tagName, 'TEXTAREA') && isValueDirective))) {
-                        fields.event = quoteResolver(resolvedDecorators.input ? 'input' : 'change');
-                        this.directives.eventHandlers.push(directiveResolver(`(() => { try { Object.is(${ value }, $$_dg_data) || (${ value } = $$_dg_data); } catch (error) {} })()`, fields, '$$_dg_data'));
+                fields.options = decorators;
+                directives.eventHandlers.push(directiveResolver(value, fields, '$node, $event'));
+            }
+        } else {
+            const isWatch = Object.is(name, 'watch');
+            isWatch || (fields.name = name);
+            isWatch && decorators.lazy && (value = `${ value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).trim() || 'null' }, $node => ${ value }`);
+            const directive = directiveResolver(value, fields);
+            if (Object.is(name, 'each')) {
+                asserter([`It is illegal to use "$each" directive with "id" attribute together on node "%o"`, node], !node.hasAttribute('id'));
+                directives.each = directive;
+                this.resolveLandmark(node, '"$each" node replaced');
+                this.unique = false;
+            } else if (Object.is(name, 'exist')) {
+                directives.exist = directive;
+                this.resolveLandmark(node, '"$exist" node replaced');
+                this.unique = false;
+            } else if (Object.is(name, 'html') || Object.is(name, 'text')) {
+                warner([`Please avoid adding "$html" and "$text" directives together on element "%o"`, node], !directives.child);
+                directives.child = directive;
+            } else {
+                if (Object.is(name, 'class')) {
+                    this.classNames || (node.classList.length && (this.classNames = [...node.classList].map(className => className.trim())));
+                } else if (Object.is(name, 'style')) {
+                    if (!this.styles) {
+                        const style = node.style, styleKeys = [...style];
+                        if (styleKeys.length) {
+                            this.inlineStyle = node.getAttribute('style');
+                            this.styles = emptier();
+                            forEach(styleKeys, key => {
+                                const value = style[key], priority = style.getPropertyPriority(key);
+                                this.styles[key] = priority ? `${ value } !${ priority }` : value;
+                            });
+                        }
                     }
-                } else {
-                    directiveNameSet.add(name);
+                } else if (interactiveDirectiveNames[name]) { // two-way data binding
+                    const isValueDirective = Object.is(name, 'value');
+                    if (!decorators.oneway) {
+                        fields.options = true; // useCapture
+                        const { tagName, type } = node, isCheckedDirective = Object.is(name, 'checked'), isSelectedDirective = Object.is(name, 'selected'), isCheckedType = Object.is(type, 'checkbox') || Object.is(type, 'radio'), isFileType = Object.is(type, 'file');
+                        if (Object.is(name, 'focus')) {
+                            dataBinder(directives, value, fields, 'blur');
+                            dataBinder(directives, value, fields, 'focus');
+                        } else if ((Object.is(tagName, 'INPUT') && ((isFileType && (Object.is(name, 'file') || Object.is(name, 'result'))) || (isCheckedType && (isCheckedDirective || isSelectedDirective)) || (!isCheckedType && !isFileType && isValueDirective))) || ((Object.is(tagName, 'OPTION') && isCheckedDirective) || (Object.is(tagName, 'SELECT') && isSelectedDirective) || (Object.is(tagName, 'TEXTAREA') && isValueDirective))) {
+                            dataBinder(directives, value, fields, decorators.input ? 'input' : 'change');
+                        }
+                    }
+                    if (isValueDirective) { return directives.controllers.unshift(directive); }
                 }
+                directives.controllers.push(directive);
             }
         }
     }
-    resolveLandmark (node, message) { // each/exist/virtual
+    resolveLandmark (node, message) {
         if (this.landmark) { return; }
-        this.landmark = document.createTextNode('');
-        this.promises.push(Promise.resolve().then(() => node.replaceWith(this.landmark) || message));
+        this.landmark = textNode.cloneNode(false);
+        this.promises.push(promisor.then(() => node.replaceWith(this.landmark) || message));
+        return this.landmark;
     }
     resolveTemplate (moduleProfile) {
         const module = moduleProfile.module;
-        let cachedFields = templateCache.get(module);
+        let cachedFields = templateCacheMap.get(module);
         if (!cachedFields) {
             cachedFields = emptier();
-            const isTemplate = isInstanceOf(module, NodeProfile), template = isTemplate ? module : (module || {}).template;
-            asserter(`"${ moduleProfile.path }" or "${ moduleProfile.path }.template" is not a valid template module`, isInstanceOf(template, NodeProfile));
-            cachedFields.namespace = isTemplate ? moduleProfile.parent : moduleProfile;
+            const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'template')) || {}).module;
+            asserter(`"${ moduleProfile.path }" or "${ moduleProfile.path }.template" is not a valid template module`, template instanceof NodeProfile);
             cachedFields.children = template.children;
-            forEach(cachedFields.children, child => child.namespace && (child.namespace = cachedFields.namespace));
-            templateCache.set(module, cachedFields);
-            isTemplate || templateCache.set(template, cachedFields);
+            cachedFields.defaultSlotScope = template.defaultSlotScope;
+            originalWeakMapSet.call(templateCacheMap, module, cachedFields);
+            isTemplate || originalWeakMapSet.call(templateCacheMap, template, cachedFields);
         }
         Object.assign(this, cachedFields);
-        this.namespace.resolve().then(namespace => (this.innerModuleScope = freezer(namespace.extract()[this.namespace.name])));
-        return `template "${ moduleProfile.path }" resolved`;
-    }
-    updateNamespace (moduleProfile) {
-        this.namespace && (this.namespace = moduleProfile);
-        forEach(this.children, nodeProfile => nodeProfile.updateNamespace(moduleProfile));
-    }
-}) => NodeProfile)(), Topology = ((dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, ignoreSubscribe = false, ignoreUpdate = false, proxyConstructorSet = new Set([Array, Object]), proxyHandler = {
-    get: (target, property) => {
-        const controller = runtimeContext.controller, value = Reflect.get(target, property), prototype = Reflect.getPrototypeOf(target); // prototype is null for scope
-        if (ignoreSubscribe || !controller || reservedProperties.has(property) || (prototype && Reflect.has(prototype, property)) || isInstanceOf(value, Function)) { return value; }
-        const targetTopology = target[meta];
-        if (!prototype) { // scope
-            targetTopology[property].subscribe();
-        } else if (targetTopology.has(runtimeContext.topology)) { // go through data path
-            const topology = runtimeContext.topology.fetch(property);
-            isInstanceOf(topology, Topology) && topology.subscribe();
-        } else { // data path changed
-            targetTopology.forEach(topology => topology.fetch(property).subscribe());
+        if (Object.keys(this.defaultSlotScope).length) {
+            const slotScope = {}, emptySlot = '_$slot_', slotDirective = '@slot';
+            forEach(this.node.children, container => {
+                if (container.hasAttribute(slotDirective)) {
+                    const slotValue = container.getAttribute(slotDirective).trim(), slotName = `${ emptySlot }${ slotValue }`;
+                    directiveAttributeResolver(container, slotDirective, slotValue);
+                    slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
+                }
+            });
+            Reflect.has(this.defaultSlotScope, emptySlot) && !Reflect.has(slotScope, emptySlot) && (slotScope[emptySlot] = this.node.innerHTML);
+            this.slotScope = Object.assign({}, this.defaultSlotScope, slotScope);
         }
-        return value;
-    },
-    set: (target, property, newValue) => {
-        if (ignoreUpdate || reservedProperties.has(property)) { return Reflect.set(target, property, newValue); }
-        const contextTopology = runtimeContext.topology, targetTopology = target[meta]; // topology for scope, set for others
-        isInstanceOf(targetTopology, Set) && targetTopology.has(contextTopology) && contextTopology.unsubscribe();
-        if (!is(Reflect.get(target, property), newValue)) {
-            newValue = proxyResolver(newValue, target[meta], property);
-            Reflect.set(target, property, newValue);
-            topologyUpdater(targetTopology, property, newValue);
-        }
-        return true;
-    },
-    deleteProperty: (target, property) => {
-        const exist = Reflect.has(target, property);
-        if (Reflect.deleteProperty(target, property)) {
-            exist && topologyUpdater(target[meta], property);
-            return true;
-        }
-        return false;
+        return '';
     }
-}, reservedProperties = new Set([meta, Symbol.asyncIterator, Symbol.hasInstance, Symbol.isConcatSpreadable, Symbol.iterator, Symbol.match, Symbol.matchAll, Symbol.replace, Symbol.search, Symbol.species, Symbol.split, Symbol.toPrimitive, Symbol.toStringTag, Symbol.unscopables]), dispatchResolver = (controller, force) => {
-    if (runtimeContext.sensitive) {
-        controller.trigger(force);
-    } else if (!queueingControllerSet.has(controller)) {
-        queueingControllerSet.add(controller);
-        queueMicrotask(() => controller.trigger(force));
-    }
-}, fetcher = (parent = null, name = '') => parent ? parent.fetch(name) : new Topology(), proxyResolver = (rawData, parentTopology = null, property = '') => {
-    const topologies = isInstanceOf(parentTopology, Set) || Array.isArray(parentTopology) ? [...parentTopology].map(topology => fetcher(topology, property)) : [fetcher(parentTopology, property)];
-    if (!isInstanceOf(rawData) || isInstanceOf(rawData, HTMLElement)) {
-        ignoreUpdate && forEach(topologies, topology => (topology[meta].value = rawData));
-    } else if (rawData[meta]) { // proxy
-        forEach(topologies, topology => rawData[meta].add(topology));
-    } else {
-        const constructor = rawData.constructor;
-        if (proxyConstructorSet.has(constructor)) { // parentTopology is null for scope
-            const resolvedData = new Proxy(parentTopology ? new constructor() : emptier(), proxyHandler);
-            if (parentTopology) {
-                resolvedData[meta] = new Set(topologies);
-                ignoreUpdate && forEach(topologies, topology => (topology[meta].value = resolvedData));
-            } else { // scope
-                const topology = topologies[0];
-                resolvedData[meta] = topology;
-                topology[meta].value = resolvedData;
-            }
-            forEach(ownKeys(rawData), key => (resolvedData[key] = proxyResolver(rawData[key], topologies, key)));
-            parentTopology || Object.seal(resolvedData);
-            return resolvedData;
-        } else {
-            rawData[meta] = new Set(topologies);
-        }
-    }
-    return rawData;
-}, topologyUpdater = (topology, property, newValue) => {
-    if (isInstanceOf(topology, Set)) { return topology.forEach(topology => topologyUpdater(topology, property, newValue)); } // topology set
-    property && (topology = topology.fetch(property));
-    topology.update(newValue, dispatchSource.self);
-}, Topology = class {
-    constructor (parent = null, name = '') {
+}) => NodeProfile)(), Topology = class {
+    constructor (parent, name, value) {
+        this.value = this.oldValue = value, this.parent = null, this.controllerSet = new Set(), this.children = emptier(), this.name = name;
         if (parent) {
-            parent[name] = this;
-            const parentPath = parent[meta].path;
-            this[meta] = { parent, path: parentPath ? `${ parentPath }.${ name }` : name };
-        } else {
-            this[meta] = { path: name };
+            parent.children[name] = this;
+            this.parent = parent;
         }
-    }
-    destructor () {
-        forEach(Object.keys(this), key => this[key].destructor());
-        const metaInfo = this[meta];
-        delete metaInfo.parent;
-        if (metaInfo.controllerSet) {
-            metaInfo.controllerSet.clear();
-            delete metaInfo.controllerSet;
-        }
-        destructor(this);
     }
     dispatch (source = dispatchSource.bubble) {
-        const { controllerSet, parent } = this[meta];
-        if (controllerSet) {
-            const force = is(source, dispatchSource.bubble);
-            controllerSet.forEach(controller => dispatchResolver(controller, force));
-        }
-        if (!is(source, dispatchSource.mutation) && parent) { // bubble
-            asserter(`It's illegal to modify fields of "$router"`, isWritable || !is(rootScope.$router[meta], parent));
-            parent[meta].parent && parent.dispatch();
-        }
+        asserter(`It's illegal to modify fields of "$router"`, isRouterWritable || !Object.is(routerTopology, this.parent));
+        Object.is(source, dispatchSource.mutation) || (this.parent && this.parent.parent && this.parent.dispatch(dispatchSource.bubble));
+        const force = Object.is(source, dispatchSource.bubble);
+        (this.value && this.value[meta]) ? this.value[meta].forEach(topology => topology.trigger(force)) : this.trigger(force);
     }
-    fetch (name) { return this[name] || new Topology(this, name); }
+    fetch (name, value) {
+        const topology = this.children[name] || new Topology(this, name, value);
+        value && value[meta] && originalSetAdd.call(value[meta], topology);
+        return topology;
+    }
     subscribe () {
-        runtimeContext.topology = this;
-        const controller = runtimeContext.controller, { topologySet, visitedTopologySet } = controller;
-        if (visitedTopologySet.has(this)) { return; }
-        const metaInfo = this[meta], { controllerSet, parent } = metaInfo;
-        parent && parent[meta].parent && parent.unsubscribe(controller);
-        topologySet.add(this);
-        visitedTopologySet.add(this);
-        controllerSet ? controllerSet.add(controller) : (metaInfo.controllerSet = new Set([controller]));
+        if (currentController) {
+            originalSetAdd.call(currentController.topologySet, this);
+            originalSetAdd.call(this.controllerSet, currentController);
+            const parent = this.parent;
+            parent && parent.parent && parent.unsubscribe(currentController);
+        }
+        return this;
     }
-    unsubscribe (controller = runtimeContext.controller) {
-        controller.topologySet.delete(this);
-        const controllerSet = this[meta].controllerSet;
-        controllerSet && controllerSet.delete(controller);
+    trigger (force) {
+        this.controllerSet.size ? this.controllerSet.forEach(controller => controller.owner.updateController(controller, force)) || promisor.then(() => (this.oldValue = this.value)) : (this.oldValue = this.value);
     }
-    update (newValue, source = dispatchSource.mutation) {
-        const metaInfo = this[meta], oldValue = metaInfo.value;
-        if (is(oldValue, newValue)) { return; }
-        (!Reflect.has(metaInfo, 'oldValue') || runtimeContext.sensitive) && (metaInfo.oldValue = oldValue);
-        metaInfo.value = newValue;
-        isInstanceOf(oldValue) && !isInstanceOf(oldValue, HTMLElement) && oldValue[meta] && oldValue[meta].delete(this) && forEach(ownKeys(oldValue), key => this[key] && this[key].update((newValue || emptyObject)[key]));
-        isInstanceOf(newValue) && !isInstanceOf(newValue, HTMLElement) && newValue[meta] && newValue[meta].add(this) && forEach(ownKeys(newValue), key => fetcher(this, key).update((newValue || emptyObject)[key]));
+    unsubscribe (controller) {
+        originalSetDelete.call(controller.topologySet, this);
+        originalSetDelete.call(this.controllerSet, controller);
+    }
+    update (newValue, source) {
+        const value = this.value;
+        if (Object.is(value, newValue)) { return; }
+        (value instanceof Object) && Reflect.has(value, meta) && originalSetDelete.call(value[meta], this);
+        (newValue instanceof Object) && Reflect.has(newValue, meta) && originalSetAdd.call(newValue[meta], this);
+        this.value = newValue;
         this.dispatch(source);
+        if (Object.is(newValue) && this.parent) {
+            Reflect.deleteProperty(this.parent.children, this.name);
+            this.parent = null;
+        }
+        forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
     }
-}) => {
-    Topology.resolveScope = rawData => {
-        ignoreUpdate = true;
-        const resolvedData = proxyResolver(rawData);
-        ignoreUpdate = false;
-        return resolvedData;
-    };
-    const originalMethod = JSON.stringify;
-    JSON.stringify = (...parameters) => {
-        ignoreSubscribe = true;
-        const string = originalMethod(...parameters);
-        ignoreSubscribe = false;
-        return string;
-    };
-    return Topology;
-})(), runtime = ((base = '', customTags = null, currentStyles = [], htmlNodeContext = null, htmlNodeProfile = null, ignoreHashChange = false, nextRouter = null, rootNodes = null, routers = null, resolvedRouters = null, rootRouter = null, routerOptions = { aliases: {}, default: '', hashPrefix: '#', overrideRelativeLinks: true, redirects: {}, scenarios: {} }, relativeLinkResolver = ((tagNames = hashTableResolver('A', 'AREA')) => event => {
+}, runtime = ((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerOptions = null, styleModules = { '': styleModuleSet }, relativeLinkResolver = ((tagNames = hashTableResolver('A', 'AREA')) => event => {
     const node = event.target;
     if (!tagNames[node.tagName] || !node.hasAttribute('href')) { return; }
-    const href = node.getAttribute('href').trim(), hashPrefix = routerOptions.hashPrefix;
-    href && ![hashPrefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !is(href, new URL(href, document.baseURI).href) && (node.href = `${ hashPrefix }${ href }`);
-})(), hashChangeResolver = ((routerChangeResolver = ((reservedFieldNames = hashTableResolver('$modules', '$router', '$validator'), rootModuleProfileResolver = (rootModuleProfile, nextRouter) => {
-    forEach(Object.keys(rootScope).filter(key => !reservedFieldNames[key]), key => Reflect.deleteProperty(rootScope, key));
-    const styleModuleSet = new Set(), modules = rootModuleProfile.extract(styleModuleSet)[rootModuleProfile.name];
-    Object.assign(rootScope, modules);
-    rootScope.$modules = modules;
-    isWritable = true;
-    htmlNodeContext ? forEach(ownKeys(rootScope.$router), key => (rootScope.$router[key] = nextRouter[key])) : (rootScope.$router = nextRouter);
-    isWritable = false;
-    forEach(Object.keys(modules), key => freezer(rootScope[key]));
-    forEach(currentStyles, style => styleModuleSet.has(style) || ((style.disabled = true) && directiveAttributeUpdater(style, 'active', false))); // disable previous styles
-    currentStyles = [...styleModuleSet];
-    forEach(currentStyles, style => (style.disabled = false) || directiveAttributeUpdater(style, 'active', true));
-    if (htmlNodeContext) {
-        forEach(rootNodeProfiles, nodeProfile => nodeProfile.updateNamespace(rootModuleProfile));
-        const loaded = (htmlNodeContext.closures.directives || {}).loaded;
-        loaded && loaded.processor();
+    const href = node.getAttribute('href').trim();
+    if (Object.is(routerOptions.mode, 'history')) {
+        event.preventDefault();
+        history.pushState({}, '', href);
+        routeChangeResolver();
     } else {
-        htmlNodeContext = new NodeContext(htmlNodeProfile, functionResolver(closureResolver(htmlNodeProfile.closures, 2))(rootScope, htmlScope));
+        const prefix = routerOptions.prefix;
+        href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }${ href }`);
     }
-}) => () => {
-    daggerOptions.routerLog && logger(`router changed from "${ rootScope.$router.path || '[root]' }" to "${ nextRouter.path }"`);
-    templateCache.clear();
-    const rootModules = Object.assign({}, ...resolvedRouters.map(router => router.modules));
-    forEach(Object.keys(rootModules), key => isInstanceOf(rootModules[key], ModuleProfile) || (rootModules[key] = routers.find(router => router.resolveModule(key, base)).modules[key]));
-    const rootModuleProfile = new ModuleProfile({ content: rootModules, customTags, type: ModuleProfile.resolvedType.namespace }, base), resolver = rootModuleProfile.resolve().then(() => rootModuleProfileResolver(rootModuleProfile, Topology.resolveScope(nextRouter)));
-    window.$ModuleProfile = content => new ModuleProfile({ content, type: 'namespace' }, '', '__demo__', rootModuleProfile); // TODO: demo only
-    window.$Router = Router; // TODO: demo only
-    if (htmlNodeContext) {
-        const { unloading, unloaded } = htmlNodeContext.closures.directives || {};
-        unloading && unloading.processor();
-        unloaded && unloaded.processor();
-    } else {
-        forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, rootModuleProfile, rootNodeProfiles, null, true]));
-        warner(['No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
+})(), routeChangeResolver = ((routerChangeResolver = ((rootNamespaceResolver = nextRouter => {
+    logger(`router has changed from "${ (rootScope.$router || {}).path || '[root]' }" to "${ nextRouter.path }"`);
+    processorResolver();
+    isRouterWritable = true;
+    rootScope.$router = nextRouter;
+    isRouterWritable = false;
+    if (!currentStyleSet) {
+        rootNodeProfiles.map(nodeProfile => new NodeContext(nodeProfile));
+        routerTopology = [...rootScope.$router[meta]][0];
     }
-    return resolver;
-})(), inspectResolver = ((resolver = (sentries, array, token) => {
-    const index = array.findIndex(rejected => rejected);
-    if (index < 0) { return; }
-    const owner = sentries[index].owner;
-    token.stop = true;
-    daggerOptions.routerLog && warner([`The router redirect is prevented by "%o"`, owner.node || owner.profile.node]);
-    ignoreHashChange = true;
-    location.hash = `${ rootScope.$router.hashPrefix }${ rootScope.$router.path }`;
-}) => token => {
-    const sentries = [...sentrySet];
-    return Promise.all(sentries.map(sentry => sentry.processor(nextRouter))).then(array => resolver(sentries, array, token));
-})()) => (hash = location.hash.replace(routerOptions.hashPrefix, '')) => {
-    if (ignoreHashChange) {
-        ignoreHashChange = false;
-        return;
+    if (!Object.is(currentStyleSet, styleModuleSet)) {
+        currentStyleSet && currentStyleSet.forEach(style => (style.disabled = !styleModuleSet.has(style), style.setAttribute('active-debug', !style.disabled)));
+        styleModuleSet.forEach(style => (style.disabled = false, style.setAttribute('active-debug', true)));
+        currentStyleSet = styleModuleSet;
     }
+}) => nextRouter => {
+    logger(`router is changing from "${ (rootScope.$router || {}).path || '[root]' }" to "${ nextRouter.path }"...`);
+    rootNamespace.childrenCache = emptier();
+    // originalMapClear.call(templateCacheMap);
+    const path = nextRouter.path;
+    styleModuleSet = styleModules[path] || (styleModules[path] = new Set());
+    const rootModules = Object.assign(emptier(), ...resolvedRouters.map(router => router.modules));
+    forEach(Object.keys(rootModules), key => (rootModules[key] instanceof ModuleProfile) || (rootModules[key] = routers.find(router => router.resolveModule(key, base)).modules[key]));
+    rootNamespace = new ModuleProfile({ content: rootModules, type: resolvedType.namespace }, base);
+    return rootNamespace.resolve().then(() => rootNamespaceResolver(nextRouter));
+})()) => (route = (Object.is(routerOptions.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerOptions.prefix, '')) => {
     const slash = '/';
-    hash.startsWith(slash) || (hash = `${ slash }${ hash }`);
-    const { aliases, hashPrefix, redirects } = routerOptions, [path = '', query = ''] = hash.split('?'), redirectPath = aliases[path] || redirects[path];
+    route.startsWith(slash) || (route = `${ slash }${ route }`);
+    const { mode, aliases, prefix, redirects } = routerOptions, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path] || redirects[path];
     if (redirectPath) {
-        daggerOptions.routerLog && logger(`router redirected from "${ path }" to "${ redirectPath }"`);
-        hash = query ? `${ redirectPath }?${ query }` : redirectPath;
-        aliases[path] || history.replaceState({ path: hash }, hash, `${ hashPrefix }${ hash }`);
-        return hashChangeResolver(hash);
+        logger(`router redirected from "${ path }" to "${ redirectPath }"`);
+        route = query ? `${ redirectPath }?${ query }` : redirectPath;
+        aliases[path] || history.replaceState({ path: route }, '', `${ prefix }${ route }`);
+        return routeChangeResolver(route);
     }
-    const scenarios = {}, paths = is(path, slash) ? [''] : path.split(slash);
+    const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
     if (!rootRouter.match(routers, scenarios, paths)) {
-        asserter(`The router "${ path }" is invalid`, routerOptions.default);
-        return hashChangeResolver(routerOptions.default);
+        if (Reflect.has(routerOptions, 'default')) {
+            warner(`The router "${ path }" is invalid, redirect to the default router "${ routerOptions.default }"`);
+            return routeChangeResolver(routerOptions.default);
+        } else {
+            asserter(`The router "${ path }" is invalid`);
+        }
     }
     resolvedRouters = routers.slice().reverse();
     forEach(resolvedRouters, router => router.initialize());
-    const queries = {};
-    query && forEach([...new URLSearchParams(query)], ([key, value]) => (queries[key] = safeDataResolver(value)));
-    const schemes = Object.assign({}, ...resolvedRouters.map(router => router.variables), queries, ...resolvedRouters.map(router => router.constants));
-    nextRouter = Object.freeze({ hash, hashPrefix, path, paths, query, queries, scenarios, schemes, identity: Symbol('identity') });
-    const token = {};
-    serializer([htmlNodeContext && inspectResolver(token), () => routerChangeResolver()], token);
-})(), resetEventHandler = ((resetFlag = { detail: true }, changeEvent = new CustomEvent('change', resetFlag), inputEvent = new CustomEvent('input', resetFlag)) => event => is(event.target.tagName, 'FORM') && forEach(document.querySelectorAll('input, textarea'), child => {
+    const queries = {}, variables = Object.assign({}, ...resolvedRouters.map(router => router.variables)), constants = Object.assign({}, ...resolvedRouters.map(router => router.constants));
+    query && forEach([...new URLSearchParams(query)], ([key, value]) => (queries[key] = value));
+    forEach(Object.keys(variables), key => {
+        if (Reflect.has(queries, key) && !Reflect.has(constants, key)) {
+            try {
+                const type = typeof variables[key], query = queries[key];
+                variables[key] = Object.is(type, 'string') ? query : window[`${ type[0].toUpperCase() }${ type.substring(1) }`](JSON.parse(query));
+            } catch (error) {
+                asserter(`The expected variable type is "${ type }" but the real queryString content is "${ query }"`);
+            }
+        }
+    });
+    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
+    Promise.all([...sentrySet].map(sentry => sentry.processor(nextRouter) && (warner([`The router redirect is prevented by "%o"`, sentry.owner.node || sentry.owner.profile.node]) || true))).then(array => array.some(rejected => rejected) ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter));
+})(), resetEventHandler = ((resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken)) => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true, true), child => {
     child.dispatchEvent(inputEvent);
     child.dispatchEvent(changeEvent);
 }))(), Router = class {
-    constructor ({ children, path = '', constants = {}, variables = {}, modules = null, tailable = !children }, parent = null) {
-        this.constants = constants, this.variables = variables, this.modules = modules, this.tailable = tailable;
-        this.scenarios = isInstanceOf(path) ? Object.entries(path).map(([scenario, regExp]) => ({ scenario, regExp: new RegExp(regExp || '^$') })) : [{ scenario: path, regExp: new RegExp(`^${ path }$` || '^$') }];
-        if (parent) {
-            this.parent = parent;
-            parent.children.push(this);
-        }
+    constructor ({ children, path = '', constants = {}, variables = {}, modules = null, tailable = false }, parent = null) {
+        this.constants = constants, this.variables = variables, this.modules = modules, this.children = null, this.parent = parent;
+        this.scenarios = (path instanceof Object) ? Object.keys(path).map(scenario => ({ scenario, regExp: new RegExp(path[scenario] || '^$') })) : [{ scenario: path, regExp: new RegExp(`^${ path }$`) }];
+        this.initialized = false;
         if (children) {
             asserter([`The router's children should be "array" instead of "%o"`, children], Array.isArray(children));
-            this.children = [];
-            forEach(children, child => new Router(child, this));
+            this.children = children.filter(child => {
+                try {
+                    return !Reflect.has(child, 'match') || matchMedia(child.match).matches || functionResolver(child.match);
+                } catch (error) {
+                    return false;
+                }
+            }).map(child => new Router(child, this));
         }
+        this.tailable = tailable || !(this.children || []).length;
     }
     initialize () {
         if (this.initialized) { return; }
@@ -1235,64 +1282,83 @@ export default ((daggerOptions = { integrity: true }, rootNodeProfiles = [], emp
     match (routers, scenarios, paths, length = paths.length, start = 0) {
         const scenarioLength = this.scenarios.length;
         if ((length >= scenarioLength) && this.scenarios.every(({ scenario, regExp }, index) => {
-            const path = paths[start + index];
-            if (regExp.test(path)) {
-                scenarios[scenario] = path;
-                return true;
-            }
-        })) {
+                const path = paths[start + index];
+                if (regExp.test(path)) {
+                    scenarios[scenario] = path;
+                    return true;
+                }
+            })) {
             start += scenarioLength;
-            if ((is(length, start) && this.tailable) || (this.children || []).find(child => child.match(routers, scenarios, paths, length, start))) {
-                routers.push(this);
-                return true;
-            }
+            return ((Object.is(length, start) && this.tailable) || (this.children || []).find(child => child.match(routers, scenarios, paths, length, start))) && routers.push(this);
         }
     }
     resolveModule (key, base) {
         if (this.modules) {
             const module = this.modules[key];
-            this.modules[key] = module && (isInstanceOf(module, ModuleProfile) ? module : new ModuleProfile(module, base, key));
+            this.modules[key] = module && ((module instanceof ModuleProfile) ? module : new ModuleProfile(module, base, key));
             return this.modules[key];
         }
     }
-}, runtime = (configs = {}) => {
-    const { options = {}, rootSelectors = ['title', 'body'], routing = {} } = configs;
-    Object.assign(daggerOptions, options); // daggerOptions: commentNode, directiveAttribute, moduleLog, routerLog, integrity
-    Object.assign(routerOptions, routing); // routing: aliases, default, hashPrefix, overrideRelativeLinks, redirects, scenarios
-    logger(`Powered by "dagger V${ version }".`);
-    asserter([`The "rootSelectors" should be "string array" instead of "%o"`, rootSelectors], Array.isArray(rootSelectors) && rootSelectors.every(selector => isString(selector)));
-    const { overrideRelativeLinks, scenarios } = routerOptions;
-    overrideRelativeLinks && document.body.addEventListener('click', relativeLinkResolver, true);
-    document.body.addEventListener('reset', resetEventHandler);
-    rootNodes = [...new Set(rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat())];
-    const html = document.querySelector('html');
-    asserter(['It\'s illegal to set "%o" as root node', html], !rootNodes.includes(html));
-    forEach(rootNodes, rootNode => {
-        const conflictRootNode = rootNodes.find(node => !rootNode.isSameNode(node) && rootNode.contains(node));
-        asserter(['The root element "%o" contains another root node "%o"', rootNode, conflictRootNode], !conflictRootNode);
-    });
-    htmlNodeProfile = new NodeProfile(html), ({ base, customTags } = configs), rootRouter = new Router(scenarios);
-    window.addEventListener('hashchange', () => hashChangeResolver());
-    hashChangeResolver();
-}, version = '1.0.0 - RC') => {
+}) => {
+    rootScope = Object.seal(proxyResolver({ $router: null, $validator: (data, path, { type, assert, required } = {}) => {
+        if ((data == null) || Number.isNaN(data)) { asserter([`The data "${ path }" should be assigned a valid value instead of "%o" before using`, data], !required); }
+        type && (Array.isArray(type) ? asserter([`The type of data "${ path }" should be one of "%o" instead of "%o"`, type, (data.constructor || {}).name], type.some(type => (data instanceof type))) : asserter([`The type of data "${ path }" should be "%o" instead of "%o"`, type, (data.constructor || {}).name], data instanceof type));
+        if (!assert) { return; }
+        if (assert instanceof Function) {
+            asserter(`The assert of "${ path }" is falsy`, assert(data));
+        } else if (Array.isArray(assert)) {
+            forEach(assert, func => {
+                asserter(`The type of assert should be "function" instead of "${ typeof func }"`, func instanceof Function);
+                asserter(`The assert of "${ path }" is falsy`, func(data));
+            });
+        } else { asserter(`The type of assert should be "function" or "function array" instead of "${ typeof assert }"`); }
+    }}));
     const register = ((resolver = (prototype, name) => {
-        const method = prototype[name];
-        asserter([`"${ name }" is not a valid method name of prototype object "%o"`, prototype], isInstanceOf(method, Function));
+        const method = (prototype || {})[name];
+        asserter([`"${ name }" is not a valid method name of prototype object "%o"`, prototype], method && (method instanceof Function));
         const resolvedMethod = function (...parameters) {
-            const result = method.bind(this)(...parameters);
+            const result = method.apply(this, parameters);
             this[meta] && this[meta].forEach(topology => topology.dispatch());
             return result;
-        }
+        };
         Reflect.defineProperty(resolvedMethod, 'name', { configurable: true, value: name });
         Reflect.defineProperty(prototype, name, { get: () => resolvedMethod });
     }) => (target, names) => {
-        asserter([`The 1st argument of "$dagger.register" should be valid "object" instead of "%o"`, target], isInstanceOf(target));
+        asserter([`The 1st argument of "$dagger.register" should be valid "object" instead of "%o"`, target], target instanceof Object);
         asserter([`The 2nd argument of "$dagger.register" should be "string array" instead of "%o"`, names], Array.isArray(names) && names.every(name => isString(name)));
-        const prototype = target.prototype;
-        forEach(names, name => resolver(prototype, name));
+        forEach(names, name => resolver(target.prototype, name));
     })();
-    const mapMethodNames = ['set', 'delete'], setMethodNames = ['add', 'delete'];
-    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, mapMethodNames) || register(Set, setMethodNames) || register(WeakMap, mapMethodNames) || register(WeakSet, setMethodNames);
-    window.$dagger = Object.freeze(Object.assign(emptier(), { register, runtime, version }));
+    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
+    JSON.stringify = processorWrapper(JSON.stringify);
+    forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
+    const runtime = (configs = { base: document.baseURI, content: {} }) => { // TODO: base
+        logger(`Powered by "dagger V${ $dagger.version }".`);
+        const content = configs.content;
+        if (content.routing) {
+            content.routing = Object.assign(daggerOptions.routing, content.routing);
+            Object.assign(daggerOptions, content);
+        } else {
+            daggerOptions.routing.scenarios = { modules: content };
+        }
+        routerOptions = daggerOptions.routing;
+        Object.is(routerOptions.mode, 'history') || routerOptions.prefix || (routerOptions.prefix = '#');
+        const rootModules = emptier();
+        document.body.addEventListener('click', relativeLinkResolver, true);
+        document.body.addEventListener('reset', resetEventHandler);
+        base = configs.base, rootRouter = new Router(routerOptions.scenarios), rootRouter.initialize();
+        forEach(Object.keys(rootRouter.modules || {}), key => (rootModules[key] = rootRouter.resolveModule(key, base)));
+        rootNamespace = Reflect.construct(ModuleProfile, [{ content: rootModules, type: resolvedType.namespace }, base]);
+        rootNamespace.resolve().then(() => styleModuleSet.forEach(style => (style.disabled = false)) || serializer([new NodeContext(new NodeProfile(document.documentElement)).promise, () => {
+            const rootSelectors = daggerOptions.rootSelectors;
+            asserter([`The "rootSelectors" should be "string array" instead of "%o"`, rootSelectors], Array.isArray(rootSelectors) && rootSelectors.every(selector => isString(selector)));
+            const rootNodes = [...new Set(rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat())];
+            asserter(['It\'s illegal to set "%o" as root node', document.documentElement], !rootNodes.includes(document.documentElement));
+            forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, [], rootNodeProfiles, null, true]));
+            warner(['No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
+            window.addEventListener('popstate', () => routeChangeResolver());
+            routeChangeResolver();
+        }]));
+    };
+    window.$dagger = Object.freeze(Object.assign(emptier(), { register, runtime, version: '1.0.0 - RC' }));
     return runtime;
-})()) => head.querySelector('script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(head), ({ base, content }) => runtime(Object.assign({ base }, content))])) : runtime)();
+})()) => querySelector(document, 'script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();
