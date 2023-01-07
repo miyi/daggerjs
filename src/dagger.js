@@ -152,7 +152,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[a-zA-Z-_]{1}[\w-$]*$/, pathRegExp = /^[a-zA-Z-_]{1}[\w-$]*(\.[$a-zA-Z-_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, pathRegExp = /^[$a-zA-Z_]{1}[\w-$]*(\.[$a-zA-Z_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
@@ -362,7 +362,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
             }
             originalSetAdd.call(styleModuleSet, module);
         } else if (Object.is(type, resolvedType.template)) {
-            asserter(`It's invalid to use '-' in template module path "${ this.path }"`, !this.path.includes('-'));
+            asserter(`It's invalid to use "$" or "-" in template module path "${ this.path }"`, !this.path.includes('$') && !this.path.includes('-'));
         }
         return module;
     }

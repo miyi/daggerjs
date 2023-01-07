@@ -11,7 +11,7 @@
     "rootSelectors": ["title", "body"],
     "routing": {
         "mode": "history",
-        "prefix": "/index6",
+        "prefix": "",
         "aliases": {
             "/1": "/index1"
         },

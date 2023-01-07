@@ -2,6 +2,17 @@ dagger.js is a lightweight html-based runtime web frontend framework.
 
 The current version is V0.9.17  
 
+The sha256 integrity of each file:
+
+|  file name   | integrity  |
+|  ----  | ----  |
+| dagger.js  | sha256-N/eaOax8vjpVDpTdU/eQ5uwzKkFxXyeM56nf0wtEqO4= |
+| dagger.min.js  | sha256-GJEQwFhYod2v/exTAS0Dg2VC1Dif+iJZqBFTFaNI+N0= |
+| dagger.release.js  | sha256-+9E2KDtgJ9DKSmRU9NQ8l/s41lWzCn7niminMfcimL4= |
+| dagger.release.min.js  | sha256-+m+5EjhiliZTdLn31KYAq1CU+Amp0g76v62Wtw3ZqqI= |
+
+dagger.js is a pure runtime framework, you don't need to prepare anything for using it but the background knowledge of html/javaScript/css.  
+
 #### Just insert the following two script tags insides the head section of the entry html page of your application to setup dagger.js:  
 ##### <script type="module" crossorigin="anonymous" src="https://assets.codepen.io/5782383/dagger.release.js" defer></script>
 ##### <script type="dagger/configs"></script><!-- dagger configs -->
