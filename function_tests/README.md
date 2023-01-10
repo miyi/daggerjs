@@ -1,1 +1,1 @@
-npx allure serve  
+view test report: npx allure serve  
