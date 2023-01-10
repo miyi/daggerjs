@@ -1,0 +1,6 @@
+/.vscode
+/allure-results
+/coverage
+/widgets
+/node_modules
+.DS_Store
