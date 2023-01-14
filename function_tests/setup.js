@@ -14,7 +14,12 @@ versions.forEach(({ tag, path }) => (frameworks[tag] = readFileSync(`../src/dagg
 
 const initialize = async (version, dirName, contentPath, configs = '') => browser.newPage().then(page => page.setContent(`${ htmlTemplateStart.replace('%CONFIGS%', configs) }${ frameworks[version] }${ htmlTemplateEnd.replace('%CONTENT%', readFileSync(resolve(dirName, contentPath))) }`) && page).then(page => pageExtend(page));
 
-global.runner = (name, describe, it, dirName, callback, contentPath = 'content.html') => describe(name, () => versions.forEach(({ tag, desc }) => it(desc, () => initialize(tag, dirName, contentPath).then(page => Promise.all(callback(page)).then(() => page.close())))));
+global.runner = (name, describe, it, dirName, callback, contentPath = 'content.html') => describe(name, () => versions.forEach(({ tag, desc }) => it(desc, () => initialize(tag, dirName, contentPath).then(page => {
+    let promise = callback(page);
+    Array.isArray(promise) && (promise = Promise.all(promise));
+    (promise instanceof Promise) || (promise = Promise.resolve(promise));
+    return promise.then(() => page.close());
+}))));
 
 module.exports = async () => (global.browser = await puppeteer.launch({
     headless: true,
