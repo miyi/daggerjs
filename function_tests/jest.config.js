@@ -2,7 +2,7 @@ module.exports = {
     globalSetup: "./setup.js",
     globalTeardown: "./teardown.js",
     testMatch: [
-        '**/cases/**/*.js'
+        '**/cases/**/test.js'
     ],
     reporters: [
         "default",

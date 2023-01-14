@@ -12,7 +12,19 @@ const versions = [{ tag: 'debug', path: '', desc: 'debug version' },
 const frameworks = {};
 versions.forEach(({ tag, path }) => (frameworks[tag] = readFileSync(`../src/dagger${ path }.js`).toString()));
 
-global.versions = versions;
-global.initialize = async (version, contentPath, configs = '') => browser.newPage().then(page => page.setContent(`${ htmlTemplateStart.replace('%CONFIGS%', configs) }${ frameworks[version] }${ htmlTemplateEnd.replace('%CONTENT%', readFileSync(resolve(baseContentPath, contentPath))) }`) && page).then(page => pageExtend(page));
+const initialize = async (version, dirName, contentPath, configs = '') => browser.newPage().then(page => page.setContent(`${ htmlTemplateStart.replace('%CONFIGS%', configs) }${ frameworks[version] }${ htmlTemplateEnd.replace('%CONTENT%', readFileSync(resolve(dirName, contentPath))) }`) && page).then(page => pageExtend(page));
 
-module.exports = async () => (global.browser = await puppeteer.launch({ headless: true }));
+global.runner = (name, describe, it, dirName, callback, contentPath = 'content.html') => describe(name, () => versions.forEach(({ tag, desc }) => it(desc, () => initialize(tag, dirName, contentPath).then(page => Promise.all(callback(page)).then(() => page.close())))));
+
+module.exports = async () => (global.browser = await puppeteer.launch({
+    headless: true,
+    args: [
+        '–disable-gpu',
+        '–disable-dev-shm-usage',
+        '–disable-setuid-sandbox',
+        '–no-first-run',
+        '–no-sandbox',
+        '–no-zygote',
+        '–single-process'
+    ]
+}));
