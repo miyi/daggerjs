@@ -1,0 +1,26 @@
+[
+    {
+        "tag": "debug",
+        "path": "",
+        "desc": "debug version",
+        "integrity": "sha256-N/eaOax8vjpVDpTdU/eQ5uwzKkFxXyeM56nf0wtEqO4="
+    },
+    {
+        "tag": "debug.min",
+        "path": ".min",
+        "desc": "minimal debug version",
+        "integrity": "sha256-GJEQwFhYod2v/exTAS0Dg2VC1Dif+iJZqBFTFaNI+N0="
+    },
+    {
+        "tag": "release",
+        "path": ".release",
+        "desc": "release version",
+        "integrity": "sha256-+9E2KDtgJ9DKSmRU9NQ8l/s41lWzCn7niminMfcimL4="
+    },
+    {
+        "tag": "release.min",
+        "path": ".release.min",
+        "desc": "minimal release version",
+        "integrity": "sha256-+m+5EjhiliZTdLn31KYAq1CU+Amp0g76v62Wtw3ZqqI="
+    }
+]
