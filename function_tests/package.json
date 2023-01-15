@@ -1,7 +1,7 @@
 {
   "scripts": {
     "test": "jest --runInBand --detectOpenHandles",
-    "test:coverage": "jest --collect-coverage"
+    "test:coverage": "jest --collect-coverage --detectOpenHandles"
   },
   "devDependencies": {
     "allure-commandline": "^2.20.1",
