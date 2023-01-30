@@ -1,0 +1,7 @@
+<div +loading="{ count1: 0, count2: 0 }">
+    <div id="div" +click#current="count1++">
+        <button id="button" +click="count2++">button</button>
+    </div>
+    <span id="count1">${ count1 }</span>
+    <span id="count2">${ count2 }</span>
+</div>
