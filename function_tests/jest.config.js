@@ -1,9 +1,8 @@
 module.exports = {
     globalSetup: "./setup.js",
     globalTeardown: "./teardown.js",
-    testMatch: [
-        '**/cases/**/test.js'
-    ],
+    testPathIgnorePatterns: ['ignored'],
+    testMatch: ['**/cases/**/test.js'],
     reporters: [
         "default",
         "jest-allure"
