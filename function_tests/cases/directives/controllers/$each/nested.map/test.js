@@ -1,4 +1,4 @@
-runner('$each directive nested.object test suite', describe, it, __dirname, page => {
+runner('$each directive nested.map test suite', describe, it, __dirname, page => {
     const divs = page.jQuery('.each-div-layer1');
     return [divs.then(divs => expect(divs.length).toBe(3)), async () => {
         const spans = divs.find('span');
