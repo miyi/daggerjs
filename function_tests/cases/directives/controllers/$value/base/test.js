@@ -1,8 +1,7 @@
 runner('$value directive base test suite', describe, it, __dirname, async page => {
     const selectors = ['button', 'checkbox', 'color', 'date', 'datetime-local', 'email', 'file', 'hidden', 'image', 'month', 'number', 'password', 'radio', 'range', 'reset', 'search', 'submit', 'tel', 'text', 'time', 'url', 'week'];
     const helper = (selectorValueMapping, defaultValue = '') => Promise.all(selectors.map((selector, index) => page.jQuery(`#${selector}`).val().then(value => expect(`${ selector }: ${ value }`).toBe(`${ selector }: ${ Reflect.has(selectorValueMapping, selector) ? selectorValueMapping[selector] : defaultValue }`))));
-    // default value
-    await helper({
+    await helper({ // default value
         color: '#000000',
         range: '50'
     });
@@ -16,4 +15,60 @@ runner('$value directive base test suite', describe, it, __dirname, async page =
         time: '',
         week: ''
     }, '66');
+    await page.jQuery('#button2').trigger('click'); // set value as #aabb00
+    await helper({
+        date: '',
+        'datetime-local': '',
+        file: '',
+        month: '',
+        number: '',
+        range: '50',
+        time: '',
+        week: ''
+    }, '#aabb00');
+    await page.jQuery('#button3').trigger('click'); // set value as 2023-08-30
+    await helper({
+        color: '#000000',
+        'datetime-local': '2023-08-30T00:00',
+        file: '',
+        month: '',
+        number: '',
+        range: '50',
+        time: '',
+        week: ''
+    }, '2023-08-30');
+    await page.jQuery('#button4').trigger('click'); // set value as 2023-08
+    await helper({
+        color: '#000000',
+        date: '',
+        date: '2023-08-01',
+        'datetime-local': '2023-08-01T00:00',
+        file: '',
+        number: '',
+        range: '50',
+        time: '',
+        week: ''
+    }, '2023-08');
+    await page.jQuery('#button5').trigger('click'); // set value as 2023-W08
+    await helper({
+        color: '#000000',
+        date: '',
+        'datetime-local': '',
+        file: '',
+        month: '',
+        number: '',
+        range: '50',
+        time: ''
+    }, '2023-W08');
+    await page.jQuery('#button6').trigger('click'); // set value as 20:44
+    await helper({
+        color: '#000000',
+        date: '',
+        'datetime-local': '',
+        file: '',
+        month: '',
+        number: '',
+        range: '50',
+        week: ''
+    }, '20:44');
 });
