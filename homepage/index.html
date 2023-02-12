@@ -45,7 +45,7 @@
     <div id="content">
       <template $html="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></template>
     </div>
-    <div id="footer">
+    <div id="footer" $watch="document.scrollingElement.scrollTop = +$router.path || 0;">
       <a $exist="$router.schemes.previousLink" $href="$router.schemes.previousLink">${ $.previous }</a>
       <a $exist="$router.schemes.nextLink" $href="$router.schemes.nextLink">${ $.next }</a>
     </div>
