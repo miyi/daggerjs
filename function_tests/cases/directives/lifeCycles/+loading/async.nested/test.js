@@ -6,6 +6,6 @@ runner('+loading directive async.nested test suite', describe, it, __dirname, as
     let promise = new Promise(r => (resolve = r));
     setTimeout(() => helper(page), 200);
     setTimeout(() => helper(page, ['', '', '', 'text1', '1', '']), 400);
-    setTimeout(() => helper(page, ['text2', '1', '2', 'text1', '1', '']).then(resolve), 600);
+    setTimeout(() => helper(page, ['text2', '1', '2', 'text1', '1', '']).then(resolve), 800);
     return promise;
 });
