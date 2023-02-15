@@ -1015,7 +1015,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         Object.is(source, dispatchSource.mutation) || (this.parent && this.parent.parent && this.parent.dispatch(dispatchSource.bubble));
         const force = Object.is(source, dispatchSource.bubble);
         (this.value && this.value[meta]) ? this.value[meta].forEach(topology => topology.trigger(force)) : this.trigger(force);
-        
     }
     fetch (name, value) {
         const topology = this.children[name] || new Topology(this, name, value);
