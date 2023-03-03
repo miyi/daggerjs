@@ -73,5 +73,4 @@ runner('$value directive base test suite', describe, it, __dirname, async page =
     }, '20:44');
     await page.jQuery('#button7').click(); // set value as 135
     await page.jQuery('#range').val().then(value => expect(value).toBe('100'));
-
 });

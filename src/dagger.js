@@ -41,7 +41,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { template: { uri: ['#template'], type: resolvedType.template, style: 'style', optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, optional: true } }, configExtender = (base, content, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent, content) : content })) => (baseElement, base) => {
+}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { template: { uri: ['body'], type: resolvedType.template, style: 'style', optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, optional: true } }, configExtender = (base, content, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent, content) : content })) => (baseElement, base) => {
     const configContainer = querySelector(baseElement, 'script[type="dagger/configs"]', false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
@@ -152,7 +152,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, pathRegExp = /^[$a-zA-Z_]{1}[\w-$]*(\.[$a-zA-Z_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, pathRegExp = /^[$a-zA-Z_]{1}[\w-$]*(\.[$a-zA-Z_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
@@ -841,7 +841,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     }
     resolvePromise (promise, callback) {
         if (promise instanceof Promise) {
-            callback && (promise = promise.then(callback));
+            callback && promise.then(callback);
             this.resolver || (this.promise = new Promise(resolver => (this.resolver = resolver)));
         } else { callback && callback(promise); }
     }
@@ -974,7 +974,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
                 raw && directiveAttributeResolver(node, rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = tagName.toLowerCase(), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ((node instanceof HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = (((node instanceof HTMLUnknownElement) || /[A-Z-]/g.test(name)) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     directiveAttributeResolver(node, slotDirective, slotValue);
@@ -1128,7 +1128,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
                     slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
                 }
             });
-            Reflect.has(this.defaultSlotScope, emptySlot) && !Reflect.has(slotScope, emptySlot) && (slotScope[emptySlot] = this.node.innerHTML);
+            Reflect.has(this.defaultSlotScope, emptySlot) && !Reflect.has(slotScope, emptySlot) && this.node.innerHTML && (slotScope[emptySlot] = this.node.innerHTML);
             this.slotScope = Object.assign({}, this.defaultSlotScope, slotScope);
         }
         return '';
