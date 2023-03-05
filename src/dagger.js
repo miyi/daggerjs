@@ -362,7 +362,9 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
             }
             originalSetAdd.call(styleModuleSet, module);
         } else if (Object.is(type, resolvedType.template)) {
-            asserter(`It's invalid to use "$" or "-" in template module path "${ this.path }"`, !this.path.includes('$') && !this.path.includes('-'));
+            try { document.createElement(this.path); } catch (error) {
+                asserter(`It's invalid to use "${ this.path }" as a template module path`);
+            }
         }
         return module;
     }
@@ -718,11 +720,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
         }
         forEach(Reflect.ownKeys(this), key => { this[key] = null; });
     }
-    initialize (scope, root) {
-        if (scope) {
-            const constructor = scope.constructor;
-            (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) && this.resolveScope(scope, false, root);
-        }
+    initialize () {
         const { html, virtual } = this.profile;
         html ? (this.node = html) : (virtual || this.resolveNode());
         this.loaded();
@@ -731,7 +729,18 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     loading () {
         this.state = 'loading';
         const loading = (this.directives || {}).loading;
-        loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => Object.is(this.state, 'loading') && this.initialize(scope, loading.decorators.root)) : this.initialize();
+        loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => {
+            if (Object.is(this.state, 'loading')) {
+                if (scope) {
+                    const constructor = scope.constructor;
+                    if (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) {
+                        const { root, plain } = loading.decorators;
+                        this.resolveScope(scope, plain, root);
+                    }
+                }
+                this.initialize();
+            }
+        }) : this.initialize();
     }
     loaded () {
         const loaded = (this.directives || {}).loaded;

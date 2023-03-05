@@ -634,11 +634,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         }
         forEach(Reflect.ownKeys(this), key => { this[key] = null; });
     }
-    initialize (scope, root) {
-        if (scope) {
-            const constructor = scope.constructor;
-            (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) && this.resolveScope(scope, false, root);
-        }
+    initialize () {
         const { html, virtual } = this.profile;
         html ? (this.node = html) : (virtual || this.resolveNode());
         this.loaded();
@@ -647,7 +643,18 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     loading () {
         this.state = 'loading';
         const loading = (this.directives || {}).loading;
-        loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => Object.is(this.state, 'loading') && this.initialize(scope, loading.decorators.root)) : this.initialize();
+        loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => {
+            if (Object.is(this.state, 'loading')) {
+                if (scope) {
+                    const constructor = scope.constructor;
+                    if (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) {
+                        const { root, plain } = loading.decorators;
+                        this.resolveScope(scope, plain, root);
+                    }
+                }
+                this.initialize();
+            }
+        }) : this.initialize();
     }
     loaded () {
         const loaded = (this.directives || {}).loaded;
