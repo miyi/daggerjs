@@ -21,7 +21,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
         configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
-        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, JSON.parse(content), extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? JSON.parse(configContainer.textContent) : {}, extendsDefaultConfig);
+        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent };
 })(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return ${ expression };`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
@@ -256,7 +256,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             this.type = resolvedType.template;
         } else if (isScript && Object.is(type, embeddedType.namespace)) {
             this.type = resolvedType.namespace;
-            return this.resolveNamespace(JSON.parse(element.innerHTML), element.getAttribute('base') || this.base);
+            return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
         } else if (isScript && Object.is(type, embeddedType.script)) {
             this.type = resolvedType.script;
         } else if (isScript && Object.is(type, embeddedType.json)) {
