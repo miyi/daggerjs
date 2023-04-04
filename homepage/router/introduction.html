@@ -3,7 +3,7 @@
   <script type="dagger/configs">
     {
       "template": {
-          "uri": "#template",
+          "uri": "body",
           "style": "style"
       },
       "style": "#style",
@@ -13,15 +13,6 @@
       }
     }
   </script>
-  <template id="template">
-    <h2>${ $['router.introduction'] }</h2>
-    <div class="content">
-      <template $each="$['router.introduction.sections']">
-        <h3 class="question">${ item.question }</h3>
-        <div class="answer" $html="item.answer"></div>
-      </template>
-    </div>
-  </template>
   <style id="style" type="dagger/style">
     h3::before {
         content: "😕";
@@ -35,4 +26,13 @@
         font-style: italic;
     }
   </style>
+  <body>
+    <h2>${ $['router.introduction'] }</h2>
+    <div class="content">
+      <template $each="$['router.introduction.sections']">
+        <h3 class="question">${ item.question }</h3>
+        <div class="answer" $html="item.answer"></div>
+      </template>
+    </div>
+  </body>
 </html>

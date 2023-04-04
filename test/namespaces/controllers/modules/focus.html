@@ -1,12 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
-    <div +loading="loading($router.schemes.focus)">
-      <input $focus="focus" +blur="onBlur()" +focus="onFocus()" $value="focus">
-      <button +click="focus = !focus">toggle</button>
-      focus value is: ${ focus }, the current input element is ${ focus ? 'focused' : 'blurred' }.
-    </div>
-  </template>
   <script type="dagger/script">
     export const loading = focus => ({ focus });
     export const onclick = function () {
@@ -26,4 +19,11 @@
         margin-right: 20px;
     }
   </style>
+  <body>
+    <div +loading="loading($router.schemes.focus)">
+      <input $focus="focus" +blur="onBlur()" +focus="onFocus()" $value="focus">
+      <button +click="focus = !focus">toggle</button>
+      focus value is: ${ focus }, the current input element is ${ focus ? 'focused' : 'blurred' }.
+    </div>
+  </body>
 </html>

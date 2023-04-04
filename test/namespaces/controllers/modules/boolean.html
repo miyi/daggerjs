@@ -1,13 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
-    <div +loading="$module.loading($router.schemes.boolean)">
-      <input $disabled="!enabled">
-      <br/>
-      <button +click="enabled = !enabled">toggle</button>
-      enabled value is: ${ enabled }, the current input element is ${ enabled ? 'enabled' : 'disabled' }.
-    </div>
-  </template>
   <script type="dagger/script">
     export const loading = enabled => ({ enabled });
   </script>
@@ -22,4 +14,12 @@
         margin-right: 20px;
     }
   </style>
+  <body>
+    <div +loading="$module.loading($router.schemes.boolean)">
+      <input $disabled="!enabled">
+      <br/>
+      <button +click="enabled = !enabled">toggle</button>
+      enabled value is: ${ enabled }, the current input element is ${ enabled ? 'enabled' : 'disabled' }.
+    </div>
+  </body>
 </html>

@@ -316,9 +316,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     resolveURI (uri) {
         uri = uri.trim();
         if (!uri) { return; }
-        if (pathRegExp.test(uri)) {
-            return this.parent.fetch(uri).then(moduleProfile => (this.resolvedContent = moduleProfile.resolvedContent, (this.type || (this.type = moduleProfile.type)) && (!Object.is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module)));
-        }
         let pipeline = null;
         if (remoteUrlRegExp.test(uri)) {
             const cachedProfile = integrityProfileCache[this.integrity];
@@ -327,19 +324,22 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             } else {
                 daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
-                pipeline = [(data, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
+                pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
         } else {
-            const element = querySelector(this.baseElement, uri);
-            if (element) {
-                const cachedProfile = elementProfileCacheMap.get(element);
-                if (cachedProfile) {
-                    pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
-                } else {
-                    originalMapSet.call(elementProfileCacheMap, element, this);
-                    pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
+            try {
+                const element = querySelector(this.baseElement, uri);
+                if (element) { // selector
+                    const cachedProfile = elementProfileCacheMap.get(element);
+                    if (cachedProfile) {
+                        pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
+                    } else {
+                        originalMapSet.call(elementProfileCacheMap, element, this);
+                        pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
+                    }
                 }
-            }
+            } catch (error) { pipeline = null; }
+            pipeline || (pipeline = [this.parent.fetch(uri), moduleProfile => (this.type || (this.type = moduleProfile.type), this.resolvedContent = moduleProfile.resolvedContent)]); // alias
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }
@@ -674,6 +674,9 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 originalSetAdd.call(sentrySet, this.sentry);
             }
             eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
+                if (name) {
+                    debugger
+                }
                 const target = decorators.target || this.node, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators);
                 target.addEventListener(event, handler, options);
                 return { target, event, handler, options, decorators };
@@ -802,7 +805,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     updateEventHandler (event, name, processor, decorators) {
         if (!name) {
-            const { current, inside, every, some, prevent, stop, stopImmediate } = decorators, { target, currentTarget } = event, isCurrent = Object.is(target, currentTarget); // TODO: outside
+            const { current, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
             if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();

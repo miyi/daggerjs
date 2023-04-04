@@ -1,11 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
-      <div +loading="{ id: '', placeholder: '' }">
-        <input $id="id" $placeholder="placeholder">
-        <button +click="({ id, placeholder } = toggle())">toggle</button>
-      </div>
-  </template>
   <script type="dagger/script">
     let index = 0;
     const array = [{ id: 'id1', placeholder: 'please enter your name' }, { id: 'id2', placeholder: 'please enter your email' }];
@@ -22,4 +16,10 @@
         border: 3px dotted blue;
     }
   </style>
+    <body>
+      <div +loading="{ id: '', placeholder: '' }">
+        <input $id="id" $placeholder="placeholder">
+        <button +click="({ id, placeholder } = toggle())">toggle</button>
+      </div>
+  </body>
 </html>

@@ -1,11 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
-    <div +loading="$module.loading()">
-      <p class="content" $class="className">class value is "${ className instanceof Object ? JSON.stringify(className) : className }", class content -></p>
-      <button +click="className = $module.onSwitchClass()">switch</button>
-    </div>
-  </template>
   <script type="dagger/script">
     const classes = {
         class0: null,
@@ -30,4 +24,10 @@
         margin-right: 20px;
     }
   </style>
+  <body>
+    <div +loading="$module.loading()">
+      <p class="content" $class="className">class value is "${ className instanceof Object ? JSON.stringify(className) : className }", class content -></p>
+      <button +click="className = $module.onSwitchClass()">switch</button>
+    </div>
+  </body>
 </html>

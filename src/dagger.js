@@ -152,7 +152,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, pathRegExp = /^[$a-zA-Z_]{1}[\w-$]*(\.[$a-zA-Z_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
@@ -396,29 +396,31 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     resolveURI (uri) {
         uri = uri.trim();
         if (!uri) { return; }
-        if (pathRegExp.test(uri)) {
-            return this.parent.fetch(uri).then(moduleProfile => (this.resolvedContent = moduleProfile.resolvedContent, (this.type || (this.type = moduleProfile.type)) && (!Object.is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module)));
-        }
         let pipeline = null;
-        if (remoteUrlRegExp.test(uri)) {
+        if (remoteUrlRegExp.test(uri)) { // remote
             const cachedProfile = integrityProfileCache[this.integrity];
             if (cachedProfile) {
                 pipeline = [cachedProfile.resolve(), () => (this.type = cachedProfile.type) && cachedProfile.resolvedContent];
             } else {
                 daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
-                pipeline = [(data, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
+                pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
         } else {
-            const element = querySelector(this.baseElement, uri);
-            const cachedProfile = elementProfileCacheMap.get(element);
-            if (cachedProfile) {
-                warner([`The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
-                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
-            } else {
-                originalMapSet.call(elementProfileCacheMap, element, this);
-                pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
-            }
+            try {
+                const element = querySelector(this.baseElement, uri);
+                if (element) { // selector
+                    const cachedProfile = elementProfileCacheMap.get(element);
+                    if (cachedProfile) {
+                        warner([`The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
+                        pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
+                    } else {
+                        originalMapSet.call(elementProfileCacheMap, element, this);
+                        pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
+                    }
+                }
+            } catch (error) { pipeline = null; }
+            pipeline || (pipeline = [this.parent.fetch(uri), moduleProfile => (this.type || (this.type = moduleProfile.type), this.resolvedContent = moduleProfile.resolvedContent)]); // alias
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }

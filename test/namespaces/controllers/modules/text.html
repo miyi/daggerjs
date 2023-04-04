@@ -1,13 +1,5 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
-    <div +loading="loading($router.schemes.index)">
-        <span $text="`The current text content is &#x22;${ text }&#x22;.`">You should not see this content.</span>
-        <span>The current text content is "${ text }".</span>
-        <br/>
-        <button +click="text = onToggle()">toggle</button>
-    </div>
-  </template>
   <script type="dagger/script">
     let index = 0;
     const array = [Math.random(), new Date().getFullYear(), Math.PI];
@@ -24,4 +16,12 @@
         border: 1px solid green;
     }
   </style>
+  <body>
+    <div +loading="loading($router.schemes.index)">
+      <span $text="`The current text content is &#x22;${ text }&#x22;.`">You should not see this content.</span>
+      <span>The current text content is "${ text }".</span>
+      <br/>
+      <button +click="text = onToggle()">toggle</button>
+    </div>
+  </body>
 </html>

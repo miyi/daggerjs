@@ -6,52 +6,6 @@
       "inner_template2": "#innerTemplate2"
     }
   </script>
-  <template id="template">
-    <template +loading="loading()">
-      <div class="container" +click="logger($event)">
-        <div class="separator"></div>
-        <label>loop0 [array]:</label>
-        <div $each="loop0">
-          <p>${ key }: ${ JSON.stringify(item) }</p>
-        </div>
-        <div class="separator"></div>
-        <label>loop1 [object]:</label>
-        <div $each#item#key="loop1">
-          <p>${ key }: ${ JSON.stringify(item) }</p>
-        </div>
-        <div class="separator"></div>
-        <label>loop2 [toggle with $exist]:</label>
-        <div>data: ${ JSON.stringify(loop2) }</div>
-        <button +click="trigger(loop1)">trigger loop1</button>
-        <button +click="show(loop2)">show</button>
-        <button +click="hide(loop2)">hide</button>
-        <button +click="split(loop2)">split</button>
-        <button +click="toggle(loop2)">toggle</button>
-        <button +click="unshift(loop2)">unshift</button>
-        <button +click="shift(loop2)">shift</button>
-        <button +click="push(loop2)">push</button>
-        <button +click="pop(loop2)">pop</button>
-        <button +click="modify(loop2)">modify(1)</button>
-        <button +click="deleteElement(loop2)">delete(2)</button>
-        <button +click="splice(loop2)">splice(1, 1, item)</button>
-        <button +click="sort(loop2)">sort</button>
-        <button +click="reverse(loop2)">reverse</button>
-        <button +click="clear(loop2)">clear</button>
-        <button +click="spread(loop2)">spread (10)</button>
-        <button +click="fill(loop2)">fill (3)</button>
-        <button +click="copyWithin(loop2)">copyWithin</button>
-        <button +click="$module.loop3(loop3)">toggle loop3</button>
-        <div class="test" $class="`each-item${ key }`" $each#xxx#item:slice="loop2" $id="key" $exist="slice.exist" +loading="console.log('loading', index, key)" +loaded="console.log('loaded', index, key)" +unloading="console.log('unloading', index, key)" +unloaded="console.log('unloaded')" loading="$intervalIds.push(setInterval(() => { slice.exist = !slice.exist; }, 3000));">
-          <p>index: ${ index }-key: ${ key }-${ slice.content }</p>
-        </div>
-        <div class="separator"></div>
-        <label>loop2 [nested]:</label>
-        <inner_template1 $each#item:item1#index:index1="loop2" $exist="item1.exist"></inner_template1>
-        <!--<inner_template1 $each#key:index1="new Array(2)"></inner_template1>-->
-        <span>This is the end!</span>
-      </div>
-    </template>
-  </template>
   <template id="innerTemplate1">
     <!-- comment 1 -->
     <div class="innerItem1">
@@ -146,4 +100,50 @@
         margin-left: 20px;
     }
   </style>
+  <body>
+    <template +loading="loading()">
+      <div class="container" +click="logger($event)">
+        <div class="separator"></div>
+        <label>loop0 [array]:</label>
+        <div $each="loop0">
+          <p>${ key }: ${ JSON.stringify(item) }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop1 [object]:</label>
+        <div $each#item#key="loop1">
+          <p>${ key }: ${ JSON.stringify(item) }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop2 [toggle with $exist]:</label>
+        <div>data: ${ JSON.stringify(loop2) }</div>
+        <button +click="trigger(loop1)">trigger loop1</button>
+        <button +click="show(loop2)">show</button>
+        <button +click="hide(loop2)">hide</button>
+        <button +click="split(loop2)">split</button>
+        <button +click="toggle(loop2)">toggle</button>
+        <button +click="unshift(loop2)">unshift</button>
+        <button +click="shift(loop2)">shift</button>
+        <button +click="push(loop2)">push</button>
+        <button +click="pop(loop2)">pop</button>
+        <button +click="modify(loop2)">modify(1)</button>
+        <button +click="deleteElement(loop2)">delete(2)</button>
+        <button +click="splice(loop2)">splice(1, 1, item)</button>
+        <button +click="sort(loop2)">sort</button>
+        <button +click="reverse(loop2)">reverse</button>
+        <button +click="clear(loop2)">clear</button>
+        <button +click="spread(loop2)">spread (10)</button>
+        <button +click="fill(loop2)">fill (3)</button>
+        <button +click="copyWithin(loop2)">copyWithin</button>
+        <button +click="$module.loop3(loop3)">toggle loop3</button>
+        <div class="test" $class="`each-item${ key }`" $each#xxx#item:slice="loop2" $id="key" $exist="slice.exist" +loading="console.log('loading', index, key)" +loaded="console.log('loaded', index, key)" +unloading="console.log('unloading', index, key)" +unloaded="console.log('unloaded')" loading="$intervalIds.push(setInterval(() => { slice.exist = !slice.exist; }, 3000));">
+          <p>index: ${ index }-key: ${ key }-${ slice.content }</p>
+        </div>
+        <div class="separator"></div>
+        <label>loop2 [nested]:</label>
+        <inner_template1 $each#item:item1#index:index1="loop2" $exist="item1.exist"></inner_template1>
+        <!--<inner_template1 $each#key:index1="new Array(2)"></inner_template1>-->
+        <span>This is the end!</span>
+      </div>
+    </template>
+  </body>
 </html>

@@ -1,6 +1,32 @@
 <!DOCTYPE html>
 <html>
-  <template id="template">
+  <script type="dagger/script">
+    export const loading = () => ({
+        array: [new Date(), '2020-W01', 0, [], {}],
+        exist: true
+    });
+    export const map = array => array.map((item, index) => ({
+        checked: !!(index % 2),
+        value: item
+    }));
+  </script>
+  <style type="dagger/style">
+    button {
+        margin: 0 20px 40px 0;
+        border: 1px solid red;
+    }
+    form {
+        padding: 20px;
+    }
+    label {
+        margin-right: 20px;
+    }
+    input {
+        margin-bottom: 20px;
+        border: 1px solid green;
+    }
+  </style>
+  <body>
     <div +loading="loading()" style="margin-top: 20px;">
         <button +click="exist = !exist;">toggle exist</button>
         <form onsubmit="return false;">
@@ -38,31 +64,5 @@
             </template>
         </form>
     </div>
-  </template>
-  <script type="dagger/script">
-    export const loading = () => ({
-        array: [new Date(), '2020-W01', 0, [], {}],
-        exist: true
-    });
-    export const map = array => array.map((item, index) => ({
-        checked: !!(index % 2),
-        value: item
-    }));
-  </script>
-  <style type="dagger/style">
-    button {
-        margin: 0 20px 40px 0;
-        border: 1px solid red;
-    }
-    form {
-        padding: 20px;
-    }
-    label {
-        margin-right: 20px;
-    }
-    input {
-        margin-bottom: 20px;
-        border: 1px solid green;
-    }
-  </style>
+  </body>
 </html>

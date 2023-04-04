@@ -5,19 +5,6 @@
       "content": "./value_content.json"
     }
   </script>
-  <template id="template">
-    <div +loading="loading()" style="margin-top: 20px;">
-        <button +click="exist = !exist;">toggle exist</button>
-        <button +click="index = toggleValue(array)">toggle value</button>
-        <span $name="array[index]" $name0="JSON.stringify(array[index])" $name1="0 + array[index]" $name2="(() => array[index])()">The selected value is: ${ index }. ${ JSON.stringify(array[index]) }</span>
-        <form>
-            <template $html="content.map((item, idx) => `<label>${ idx + 1 }. ${ item.label }:</label><input type='${ item.type }' $exist='exist' $value${ item.decorator || '' }='array[index]' ${ item.extra || '' }><br/>`).join('')"></template>
-            <label>${ content.length + 1 }. textarea #change:</label><textarea $exist="exist" $value="array[index]" rows="4" cols="50">1</textarea><br/>
-            <label>${ content.length + 2 }. textarea #input:</label><textarea $exist="exist" $value#input="array[index]" rows="4" cols="50">2</textarea><br/>
-            <label>${ content.length + 3 }. textarea #number:</label><textarea $exist="exist" $value#number="array[index]" rows="4" cols="50">3</textarea><br/>
-        </form>
-    </div>
-  </template>
   <script type="dagger/script">
     export const loading = () => ({
         array: [new Date(), '2020-W01', 0, [], {}],
@@ -49,4 +36,17 @@
         border: 1px solid green;
     }
   </style>
+  <body>
+    <div +loading="loading()" style="margin-top: 20px;">
+      <button +click="exist = !exist;">toggle exist</button>
+      <button +click="index = toggleValue(array)">toggle value</button>
+      <span $name="array[index]" $name0="JSON.stringify(array[index])" $name1="0 + array[index]" $name2="(() => array[index])()">The selected value is: ${ index }. ${ JSON.stringify(array[index]) }</span>
+      <form>
+        <template $html="content.map((item, idx) => `<label>${ idx + 1 }. ${ item.label }:</label><input type='${ item.type }' $exist='exist' $value${ item.decorator || '' }='array[index]' ${ item.extra || '' }><br/>`).join('')"></template>
+        <label>${ content.length + 1 }. textarea #change:</label><textarea $exist="exist" $value="array[index]" rows="4" cols="50">1</textarea><br/>
+        <label>${ content.length + 2 }. textarea #input:</label><textarea $exist="exist" $value#input="array[index]" rows="4" cols="50">2</textarea><br/>
+        <label>${ content.length + 3 }. textarea #number:</label><textarea $exist="exist" $value#number="array[index]" rows="4" cols="50">3</textarea><br/>
+      </form>
+    </div>
+  </body>
 </html>
