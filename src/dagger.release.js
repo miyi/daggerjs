@@ -24,7 +24,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent };
-})(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return ${ expression };`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
+})(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return (${ expression });`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
     if (resolver instanceof Promise) {
         return resolver.then(resolver => serializer([resolver, ...nextResolvers], token));
@@ -139,7 +139,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         sheet.insertRule(rule.cssText, iterator.index++);
         rule.name = originalName;
     }
-    if (rule.cssRules) {
+    if ((rule.cssRules || []).length) {
         forEach(rule.cssRules, rule => scopedRuleResolver(sheet, rule, name, iterator));
     } else if (rule.selectorText) {
         const style = rule.style, originalAnimationName = style.animationName;
