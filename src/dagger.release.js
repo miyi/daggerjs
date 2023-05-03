@@ -559,7 +559,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     return positive == result;
 }) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
     constructor (profile, parent = null, index = 0, sliceScope = null, plainSliceScope = false, parentNode = null) {
-        this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.promise = this.resolver = this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
+        this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
         if (parent) {
             this.parent = parent;
             this.parentNode = parentNode || parent.node || parent.parentNode;
@@ -644,16 +644,15 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         this.state = 'loading';
         const loading = (this.directives || {}).loading;
         loading ? this.resolvePromise(loading.processor(this.module, this.scope, null), scope => {
-            if (Object.is(this.state, 'loading')) {
-                if (scope) {
-                    const constructor = scope.constructor;
-                    if (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) {
-                        const { root, plain } = loading.decorators;
-                        this.resolveScope(scope, plain, root);
-                    }
+            if (!Object.is(this.state, 'loading')) { return; }
+            if (scope) {
+                const constructor = scope.constructor;
+                if (Object.is(constructor, Object) || (!constructor && Object.is(typeof scope, 'object'))) {
+                    const { root, plain } = loading.decorators;
+                    this.resolveScope(scope, plain, root);
                 }
-                this.initialize();
             }
+            this.initialize();
         }) : this.initialize();
     }
     loaded () {
@@ -661,10 +660,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         this.resolvePromise(loaded && loaded.processor(this.module, this.scope, this.node), () => Object.is(this.state, 'loading') && this.postLoaded());
     }
     postLoaded () {
-        if (this.resolver) {
-            this.resolver();
-            this.resolver = null;
-        }
         this.state = 'loaded';
         this.node && this.node.removeAttribute('dg-cloak');
         if (this.directives) {
@@ -765,10 +760,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         }
     }
     resolvePromise (promise, callback) {
-        if (promise instanceof Promise) {
-            callback && promise.then(callback);
-            this.resolver || (this.promise = new Promise(resolver => (this.resolver = resolver)));
-        } else { callback && callback(promise); }
+        (promise instanceof Promise) ? promise.then(callback) : callback(promise);
     }
     resolveScope (scope, plain, root) {
         // TODO: assert existed prototype: Object.getPrototypeOf(scope)[meta]
@@ -894,7 +886,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 node.removeAttribute(rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = (((node instanceof HTMLUnknownElement) || /[A-Z-]/g.test(name)) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ([HTMLElement, HTMLUnknownElement].includes(node.constructor) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotName = `_$slot_${ node.getAttribute(slotDirective).trim() }`;
                     node.removeAttribute(slotDirective);
@@ -1213,7 +1205,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         base = configs.base, rootRouter = new Router(routerOptions.scenarios), rootRouter.initialize();
         forEach(Object.keys(rootRouter.modules || {}), key => (rootModules[key] = rootRouter.resolveModule(key, base)));
         rootNamespace = Reflect.construct(ModuleProfile, [{ content: rootModules, type: resolvedType.namespace }, base]);
-        rootNamespace.resolve().then(() => styleModuleSet.forEach(style => (style.disabled = false)) || serializer([new NodeContext(new NodeProfile(document.documentElement)).promise, () => {
+        rootNamespace.resolve().then(() => styleModuleSet.forEach(style => (style.disabled = false)) || serializer([new NodeContext(new NodeProfile(document.documentElement)).promise, () => { // TODO
             forEach([...new Set(daggerOptions.rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat())], rootNode => Reflect.construct(NodeProfile, [rootNode, [], rootNodeProfiles, null, true]));
             window.addEventListener('popstate', () => routeChangeResolver());
             routeChangeResolver();
