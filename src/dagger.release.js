@@ -117,7 +117,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, pathRegExp = /^[$a-zA-Z_]{1}[\w-$]*(\.[$a-zA-Z_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
@@ -317,6 +317,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         uri = uri.trim();
         if (!uri) { return; }
         let pipeline = null;
+        // return this.parent.fetch(uri).then(moduleProfile => (this.resolvedContent = moduleProfile.resolvedContent, (this.type || (this.type = moduleProfile.type)) && (!Object.is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module)));
         if (remoteUrlRegExp.test(uri)) {
             const cachedProfile = integrityProfileCache[this.integrity];
             if (cachedProfile) {

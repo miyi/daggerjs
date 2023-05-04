@@ -362,7 +362,9 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
             }
             originalSetAdd.call(styleModuleSet, module);
         } else if (Object.is(type, resolvedType.template)) {
-            try { document.createElement(this.path); } catch (error) {
+            try {
+                document.createElement(this.path);
+            } catch (error) {
                 asserter(`It's invalid to use "${ this.path }" as a template module path`);
             }
         }
@@ -883,7 +885,7 @@ export default (({ asserter, logger, warner } = ((messageFormatter = (message, n
     }
     updateEventHandler (event, name, processor, decorators) {
         if (!name) {
-            const { current, inside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget); // TODO: outside support
+            const { current, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
             warner([`Please avoid using "current" and "inside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !(current && inside));
             if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
