@@ -317,11 +317,10 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         uri = uri.trim();
         if (!uri) { return; }
         let pipeline = null;
-        // return this.parent.fetch(uri).then(moduleProfile => (this.resolvedContent = moduleProfile.resolvedContent, (this.type || (this.type = moduleProfile.type)) && (!Object.is(this.type, resolvedType.namespace) || this.resolveModule(moduleProfile.resolvedContent)) && this.resolved(moduleProfile.module)));
         if (remoteUrlRegExp.test(uri)) {
             const cachedProfile = integrityProfileCache[this.integrity];
             if (cachedProfile) {
-                pipeline = [cachedProfile.resolve(), () => (this.type = cachedProfile.type) && cachedProfile.resolvedContent];
+                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
             } else {
                 daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
@@ -330,17 +329,17 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         } else {
             try {
                 const element = querySelector(this.baseElement, uri);
-                if (element) { // selector
+                if (element) {
                     const cachedProfile = elementProfileCacheMap.get(element);
                     if (cachedProfile) {
-                        pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = moduleProfile.type) && moduleProfile.resolvedContent];
+                        pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
                     } else {
                         originalMapSet.call(elementProfileCacheMap, element, this);
                         pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
                     }
                 }
             } catch (error) { pipeline = null; }
-            pipeline || (pipeline = [this.parent.fetch(uri), moduleProfile => (this.type || (this.type = moduleProfile.type), this.resolvedContent = moduleProfile.resolvedContent)]); // alias
+            pipeline || (pipeline = [this.parent.fetch(uri), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent]);
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }
