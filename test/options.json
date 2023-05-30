@@ -1,0 +1,13 @@
+{
+    "debugDirective": true,
+    "integrity": false,
+    "log": true,
+    "warning": true,
+    /* "logPlainStyle": "",
+    "logHighlightStyle": "",
+    "warningPlainStyle": "",
+    "warningHighlightStyle": "",
+    "errorPlainStyle": "",
+    "errorHighlightStyle": "", */
+    "rootSelectors": ["title", "body"]
+}

@@ -1,0 +1,186 @@
+{
+    "mode": "history",
+    "prefix": "",
+    "aliases": {
+        "/1": "/index1"
+    },
+    "default": "/index1",
+    "redirects": {
+        "/": "/index1"
+    },
+    "routing": {
+        "//": "path/constants/variables/tailable/modules/children",
+        "tailable": false,
+        "variables": {},
+        "constants": {
+            "title": "default, should be overwritten"
+        },
+        "modules": ["test_script", "script", "component", "prefix", "suffix", "directive"],
+        "children": [{
+            "path": "index1",
+            "constants": {
+                "title": "index",
+                "template": "index"
+            },
+            "modules": ["test_script", "index"]
+        }, {
+            "path": "controllers",
+            "constants": {
+                "title": "controllers",
+                "template": "controllers"
+            },
+            "modules": "controllers",
+            "children": [{
+                "path": "focus",
+                "variables": {
+                    "focus": false
+                },
+                "constants": {
+                    "title": "focus"
+                },
+                "modules": "focus"
+            }, {
+                "path": "boolean",
+                "variables": {
+                    "boolean": false
+                },
+                "constants": {
+                    "title": "boolean"
+                },
+                "modules": "boolean"
+            }, {
+                "path": "class",
+                "constants": {
+                    "title": "class"
+                },
+                "modules": "class"
+            }, {
+                "path": "style",
+                "constants": {
+                    "title": "style"
+                },
+                "modules": "style"
+            }, {
+                "path": "raw",
+                "constants": {
+                    "title": "raw"
+                },
+                "modules": "raw"
+            }, {
+                "path": "general",
+                "variables": {
+                    "index": 0
+                },
+                "constants": {
+                    "title": "general"
+                },
+                "modules": "general"
+            }, {
+                "path": "text",
+                "variables": {
+                    "index": 0
+                },
+                "constants": {
+                    "title": "text"
+                },
+                "modules": "text"
+            }, {
+                "path": "lifeCycle",
+                "constants": {
+                    "title": "lifeCycle"
+                },
+                "modules": "lifeCycle"
+            }, {
+                "path": "html",
+                "constants": {
+                    "title": "html"
+                },
+                "modules": "html"
+            }, {
+                "path": "file",
+                "constants": {
+                    "title": "file"
+                },
+                "modules": "file"
+            }, {
+                "path": "exist",
+                "constants": {
+                    "title": "exist"
+                },
+                "modules": "exist"
+            }, {
+                "path": "each",
+                "constants": {
+                    "title": "each"
+                },
+                "modules": "each"
+            }, {
+                "path": "value",
+                "constants": {
+                    "title": "value"
+                },
+                "modules": "value"
+            }, {
+                "path": "checked",
+                "constants": {
+                    "title": "checked"
+                },
+                "modules": "checked"
+            }, {
+                "path": "selected",
+                "constants": {
+                    "title": "selected"
+                },
+                "modules": "selected"
+            }, {
+                "path": "modules",
+                "constants": {
+                    "title": "modules"
+                },
+                "modules": "modules"
+            }, {
+                "path": "href",
+                "constants": {
+                    "title": "href"
+                },
+                "modules": ["href", "module_component"]
+            }, {
+                "path": "iframe",
+                "constants": {
+                    "title": "iframe"
+                },
+                "modules": "iframe"
+            }, {
+                "path": "template",
+                "constants": {
+                    "title": "template"
+                },
+                "modules": "template"
+            }, {
+                "path": "eventHandler",
+                "constants": {
+                    "title": "eventHandler"
+                },
+                "modules": "eventHandler"
+            }, {
+                "path": "date",
+                "constants": {
+                    "title": "date"
+                },
+                "modules": "date"
+            }, {
+                "path": "custom",
+                "constants": {
+                    "title": "custom class"
+                },
+                "modules": "custom"
+            }, {
+                "path": "watch",
+                "constants": {
+                    "title": "watch"
+                },
+                "modules": "watch"
+            }]
+        }]
+    }
+}

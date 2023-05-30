@@ -1,0 +1,66 @@
+{
+    "script": "#script",
+    "component": [{
+        "match": false,
+        "uri": "#component1"
+    }, {
+        "match": true,
+        "uri": "#component"
+    }],
+    "prefix": "#prefix",
+    "suffix": "#suffix",
+    "directive": {
+        "content": "<div>directive content</div>",
+        "type": "template"
+    },
+    "@script": {
+        "test_script": "#index_test_script"
+    },
+    "@namespace": {
+        "index": {
+            "content": {
+                "template": [{
+                    "match": false,
+                    "uri": "#index_template123"
+                }, {
+                    "match": true,
+                    "uri": "#index_template"
+                }],
+                "style": "#index_style",
+                "content": "./index.json"
+            }
+        }
+    },
+    "controllers": "http://localhost:8283/controllers.html",
+    "focus": "http://localhost:8283/modules/focus.html",
+    "boolean": "http://localhost:8283/modules/boolean.html",
+    "class": "http://localhost:8283/modules/class.html",
+    "style": "http://localhost:8283/modules/style.html",
+    "raw": "http://localhost:8283/modules/raw.html",
+    "general": "http://localhost:8283/modules/general.html",
+    "text": "http://localhost:8283/modules/text.html",
+    "lifeCycle": "http://localhost:8283/modules/lifeCycle.html",
+    "html": "http://localhost:8283/modules/html.html",
+    "file": "http://localhost:8283/modules/file.html",
+    "exist": "http://localhost:8283/modules/exist.html",
+    "each": "http://localhost:8283/modules/each.html",
+    "value": "http://localhost:8283/modules/value.html",
+    "checked": "http://localhost:8283/modules/checked.html",
+    "selected": "http://localhost:8283/modules/selected.html",
+    "modules": {
+        "uri": "http://localhost:8283/modules/modules.html",
+        "integrity": "oPX2k9am7u4x0hdm6tuvZ2fYau82MkZHs+QS+Ku9egM="
+    },
+    "module_component": {
+        "name": "component",
+        "content": "<div>component1</div>",
+        "type": "template"
+    },
+    "href": "http://localhost:8283/modules/href.html",
+    "iframe": "http://localhost:8283/modules/iframe.html",
+    "template": "http://localhost:8283/modules/template.html",
+    "date": "http://localhost:8283/modules/date.html",
+    "eventHandler": "http://localhost:8283/modules/eventHandler.html",
+    "custom": "http://localhost:8283/modules/custom.html",
+    "watch": "http://localhost:8283/modules/watch.html"
+}

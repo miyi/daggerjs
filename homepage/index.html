@@ -13,12 +13,13 @@
     <meta name="twitter:title" content="dagger.js">
     <meta name="twitter:description" content="A lightweight runtime web frontend javaScript framework">
     <link rel="icon" href="data:image/svg+xml,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3e%3ctext y=%22.9em%22 font-size=%2280%22%3e🗡️%3c/text%3e%3c/svg%3e">
-    <link rel="preload" href="./configs.json" as="fetch" crossorigin="anonymous">
     <!--<link rel="stylesheet" href="css.css" media="print" onload="media = 'all'">-->
     <style>[dg-cloak] { display: none !important; }</style>
     <link rel="stylesheet" href="./index.css">
     <script type="module" crossorigin="anonymous" src="./framework/dagger.release.js" defer></script>
-    <script type="dagger/configs" src="./configs.json"></script>
+    <script type="dagger/options" src="./options.json"></script>
+    <script type="dagger/modules" src="./modules.json"></script>
+    <script type="dagger/routers" src="./routers.json"></script>
     <title $text="$[$router.schemes.title] || $router.schemes.title">loading...</title>
   </head>
   <body dg-cloak +loading="{ isMenuClosed: true }" +sentry="sentry($scope, $nextRouter)" $watch#router="console.log('watch router', $module, $router), isLoading = false">

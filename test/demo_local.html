@@ -6,11 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="icon" href="data:image/svg+xml,%3csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3e%3ctext y=%22.9em%22 font-size=%2280%22%3e🗡️%3c/text%3e%3c/svg%3e">
-    <link rel="preload" href="./configs.json" as="fetch" crossorigin="anonymous">
     <!--<link rel="stylesheet" href="css.css" media="print" onload="media = 'all'">-->
     <style>[dg-cloak] { display: none !important; }</style>
-    <script type="module" crossorigin="anonymous" src="http://localhost:8280/dagger.release.js" defer></script>
-    <script type="dagger/configs" src="./configs.json"></script>
+    <script type="module" crossorigin="anonymous" src="http://localhost:8280/dagger.js" defer></script>
+    <script type="dagger/options" src="./options.json"></script>
+    <script type="dagger/modules" src="./modules.json"></script>
+    <script type="dagger/routers" src="./routers.json"></script>
     <title $text="`${ $router.schemes.title } demo`">loading...</title>
     <template id="index_template">
         <div id="plain-previous-sibling"></div>
@@ -34,9 +35,6 @@
     <template id="suffix">
         <div $class="`suffix-${ item }`">suffix-${ item }</div>
     </template>
-    <script id="root_test_script" type="dagger/script">
-        export const test = () => alert('root_test_script');
-    </script>
     <script id="index_test_script" type="dagger/script">
         export const test = () => alert('index_test_script');
     </script>

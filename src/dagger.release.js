@@ -9,21 +9,22 @@
  *  </copyright>
  *  ***********************************************************************/
 
-export default ((context = Symbol('context'), currentController = null, daggerOptions = { integrity: true, rootSelectors: ['title', 'body'], routing: { mode: 'history', aliases: {}, default: '', prefix: '', redirects: {}, scenarios: {} } }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, rootNamespace = null, rootNodeProfiles = [], rootScope = null, emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+export default ((context = Symbol('context'), currentController = null, daggerOptions = { integrity: false }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, rootNamespace = null, rootNodeProfiles = [], rootScope = null, emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { template: { uri: ['body'], type: resolvedType.template, style: 'style', optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, optional: true } }, configExtender = (base, content, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent, content) : content })) => (baseElement, base) => {
-    const configContainer = querySelector(baseElement, 'script[type="dagger/configs"]');
+}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { integrity: true, rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'history', aliases: {}, default: '', prefix: '', redirects: {}, routing: {} } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+    const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`);
+    debugger
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
         configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
-        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, extendsDefaultConfig);
+        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), type, extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
     }
-    return { base, content: defaultConfigContent };
+    return { base, content: defaultConfigContent[type] };
 })(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return (${ expression });`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
     if (resolver instanceof Promise) {
@@ -58,7 +59,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     return template.content;
 }, selectorInjector = (element, selectors) => forEach(element.children, child => {
     if (Object.is(child.tagName, 'TEMPLATE')) {
-        child.getAttribute('$html') && child.setAttribute('dg_scoped_styles', selectors.join(','));
+        child.getAttribute('$html') && (child.$styleNames = selectors.join(','));
         selectorInjector(child.content, selectors);
     } else if (child instanceof HTMLElement) {
         forEach(selectors, selector => child.setAttribute(selector, ''));
@@ -117,8 +118,10 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
-    if (Object.is(type, resolvedType.script)) {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, content, module, name, type }, styleModuleNames) => {
+    if (Object.is(type, resolvedType.template)) {
+        selectorInjector(templateResolver(content), styleModuleNames);
+    } else if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
         config.anonymous ? Object.assign(parentModule, module) : (parentModule[name] = module);
@@ -228,13 +231,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         } else if (Object.is(type, resolvedType.script)) {
             return import(`data:text/javascript, ${ encodeURIComponent(content.replace(relativePathRegExp, (match, url1, url2) => match.replace(url1 || url2, new URL(url1 || url2, this.base)))) }`);
         } else if (Object.is(type, resolvedType.template)) {
-            const fragment = templateResolver(content), pipeline = [], styles = this.config.style;
-            styles && pipeline.push(Promise.all((Array.isArray(styles) ? styles : [styles]).map(path => this.parent.fetch(path).then(style => style.module && style.module.getAttribute('name')))).then(names => selectorInjector(fragment, names.filter(name => name))));
-            pipeline.push(() => {
-                const parentPath = this.parent.path, nodeProfile = new NodeProfile(fragment, parentPath ? parentPath.split('.') : [], null, null, false, {});
-                return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
-            });
-            return serializer(pipeline);
+            const parentPath = this.parent.path, nodeProfile = new NodeProfile(templateResolver(content), parentPath ? parentPath.split('.') : [], null, null, false, {});
+            return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
         } else if (Object.is(type, resolvedType.style)) {
             return styleResolver(content, `dg_style_module_content-${ this.path.replace(/\./g, '_') }`, true);
         } else if (Object.is(type, resolvedType.json)) {
@@ -274,7 +272,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (Object.is(type, resolvedType.namespace)) {
             module = emptier();
             this.children = this.resolvedContent;
-            forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile));
+            const styleModuleNames = this.children.filter(moduleProfile => Object.is(moduleProfile.type, resolvedType.style)).map(moduleProfile => moduleProfile.module.getAttribute('name')).filter(name => name);
+            forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile, styleModuleNames));
             this.parent && this.parent.resolve().then(moduleProfile => Object.setPrototypeOf(module, moduleProfile.module));
         } else if (Object.is(type, resolvedType.script)) {
             module = scriptModuleResolver(module, emptier());
@@ -422,7 +421,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             classNames ? node.setAttribute('class', classNames.join(' ')) : node.removeAttribute('class');
         }
     },
-    each: ((sliceResolver = (index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, plainSliceScope, nodeContext, profile, parentNode) => {
+    each: ((sliceResolver = (index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, parentNode) => {
         let matchedNodeContext = null;
         const matchedArray = childrenMap.get(value);
         if (matchedArray) {
@@ -443,7 +442,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             matchedNodeContext.scope[keyName] = key;
             matchedNodeContext.scope[indexName] = index;
         } else {
-            matchedNodeContext = new NodeContext(profile, nodeContext, index, { [indexName]: index, [keyName]: key, [itemName]: value }, plainSliceScope);
+            matchedNodeContext = new NodeContext(profile, nodeContext, index, { [indexName]: index, [keyName]: key, [itemName]: value });
         }
         const newMatchedArray = newChildrenMap.get(value);
         newMatchedArray ? newMatchedArray.push(matchedNodeContext) : originalMapSet.call(newChildrenMap, value, [matchedNodeContext]);
@@ -454,11 +453,11 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (!entries.length) { return originalMapClear.call(childrenMap) || nodeContext.removeChildren(true); }
         childrenMap.forEach((array, value) => valueSet.has(value) || forEach(array, nodeContext => nodeContext.destructor(true)) || originalMapDelete.call(childrenMap, value));
         const newChildrenMap = new Map();
-        let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index', plain } = decorators;
+        let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index' } = decorators;
         Object.is(itemName, true) && (itemName = 'item');
         Object.is(keyName, true) && (keyName = 'key');
         Object.is(indexName, true) && (indexName = 'index');
-        forEach(entries, ([key, value], index) => sliceResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, plain, nodeContext, profile, parentNode));
+        forEach(entries, ([key, value], index) => sliceResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, parentNode));
         children.length = entries.length;
         childrenMap.forEach(array => forEach(array, nodeContext => (nodeContext.parent = null, nodeContext.destructor(true))));
         nodeContext.childrenMap = newChildrenMap;
@@ -472,13 +471,13 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (!data) { return; }
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
         if (!node) {
-            const styles = profile.node.getAttribute('dg_scoped_styles');
-            styles && selectorInjector(fragment, styles.split(','));
+            const styleNames = profile.node.$styleNames;
+            styleNames && selectorInjector(fragment, styleNames.split(','));
         }
         Reflect.construct(NodeProfile, [fragment, root ? [] : profile.paths, rootNodeProfiles, null, true]);
         if (rootNodeProfiles.length) {
             processorResolver();
-            Promise.all(rootNodeProfiles.map(nodeProfile => Promise.all(nodeProfile.promises || []))).then(() => forEach(rootNodeProfiles, (nodeProfile, index) => nodeContext.profile && Reflect.construct(NodeContext, [nodeProfile, root ? null : nodeContext, index, null, false, (nodeProfile.landmark || nodeProfile.node).parentNode])));
+            Promise.all(rootNodeProfiles.map(nodeProfile => Promise.all(nodeProfile.promises || []))).then(() => forEach(rootNodeProfiles, (nodeProfile, index) => nodeContext.profile && Reflect.construct(NodeContext, [nodeProfile, root ? null : nodeContext, index, null, (nodeProfile.landmark || nodeProfile.node).parentNode])));
         }
         node ? node.appendChild(fragment) : nodeContext.parentNode.insertBefore(fragment, nodeContext.landmark);
     },
@@ -558,7 +557,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     const modifierRegExp = new RegExp(modifier), result = (event.getModifierState && event.getModifierState(modifier)) || [event.code, event.key, event.button].some(value => modifierRegExp.test(value));
     return positive == result;
 }) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
-    constructor (profile, parent = null, index = 0, sliceScope = null, plainSliceScope = false, parentNode = null) {
+    constructor (profile, parent = null, index = 0, sliceScope = null, parentNode = null) {
         this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
         if (parent) {
             this.parent = parent;
@@ -600,7 +599,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             const { each, exist } = this.directives || {};
             (each || exist || profile.virtual) && this.resolveLandmark(sliceScope);
             if (sliceScope) {
-                this.sliceScope = this.resolveScope(sliceScope, plainSliceScope, each.decorators.root);
+                const { plain, root } = each.decorators;
+                this.sliceScope = this.resolveScope(sliceScope, plain, root);
                 (parent.children.length > index + 1) && forEach(parent.children, (sibling, siblingIndex) => sibling && (siblingIndex > index) && (sibling.index++));
             } else {
                 profile.slotScope && (this.slotScope = this.resolveScope(Object.assign({}, profile.slotScope), true));
@@ -669,9 +669,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 originalSetAdd.call(sentrySet, this.sentry);
             }
             eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
-                if (name) {
-                    debugger
-                }
                 const target = decorators.target || this.node, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators);
                 target.addEventListener(event, handler, options);
                 return { target, event, handler, options, decorators };
@@ -1211,6 +1208,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             routeChangeResolver();
         }]));
     };
-    window.$dagger = Object.freeze(Object.assign(emptier(), { register, runtime, version: '1.0.0 - RC' }));
+    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0 - RC' }));
     return runtime;
-})()) => querySelector(document, 'script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();
+})()) => document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI, 'options'), runtime])))();
