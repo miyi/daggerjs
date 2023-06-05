@@ -43,7 +43,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', redirects: {}, routing: null } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
     const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
@@ -1195,12 +1195,10 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 })()) => (route = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
     const slash = '/';
     route.startsWith(slash) || (route = `${ slash }${ route }`);
-    const { mode, aliases, prefix, redirects } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path] || redirects[path];
+    const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
         logger(`\u2705 router redirected from "${ path }" to "${ redirectPath }"`);
-        route = query ? `${ redirectPath }?${ query }` : redirectPath;
-        aliases[path] || history.replaceState({ path: route }, '', `${ prefix }${ route }`);
-        return routeChangeResolver(route);
+        return routeChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
@@ -1236,20 +1234,20 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         this.modules = Array.isArray(modules) ? modules : [modules];
         asserter([`${ space }The "modules" field of router should be either "string" or "string array" insted of "%o"`, modules], this.modules.every(module => isString(module)));
         if (parent) {
-            if (match && !((match instanceof Function) ? match(rootScope, rootNamespace.module) : functionResolver(`($module, $scope) => { with ($module) with ($scope) return (() => { 'use strict'; return ${ match }; })()`)(rootNamespace.module, rootScope))) {
-                warner([`${ space }The router "%o" is invalid as the match expression "%o" returns falsy or equivalent`, router, match]);
-                this.invalid = true;
-                return;
-            }
             (!path || Object.is(path, '*')) && (path = '.+');
             this.path = `${ parent.path }/${ path }`;
         } else {
-            warner(`${ space }The "path" field of the root router should be removed`, !path);
+            warner(`${ space }The "path" field of the root router should be removed`, !Reflect.has(router, 'path'));
+            warner(`${ space }The "match" field of the root router should be removed`, !Reflect.has(router, 'match'));
             path = '';
-            warner(`${ space }The "match" field of the root router should be removed`, !match);
             this.path = '';
         }
-        logger(`${ space }\u23f3 resolving the router with path "${ this.path || '/' }"`);
+        logger(`${ space }\u23f3 resolving the ${ this.path ? `router with path "${ this.path }"` : 'root router' }`);
+        if (parent && Reflect.has(router, 'match') && !((match instanceof Function) ? match(rootScope, rootNamespace.module) : functionResolver(`($module, $scope) => { with ($module) with ($scope) return (() => { 'use strict'; return ${ match }; })() }`)(rootNamespace.module, rootScope))) {
+            warner([`${ space }The router "%o" is invalid as the "match" field "%o" returns falsy or equivalent`, router, match]);
+            this.invalid = true;
+            return;
+        }
         this.constants = constants, this.variables = variables, this.children = null, this.parent = parent, this.scenarios = (path instanceof Object) ? Object.keys(path).map(scenario => ({ scenario, regExp: new RegExp(path[scenario] || '^$') })) : [{ scenario: path, regExp: new RegExp(`^${ path }$`) }];
         forEach(this.modules, module => module.trim());
         if (children) {
@@ -1257,7 +1255,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             this.children = children.map(child => new Router(child, this)).filter(child => !child.invalid);
         }
         this.tailable = tailable || !(this.children || []).length;
-        logger(`${ space }\u2705 resolved the router with path "${ this.path || '/' }"`);
+        logger(`${ space }\u2705 resolved the ${ this.path ? `router with path "${ this.path }"` : 'root router' }`);
     }
     match (routers, scenarios, paths, length = paths.length, start = 0) {
         const scenarioLength = this.scenarios.length;
