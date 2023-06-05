@@ -36,7 +36,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     warner: (messages, condition) => daggerOptions.warning && vendor(messages, condition, console.warn, daggerOptions.warningPlainStyle, daggerOptions.warningHighlightStyle),
     groupStarter: label => daggerOptions.log && console.group(label),
     groupEnder: label => daggerOptions.log && console.groupEnd(label)
-}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, rootNamespace = null, rootScope = null, rootScopePromise = null, rootScopeResolver = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
@@ -168,7 +168,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, nameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, content, module, name, type }, styleModuleNames) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, content, module, name, type }, styleModuleNames) => {
     if (Object.is(type, resolvedType.template)) {
         selectorInjector(templateResolver(content), styleModuleNames);
     } else if (Object.is(type, resolvedType.script)) {
@@ -213,7 +213,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 }, ModuleProfile = class {
     constructor (config = {}, base = '', name = '', parent = null) {
         name = name.trim();
-        asserter(`The module name should be valid string matched RegExp "${ nameRegExp.toString() }" instead of "${ name }"`, !parent || nameRegExp.test(name));
+        asserter(`The module name should be valid string matched RegExp "${ moduleNameRegExp.toString() }" instead of "${ name }"`, !parent || moduleNameRegExp.test(name));
         this.layer = name ? (((parent || {}).layer || 0) + 1) : 0, this.space = new Array(this.layer * 4).fill(' ').join(''), this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = null;
         if (parent) {
             this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.baseElement = parent.baseElement;
@@ -660,7 +660,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         const { plain, text, html, raw } = profile;
         if (html) {
-            rootScopePromise = new Promise(resolver => (rootScopeResolver = resolver));
             return this.loading();
         }
         if (raw || plain) { // comment/raw/script/style/template
@@ -733,8 +732,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     postLoaded () {
         this.state = 'loaded';
         this.node && this.node.removeAttribute('dg-cloak');
-        if (this.profile.html) {
-            rootScopeResolver(this);
+        if (rootScopeCallback) {
+            rootScopeCallback(this.scope);
+            rootScopeCallback = null;
         } else if (this.directives) {
             const { controllers, eventHandlers, sentry } = this.directives;
             if (sentry) {
@@ -1232,7 +1232,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const space = new Array(this.layer * 4).fill(' ').join('');
         let path = router.path;
         this.modules = Array.isArray(modules) ? modules : [modules];
-        asserter([`${ space }The "modules" field of router should be either "string" or "string array" insted of "%o"`, modules], this.modules.every(module => isString(module)));
+        asserter([`${ space }The "modules" field of router should be either "string" or "string array" matched RegExp "${ moduleNameRegExp.toString() }" insted of "%o"`, modules], this.modules.every(module => isString(module) && moduleNameRegExp.test(module)));
         if (parent) {
             (!path || Object.is(path, '*')) && (path = '.+');
             this.path = `${ parent.path }/${ path }`;
@@ -1331,9 +1331,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         moduleConfigNormalizer(modules.content);
         const html = document.documentElement, routing = routerConfigs.routing || { modules: Object.keys(modules.content) };
         groupStarter('resolving top level modules');
-        rootNamespace = new ModuleProfile({ content: modules.content, type: resolvedType.namespace }, base);
-        serializer([rootNamespace.resolve(new Set(Array.isArray(routing.modules) ? routing.modules : [routing.modules])), () => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || (new NodeContext(new NodeProfile(html)) && rootScopePromise), htmlNodeContext => {
-            rootScope = htmlNodeContext.scope;
+        rootScopeCallback = scope => {
+            rootScope = scope;
             groupStarter('resolving routers');
             rootRouter = new Router(routing);
             groupEnder('resolving routers');
@@ -1347,6 +1346,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             warner(['No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
             window.addEventListener('popstate', () => routeChangeResolver());
             routeChangeResolver();
-        }]);
+        };
+        rootNamespace = new ModuleProfile({ content: modules.content, type: resolvedType.namespace }, base);
+        rootNamespace.resolve(new Set(Array.isArray(routing.modules) ? routing.modules : [routing.modules])).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
     };
 })())))();
