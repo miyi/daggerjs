@@ -43,7 +43,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
     const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
@@ -237,13 +237,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
         config.prefetch && this.resolve();
     }
-    fetch1 (paths, asynchronous = false) {
+    fetch (paths, asynchronous = false) {
         asynchronous && (paths = paths.split('.'));
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
         dependencyResolver(moduleProfile, this);
-        return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch1(paths)) : (moduleProfile.valid && moduleProfile.fetch1(paths)));
+        return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
         const type = this.type;
@@ -295,7 +295,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         } else if (Object.is(type, resolvedType.script)) {
             return import(`data:text/javascript, ${ encodeURIComponent(content.replace(relativePathRegExp, (match, url1, url2) => match.replace(url1 || url2, new URL(url1 || url2, this.base)))) }`).catch(() => asserter(`${ this.space }Failed to import dynamic script module "${ this.path }" with resolved content "${ content }"`));
         } else if (Object.is(type, resolvedType.template)) {
-            const parentPath = this.parent.path, nodeProfile = new NodeProfile(templateResolver(content), parentPath ? parentPath.split('.') : [], null, null, false, {});
+            const nodeProfile = new NodeProfile(templateResolver(content), this.parent, null, null, false, {});
             return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
         } else if (Object.is(type, resolvedType.style)) {
             return styleResolver(content, `dg_style_module_content-${ this.path.replace(/\./g, '_') }`, true);
@@ -409,7 +409,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                     }
                 }
             } catch (error) { pipeline = null; }
-            pipeline || (pipeline = [this.parent.fetch1(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent]);
+            pipeline || (pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent]);
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }
@@ -545,7 +545,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const styleNames = profile.node.$styleNames;
             styleNames && selectorInjector(fragment, styleNames.split(','));
         }
-        Reflect.construct(NodeProfile, [fragment, root ? [] : profile.paths, rootNodeProfiles, null, true]);
+        Reflect.construct(NodeProfile, [fragment, root ? rootNamespace : profile.namespace, rootNodeProfiles, null, true]);
         if (rootNodeProfiles.length) {
             processorResolver();
             Promise.all(rootNodeProfiles.map(nodeProfile => Promise.all(nodeProfile.promises || []))).then(() => forEach(rootNodeProfiles, (nodeProfile, index) => nodeContext.profile && Reflect.construct(NodeContext, [nodeProfile, root ? null : nodeContext, index, null, (nodeProfile.landmark || nodeProfile.node).parentNode])));
@@ -632,20 +632,18 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     return positive == result;
 }) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
     constructor (profile, parent = null, index = 0, sliceScope = null, parentNode = null) {
-        this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
+        const { directives, dynamic, namespace, node, landmark, plain, text, html, raw } = profile;
+        this.directives = directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
         if (parent) {
             this.parent = parent;
             this.parentNode = parentNode || parent.node || parent.parentNode;
-            const paths = profile.paths;
-            this.module = Object.is(paths, parent.profile.paths) ? parent.module : rootNamespace.fetch1([...paths]).module;
             this.scope = parent.scope;
             parent.children.splice(index, 0, this);
         } else {
-            this.parentNode = profile.node.parentNode || profile.landmark.parentNode;
-            this.module = rootNamespace.module;
+            this.parentNode = node.parentNode || landmark.parentNode;
             this.scope = rootScope;
         }
-        const dynamic = profile.dynamic;
+        this.module = namespace.module;
         if (dynamic) {
             const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
             this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
@@ -658,7 +656,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             });
             processorResolver();
         }
-        const { plain, text, html, raw } = profile;
         if (html) {
             return this.loading();
         }
@@ -912,7 +909,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
     })();
     return NodeContext;
-})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('_') ? content.replace(/_[a-z]/g, string => string[1].toUpperCase()).replace(/_[A-Z]/g, string => `_${ string[1].toLowerCase() }`) : content, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), decoratorsResolver = expression => ((safeDataResolver = expression => { try { return expression ? (window[expression] || functionResolver(expression)) : expression; } catch (error) { return expression; } }) => {
+})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('_') ? content.replace(/_[a-z]/g, string => string[1].toUpperCase()).replace(/_[A-Z]/g, string => `_${ string[1].toLowerCase() }`) : content, templateCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), decoratorsResolver = expression => ((safeDataResolver = expression => { try { return expression ? (window[expression] || functionResolver(expression)) : expression; } catch (error) { return expression; } }) => {
     const [name, ...rawDecorators] = caseResolver(expression).split('#'), decorators = emptier();
     forEach(rawDecorators.filter(decorator => decorator), decorator => {
         const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
@@ -931,7 +928,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     asserter(`There is no valid module named "${ tagName }" found`, namespace);
     let isVirtualElement = false, promise = namespace.promise;
     if (namespace) {
-        promise = namespace.fetch1(tagName, true);
+        promise = namespace.fetch(tagName, true);
         if (promise) {
             isVirtualElement = true;
         } else {
@@ -940,8 +937,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {
-    constructor (node, basePaths = [], rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
-        this.node = node, this.unique = unique, this.paths = basePaths, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
+    constructor (node, namespace = rootNamespace, rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
+        this.node = node, this.namespace = namespace, this.unique = unique, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
         const type = node.nodeType;
         if (Object.is(type, Node.TEXT_NODE)) {
             const resolvedTextContent = node.textContent.trim();
@@ -961,7 +958,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 raw && directiveAttributeResolver(node, rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), namespace = rootNamespace.fetch1([...this.paths]), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     directiveAttributeResolver(node, slotDirective, slotValue);
@@ -1013,7 +1010,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const childNodes = this.virtual ? node.content.childNodes : node.childNodes;
         if (childNodes.length) {
             this.children = [];
-            forEach(childNodes, childNode => Reflect.construct(NodeProfile, [childNode, this.paths, rootNodeProfiles, this, !!this.unique]));
+            forEach(childNodes, childNode => Reflect.construct(NodeProfile, [childNode, this.namespace, rootNodeProfiles, this, !!this.unique]));
             this.plain && this.children.every(child => child.raw) && (this.raw = true) && (this.plain = false);
         } else if (this.plain) {
             (this.raw = true) && (this.plain = false);
@@ -1186,8 +1183,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
 }) => nextRouter => {
     logger(`\u23f3 router is changing from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"...`);
-    rootNamespace.childrenCache = emptier();
-    // originalMapClear.call(templateCacheMap);
     const path = nextRouter.path;
     styleModuleSet = styleModules[path] || (styleModules[path] = new Set());
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
@@ -1342,7 +1337,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             warner(['It\'s illegal to set "%o" as root node', html], !rootNodeSet.has(html));
             rootNodeSet.delete(html);
             const rootNodes = [...rootNodeSet];
-            forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, [], rootNodeProfiles, null, true]));
+            forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, rootNamespace, rootNodeProfiles, null, true]));
             warner(['No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
             window.addEventListener('popstate', () => routeChangeResolver());
             routeChangeResolver();

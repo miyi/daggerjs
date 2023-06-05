@@ -5,9 +5,6 @@
         "/1": "/index1"
     },
     "default": "/index1",
-    "redirects": {
-        "/": "/index1"
-    },
     "routing": {
         "//": "path/constants/variables/tailable/modules/children",
         "tailable": false,
