@@ -1,10 +1,10 @@
 {
     "script": "#script",
     "component": [{
-        "match": false,
+        "media": "(resolution: 6dppx)",
         "uri": "#component1"
     }, {
-        "match": true,
+        "media": "(resolution: 2dppx)",
         "uri": "#component"
     }],
     "prefix": "#prefix",
@@ -15,13 +15,7 @@
     "@namespace": {
         "index": {
             "content": {
-                "template": [{
-                    "match": false,
-                    "uri": "#index_template123"
-                }, {
-                    "match": true,
-                    "uri": "#index_template"
-                }],
+                "template": "#index_template",
                 "style": "#index_style",
                 "content": "./index.json"
             }

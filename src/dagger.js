@@ -51,7 +51,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => resolver(base, functionResolver(content), type, extendsDefaultConfig)) : resolver(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent[type] };
-})(), functionResolver = (expression, ignoreError = false) => {
+})(), functionResolver = expression => {
     if (!Reflect.has(processorCaches, expression)) {
         try {
             try {
@@ -60,19 +60,14 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 processorCaches[expression] = new Function(`return (() => {${ expression }})();`)();
             }
         } catch (error) {
-            if (ignoreError) {
-                return expression;
-            } else {
-                asserter(`The content "${ expression }" is not a valid javaScript code block, parse with error "${ error.message }"`);
-                return null;
-            }
+            asserter(`The content "${ expression }" is not a valid javaScript code block, parse with error "${ error.message }"`);
         }
     }
     return processorCaches[expression];
 }, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
     (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
     config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'match') || matchMedia(item.match).matches || functionResolver(item.match))));
+    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches)));
     config.type || (config.type = type);
     config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
     return config;
@@ -1038,12 +1033,11 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const node = this.node;
         directiveAttributeResolver(node, attributeName, value);
         node.removeAttribute(attributeName);
-        const fields = {}, [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier();
+        const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
-            const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
-            decorators[name] = value ? (window[value] || functionResolver(value, true)) : true;
+            const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
+            decorators[name] = value ? (window[value] || JSON.parse(value)) : true;
         });
-        fields.decorators = decorators;
         if (Object.is(resolvedType, 'event')) {
             fields.event = name;
             if (lifeCycleDirectiveNames[name]) {

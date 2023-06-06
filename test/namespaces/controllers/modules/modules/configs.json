@@ -1,11 +1,7 @@
 {
     "template": [{
         "description": "mismatch",
-        "match": "(resolution: 4dppx)",
-        "uri": ["#template-mismatch"]
-    }, {
-        "description": "mismatch",
-        "match": false,
+        "media": "(resolution: 4dppx)",
         "uri": ["#template-mismatch"]
     }, {
         "description": "force breaking when embedded module missing",
@@ -49,7 +45,7 @@
     },
     "script": {
         "candidates": [{
-            "match": "screen and (resolution: 2dppx)",
+            "media": "screen and (resolution: 2dppx)",
             "uri": "#script"
         }],
         "uri": "#script",
@@ -61,9 +57,6 @@
         "type": "script"
     },
     "style1": [{
-        "match": "false",
-        "content": {}
-    }, {
         "uri": ["#style1"],
         "scoped": false
     }],

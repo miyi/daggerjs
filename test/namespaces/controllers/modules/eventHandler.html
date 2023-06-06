@@ -32,8 +32,8 @@
       <br/>
       <button $each="[3, 4, 5, 6, 1]" +click#stop="console.log(`this is button ${ index }, item is ${ item }`);">button ${ index }</button>
       <template $exist="enabled" +click#target:document.body="console.log(123)"></template>
-      <!--<textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +click#every:['-Shift','-Control']#capture#once="console.log('clicked')" $value#input="value" rows="4" cols="50" +loaded="resizeObserver = loaded($node, textarea)"></textarea><br/>-->
-      <textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +mouseover#every:['-Caps-Lock','!-Shift']="console.log('mouseover', $event)" +click#current#some:['-Shift','-Control',0,1]#capture="console.warn('clicked')" $value#input="value" rows="4" cols="50" +loaded="resizeObserver = loaded($node, textarea)"></textarea><br/>
+      <!--<textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +click#every:["-Shift","-Control"]#capture#once="console.log('clicked')" $value#input="value" rows="4" cols="50" +loaded="resizeObserver = loaded($node, textarea)"></textarea><br/>-->
+      <textarea id="textarea" $class="enabled ? 'enabled' : 'disabled'" +mouseover#every:["-Caps-Lock","!-Shift"]="console.log('mouseover', $event)" +click#current#some:["-Shift","-Control",0,1]#capture="console.warn('clicked')" $value#input="value" rows="4" cols="50" +loaded="resizeObserver = loaded($node, textarea)"></textarea><br/>
       <div $exist="enabled" +resize#target:window="console.log($event)"></div>
       <div +custom-event="console.log('custom-event', $event)">
         <span>height is ${ textarea.height }</span><br/>
