@@ -1,4 +1,2 @@
 <a $href="`${ $router.prefix }/index`">return to index</a>
-<!--<directive></directive>-->
-<template $html="'<directive></directive>'"></template>
-<!--<template $html="(() => '<directive></directive>')($router.identity)"></template>-->
+<template $html="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></template>

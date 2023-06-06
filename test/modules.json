@@ -9,10 +9,6 @@
     }],
     "prefix": "#prefix",
     "suffix": "#suffix",
-    "directive": {
-        "content": "<div>directive content</div>",
-        "type": "template"
-    },
     "@script": {
         "test_script": "#index_test_script"
     },

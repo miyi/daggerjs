@@ -36,7 +36,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     warner: (messages, condition) => daggerOptions.warning && vendor(messages, condition, console.warn, daggerOptions.warningPlainStyle, daggerOptions.warningHighlightStyle),
     groupStarter: label => daggerOptions.log && console.group(label),
     groupEnder: label => daggerOptions.log && console.groupEnd(label)
-}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[$a-zA-Z_]{1}[\w-$]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
@@ -51,10 +51,28 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => resolver(base, functionResolver(content), type, extendsDefaultConfig)) : resolver(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent[type] };
-})(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return (${ expression });`)()), isString = object => Object.is(typeof object, 'string'), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
+})(), functionResolver = (expression, ignoreError = false) => {
+    if (!Reflect.has(processorCaches, expression)) {
+        try {
+            try {
+                processorCaches[expression] = new Function(`return (${ expression });`)();
+            } catch (error) {
+                processorCaches[expression] = new Function(`return (() => {${ expression }})();`)();
+            }
+        } catch (error) {
+            if (ignoreError) {
+                return expression;
+            } else {
+                asserter(`The content "${ expression }" is not a valid javaScript code block, parse with error "${ error.message }"`);
+                return null;
+            }
+        }
+    }
+    return processorCaches[expression];
+}, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
     (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
     config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => { try { return (item instanceof Object) && (!Reflect.has(item, 'match') || matchMedia(item.match).matches || functionResolver(item.match)); } catch (error) { return false; } }));
+    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'match') || matchMedia(item.match).matches || functionResolver(item.match))));
     config.type || (config.type = type);
     config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
     return config;
@@ -66,13 +84,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     resolver = await ((resolver instanceof Function) ? resolver(null, token) : resolver);
     return nextResolvers.length ? serializer([nextResolvers.shift()(resolver, token), ...nextResolvers], token) : resolver;
 }, originalStringifyMethod = JSON.stringify, originalSetAdd = Set.prototype.add, originalSetClear = Set.prototype.clear, originalSetDelete = Set.prototype.delete, originalMapClear = Map.prototype.clear, originalMapSet = Map.prototype.set, originalWeakMapSet = WeakMap.prototype.set, processorResolver = () => {
-    if (!directiveObjects.length) { return; }
-    forEach(functionResolver(`[${ directiveObjects.map(directive => directive.processor).join(', ') }]`), (processor, index) => {
-        const directive = directiveObjects[index];
+    if (!directiveQueue.length) { return; }
+    forEach(functionResolver(`[${ directiveQueue.map(directive => directive.processor).join(', ') }]`), (processor, index) => {
+        const directive = directiveQueue[index];
         processorCaches[directive.processor] = processor;
         directive.processor = processor;
     });
-    directiveObjects.length = 0;
+    directiveQueue.length = 0;
 }, processorWrapper = originalMethod => function (...parameters) {
     const controller = currentController;
     currentController = null;
@@ -242,7 +260,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
-        dependencyResolver(moduleProfile, this);
+        // dependencyResolver(moduleProfile, this);
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
@@ -912,20 +930,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
     })();
     return NodeContext;
-})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('_') ? content.replace(/_[a-z]/g, string => string[1].toUpperCase()).replace(/_[A-Z]/g, string => `_${ string[1].toLowerCase() }`) : content, templateCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), decoratorsResolver = expression => ((safeDataResolver = expression => { try { return expression ? (window[expression] || functionResolver(expression)) : expression; } catch (error) { return expression; } }) => {
-    const [name, ...rawDecorators] = caseResolver(expression).split('#'), decorators = emptier();
-    forEach(rawDecorators.filter(decorator => decorator), decorator => {
-        const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
-        decorators[name] = value ? safeDataResolver(value) : true;
-    });
-    return { name, decorators };
-})(), directiveAttributeResolver = (node, name, value = '') => {
+})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('_') ? content.replace(/_[a-z]/g, string => string[1].toUpperCase()).replace(/_[A-Z]/g, string => `_${ string[1].toLowerCase() }`) : content, templateCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveAttributeResolver = (node, name, value = '') => {
     daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/[^\w]/g, '-') }-debug`, value);
 }, directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
     expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ (fields.decorators || {}).debug ? 'debugger\n\r' : '' }return ${ expression }; })(); }`;
     const processor = processorCaches[expression];
     const directive = Object.assign({}, fields, { processor: processor || expression });
-    processor || directiveObjects.push(directive);
+    processor || directiveQueue.push(directive);
     return directive;
 })(), templateResolver = (tagName, namespace) => {
     asserter(`There is no valid module named "${ tagName }" found`, namespace);
@@ -1027,7 +1038,11 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const node = this.node;
         directiveAttributeResolver(node, attributeName, value);
         node.removeAttribute(attributeName);
-        const fields = {}, { name, decorators } = decoratorsResolver(attributeName.substring(1));
+        const fields = {}, [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier();
+        forEach(rawDecorators.filter(decorator => decorator), decorator => {
+            const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
+            decorators[name] = value ? (window[value] || functionResolver(value, true)) : true;
+        });
         fields.decorators = decorators;
         if (Object.is(resolvedType, 'event')) {
             fields.event = name;
