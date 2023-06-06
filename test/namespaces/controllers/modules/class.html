@@ -24,10 +24,10 @@
         margin-right: 20px;
     }
   </style>
-  <body>
+  <template id="template">
     <div +loading="$module.loading()">
       <p class="content" $class="className">class value is "${ className instanceof Object ? JSON.stringify(className) : className }", class content -></p>
       <button +click="className = $module.onSwitchClass()">switch</button>
     </div>
-  </body>
+  </template>
 </html>

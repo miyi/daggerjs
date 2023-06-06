@@ -31,7 +31,7 @@
         border: 1px solid green;
     }
   </style>
-  <body>
+  <template id="template">
     <br/>
     <template +loading="loading()">
       <button +click="exist = !exist">toggle exist</button><br/>
@@ -44,5 +44,5 @@
       <template $exist="item.exist" $each="array" +loading="loading1(item.content, index)" $html="html"></template>
       <p>end</p>
     </template>
-  </body>
+  </template>
 </html>

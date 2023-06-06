@@ -23,7 +23,7 @@
         border: 1px solid green;
     }
   </style>
-  <body>
+  <template id="template">
     <div +loading="loading()" style="margin-top: 20px;">
       <button +click="exist = !exist;">toggle exist</button>
       <form onsubmit="return false;">
@@ -57,5 +57,5 @@
         </template>
       </form>
     </div>
-  </body>
+  </template>
 </html>

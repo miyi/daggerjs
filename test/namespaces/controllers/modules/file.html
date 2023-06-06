@@ -22,7 +22,7 @@
         border: 1px solid green;
     }
   </style>
-  <body>
+  <template id="template">
     <div +loading="loading()" style="margin-top: 20px;">
       <label>single file select (*.txt, *.js, *.zip)</label><input type="file" accept=".txt,.js,.zip" $multiple="!multiple" $file="file" $result#data="result" $watch="watch(file, 'single')">
       <span $text#test0="`${ result.progress }%`"></span>
@@ -31,5 +31,5 @@
       <span $each#item:result="results" $text="`${ index } - ${ result.progress }%`"></span>
       <!--<label>video select</label><input type="file" $multiple="multiple" accept="video/*" capture="environment" $file="video" $watch="watch(video, 'video')">-->
     </div>
-  </body>
+  </template>
 </html>

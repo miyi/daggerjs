@@ -23,10 +23,10 @@
         border: 1px solid green;
     }
   </style>
-  <body>
+  <template id="template">
     <div +loading="$module.loading()">
       <button +click="style = $module.onSwitchStyle()">switch</button><br/>
       <p style="border: 1px solid black; display: inline !important;" $style="style">style value is "${ style instanceof Object ? JSON.stringify(style) : style }"</p>
     </div>
-  </body>
+  </template>
 </html>

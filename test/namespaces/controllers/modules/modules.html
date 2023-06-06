@@ -1,17 +1,6 @@
 <!DOCTYPE html>
 <html>
   <script type="dagger/configs" base="./modules/" src="./configs.json"></script>
-  <template id="innerTemplate1">
-      <namespace.inner.inner_template321 +loading="{ html: '<span +click#stop=script1.processor()>1234567</span>' }"></namespace.inner.inner_template321>
-      <inner_template2 +sentry="console.log($scope, $router, $nextRouter), new Promise((resolve, reject) => setTimeout(() => resolve(false), 1000))"></inner_template2>
-      <div class="innerTemplate1_root">
-        <div description="should be dashed red">
-        <span>inside innerTemplate1 start - ${ index }</span><br/>
-        <div class="container" $html="html"></div>
-        <span>inside innerTemplate1 end - ${ index }</span><br/>
-        </div>
-    </div>
-  </template>
   <script id="namespace" type="dagger/configs">
     {
         "json": {
@@ -44,7 +33,7 @@
         border: 1px dashed red;
     }
   </style>
-  <body>
+  <template id="template">
     <template +loading="loading()">
       <br/>
       <span>Current index is: "${ index }"</span><br/>
@@ -64,5 +53,16 @@
       <inner_template2 +loading="{ index: 3 }"></inner_template2>
       <!--<inner_template2 +loading="{ index, html }"></inner_template2>-->
     </template>
-  </body>
+  </template>
+  <template id="innerTemplate1">
+    <namespace.inner.inner_template321 +loading="{ html: '<span +click#stop=script1.processor()>1234567</span>' }"></namespace.inner.inner_template321>
+    <inner_template2 +sentry="console.log($scope, $router, $nextRouter), new Promise((resolve, reject) => setTimeout(() => resolve(false), 1000))"></inner_template2>
+    <div class="innerTemplate1_root">
+      <div description="should be dashed red">
+        <span>inside innerTemplate1 start - ${ index }</span><br/>
+        <div class="container" $html="html"></div>
+        <span>inside innerTemplate1 end - ${ index }</span><br/>
+      </div>
+    </div>
+  </template>
 </html>

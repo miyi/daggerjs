@@ -14,11 +14,11 @@
         border: 1px solid green;
     }
   </style>
-  <body>
+  <template id="template">
     <br/>
     <template +loading="loading()">
       <button +click="src = onSwitch()">switch</button><br/>
       <iframe $src="src" style="width: 100%; height: 100%"></iframe>
     </template>
-  </body>
+  </template>
 </html>

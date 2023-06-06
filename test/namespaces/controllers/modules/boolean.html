@@ -14,12 +14,12 @@
         margin-right: 20px;
     }
   </style>
-  <body>
+  <template id="template">
     <div +loading="$module.loading($router.schemes.boolean)">
       <input $disabled="!enabled">
       <br/>
       <button +click="enabled = !enabled">toggle</button>
       enabled value is: ${ enabled }, the current input element is ${ enabled ? 'enabled' : 'disabled' }.
     </div>
-  </body>
+  </template>
 </html>

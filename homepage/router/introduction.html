@@ -1,19 +1,14 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
+  <script type="dagger/configs" extends>
     {
-      "template": {
-          "uri": "body",
-          "style": "style"
-      },
-      "style": "#style",
       "demo": {
           "uri": "./introduction_demo.html",
           "type": "string"
       }
     }
   </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     h3::before {
         content: "😕";
         margin-right: 10px;
@@ -26,7 +21,7 @@
         font-style: italic;
     }
   </style>
-  <body>
+  <template id="template">
     <h2>${ $['router.introduction'] }</h2>
     <div class="content">
       <template $each="$['router.introduction.sections']">
@@ -34,5 +29,5 @@
         <div class="answer" $html="item.answer"></div>
       </template>
     </div>
-  </body>
+  </template>
 </html>

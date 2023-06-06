@@ -43,12 +43,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+}, emptyObject = emptier(), meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['template#template'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
     const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
         configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
-        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), type, extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
+        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => resolver(base, functionResolver(content), type, extendsDefaultConfig)) : resolver(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent[type] };
 })(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return (${ expression });`)()), isString = object => Object.is(typeof object, 'string'), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
@@ -316,21 +316,24 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     resolveEmbeddedType (element) {
         if (this.type) { return; }
-        const { tagName, type } = element, isScript = Object.is(tagName, 'SCRIPT');
+        const { tagName, type } = element;
         if (Object.is(tagName, 'TEMPLATE')) {
             this.type = resolvedType.template;
-        } else if (isScript && Object.is(type, embeddedType.namespace)) {
-            this.type = resolvedType.namespace;
-            return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
-        } else if (isScript && Object.is(type, embeddedType.script)) {
-            this.type = resolvedType.script;
-        } else if (isScript && Object.is(type, embeddedType.json)) {
-            this.type = resolvedType.json;
         } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
             this.type = resolvedType.style;
-        } else {
-            this.type = resolvedType.string;
+        } else if (Object.is(tagName, 'SCRIPT')) {
+            if (Object.is(type, embeddedType.namespace)) {
+                this.type = resolvedType.namespace;
+                return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
+            } else if (Object.is(type, embeddedType.script)) {
+                this.type = resolvedType.script;
+            } else if (Object.is(type, embeddedType.json)) {
+                this.type = resolvedType.json;
+            } else if (Object.is(type, embeddedType.string)) {
+                this.type = resolvedType.string;
+            }
         }
+        asserter([`The element "%o" of type "${ type }" is not supported`, element], this.type);
     }
     resolveModule (resolvedContent) {
         this.resolvedContent = resolvedContent;

@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <script type="dagger/configs">
-    {
-      "template": {
-          "uri": "body",
-          "style": "style"
-      },
-      "style": "#style"
-    }
-  </script>
-  <style id="style" type="dagger/style">
+  <style type="dagger/style">
     h3::before {
         content: "😕";
         margin-right: 10px;
@@ -19,7 +10,7 @@
         margin-right: 10px;
     }
   </style>
-  <body>
+  <template id="template">
     <h2>${ $['miscellaneous.introduction'] }</h2>
     <div class="content">
       <template $each="$['miscellaneous.introduction.sections']">
@@ -27,5 +18,5 @@
         <div class="answer" $html="item.answer"></div>
       </template>
     </div>
-  </body>
+  </template>
 </html>
