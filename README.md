@@ -15,7 +15,7 @@ dagger.js is a pure runtime framework, you don't need to prepare anything for us
 
 #### Just insert the following two script tags insides the head section of the entry html page of your application to setup dagger.js:  
 ##### <script type="module" crossorigin="anonymous" src="https://assets.codepen.io/5782383/dagger.release.js" defer></script>
-##### <script type="dagger/configs"></script><!-- dagger configs -->
+##### <script type="dagger/modules"></script><!-- dagger configs -->
 
 Please find the document and examples at ***https://daggerjs.org***.
 

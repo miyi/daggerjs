@@ -4,7 +4,6 @@
         "media": "(resolution: 6dppx)",
         "uri": "#component1"
     }, {
-        "media": "(resolution: 2dppx)",
         "uri": "#component"
     }],
     "prefix": "#prefix",
@@ -25,7 +24,7 @@
     "focus": "http://localhost:8283/modules/focus.html",
     "boolean": "http://localhost:8283/modules/boolean.html",
     "class": "http://localhost:8283/modules/class.html",
-    "style": "http://localhost:8283/modules/style.html",
+    "Style": "http://localhost:8283/modules/style.html",
     "raw": "http://localhost:8283/modules/raw.html",
     "general": "http://localhost:8283/modules/general.html",
     "text": "http://localhost:8283/modules/text.html",

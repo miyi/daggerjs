@@ -53,7 +53,14 @@ return {
                 variables: {
                     boolean: false
                 }
-            }, 'class', 'style', 'raw', {
+            }, 'class', {
+                name: 'style',
+                constants: {
+                    title: 'style',
+                    directive: '__Style'
+                },
+                modules: 'Style'
+            }, 'raw', {
                 name: 'general',
                 variables: {
                     index: 0
@@ -63,7 +70,13 @@ return {
                 variables: {
                     index: 0
                 },
-            }, 'lifeCycle', 'html', 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
+            }, {
+                name: 'lifeCycle',
+                constants: {
+                    title: 'lifeCycle',
+                    directive: 'life__Cycle'
+                },
+            }, 'html', 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
                 name: 'href',
                 modules: ['href', 'module_component']
             }, 'iframe', 'template', 'eventHandler', 'date', {

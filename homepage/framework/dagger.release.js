@@ -17,7 +17,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
 }, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { template: { uri: ['#template'], type: resolvedType.template, style: 'style', optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, optional: true } }, configExtender = (base, content, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent, content) : content })) => (baseElement, base) => {
-    const configContainer = querySelector(baseElement, 'script[type="dagger/configs"]');
+    const configContainer = querySelector(baseElement, 'script[type="dagger/modules"]');
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
         configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
@@ -117,7 +117,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/configs', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, pathRegExp = /^[$a-zA-Z-_]{1}[\w-$]*(\.[$a-zA-Z-_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string'  }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, pathRegExp = /^[$a-zA-Z-_]{1}[\w-$]*(\.[$a-zA-Z-_]{1}[\w-$]*)*$/, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, resolvedType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
     } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
@@ -1177,4 +1177,4 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     };
     window.$dagger = Object.freeze(Object.assign(emptier(), { register, runtime, version: '1.0.0 - RC' }));
     return runtime;
-})()) => document.querySelector('script[type="dagger/configs"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();
+})()) => document.querySelector('script[type="dagger/modules"]') ? document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI), configs => runtime(configs)])) : runtime)();
