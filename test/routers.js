@@ -3,14 +3,14 @@ const resolver = raw => (raw instanceof Object) ? Object.assign({
     variables: raw.variables,
     constants: {
         title: raw.name,
-        template: raw.name
+        directive: raw.name
     },
     modules: raw.name
 }, raw) : {
     path: raw,
     constants: {
         title: raw,
-        template: raw
+        directive: raw
     },
     modules: raw
 };
@@ -19,7 +19,8 @@ return {
     mode: 'history',
     prefix: '',
     aliases: {
-        '/1': '/index1'
+        '/index': '/index1',
+        '/demo_local.html': '/index2'
     },
     default: '/index1',
     routing: { // path/constants/variables/tailable/modules/children,
@@ -28,10 +29,20 @@ return {
             title: 'default, should be overwritten'
         },
         modules: ['test_script', 'script', 'component', 'prefix', 'suffix'],
-        children: [resolver({
-            name: 'index',
-            path: 'index1', 
-        }), Object.assign(resolver('controllers'), {
+        children: [{
+            path: 'index1',
+            constants: {
+                title: 'index',
+                template: 'index'
+            },
+            modules: 'index'
+        }, {
+            path: 'controllers',
+            constants: {
+                title: 'controllers',
+                template: 'controllers'
+            },
+            modules: 'controllers',
             children: [{
                 name: 'focus',
                 variables: {
@@ -59,9 +70,9 @@ return {
                 name: 'custom',
                 constants: {
                     title: 'custom class',
-                    template: 'custom'
+                    directive: 'custom'
                 },
             }, 'watch'].map(resolver)
-        })]
+        }]
     }
 };

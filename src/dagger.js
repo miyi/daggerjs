@@ -60,14 +60,18 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 processorCaches[expression] = new Function(`return (() => {${ expression }})();`)();
             }
         } catch (error) {
-            asserter(`The content "${ expression }" is not a valid javaScript code block, parse with error "${ error.message }"`);
+            asserter(`The content "${ expression }" is not legal javaScript code, parsing with error "${ error.message }"`);
         }
     }
     return processorCaches[expression];
 }, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
-    (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
-    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches)));
+    (Array.isArray(config) || !(config instanceof Object)) && (config = { candidates: config });
+    if (config.candidates) {
+        Array.isArray(config.candidates) || (config.candidates = [config.candidates]);
+        const matchedCandidate = config.candidates.find(item => item && matchMedia(item.media || 'all').matches);
+        asserter(['There is no matched config part within "%o"', config.candidates], matchedCandidate);
+        (matchedCandidate instanceof Object) ? Object.assign(config, matchedCandidate) : (config.uri = matchedCandidate);
+    }
     config.type || (config.type = type);
     config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
     return config;
@@ -926,7 +930,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     })();
     return NodeContext;
 })(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('_') ? content.replace(/_[a-z]/g, string => string[1].toUpperCase()).replace(/_[A-Z]/g, string => `_${ string[1].toLowerCase() }`) : content, templateCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveAttributeResolver = (node, name, value = '') => {
-    daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/[^\w]/g, '-') }-debug`, value);
+    daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/\#/g, '__').replace(/:/g, '_').replace(/[^\w]/g, '-') }-debug`, value);
 }, directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
     expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ (fields.decorators || {}).debug ? 'debugger\n\r' : '' }return ${ expression }; })(); }`;
     const processor = processorCaches[expression];
@@ -938,11 +942,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     let isVirtualElement = false, promise = namespace.promise;
     if (namespace) {
         promise = namespace.fetch(tagName, true);
-        if (promise) {
-            isVirtualElement = true;
-        } else {
-            return templateResolver(tagName, namespace.parent);
-        }
+        if (promise) { isVirtualElement = true; } else { return templateResolver(tagName, namespace.parent); }
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {
@@ -1036,7 +1036,10 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
             const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
-            decorators[name] = value ? (window[value] || JSON.parse(value)) : true;
+            decorators[name] = true;
+            if (value) {
+                try { decorators[name] = window[value] || JSON.parse(value); } catch { decorators[name] = value; }
+            }
         });
         if (Object.is(resolvedType, 'event')) {
             fields.event = name;
@@ -1179,7 +1182,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
 }) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, routeChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     groupEnder(`resolving modules of the router "${ nextRouter.path }"`);
-    logger(`\u2705router has changed from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"`);
+    logger(`\u2705 router has changed from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"`);
     processorResolver();
     isRouterWritable = true;
     rootScope.$router = nextRouter;
@@ -1204,7 +1207,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     route.startsWith(slash) || (route = `${ slash }${ route }`);
     const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
-        logger(`\u2705 router redirected from "${ path }" to "${ redirectPath }"`);
+        logger(`\ud83e\udd98 router alias matched, router redirected from "${ path }" to "${ redirectPath }"`);
         return routeChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
