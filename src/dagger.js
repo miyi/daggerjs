@@ -36,14 +36,14 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     warner: (messages, condition) => daggerOptions.warning && vendor(messages, condition, console.warn, daggerOptions.warningPlainStyle, daggerOptions.warningHighlightStyle),
     groupStarter: label => daggerOptions.log && console.group(label),
     groupEnder: label => daggerOptions.log && console.groupEnd(label)
-}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[a-zA-Z_]{1}[\w]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[a-z]{1}[\w]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), meta = Symbol('meta'), moduleType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, promisor = Promise.resolve(), routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['template#template'], type: moduleType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: moduleType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: moduleType.style, scoped: true, optional: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+}, emptyObject = emptier(), meta = Symbol('meta'), moduleType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, promisor = Promise.resolve(), routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['template#template'], type: moduleType.template }, script: { uri: ['script[type="dagger/script"]'], type: moduleType.script, anonymous: true }, style: { uri: ['style[type="dagger/style"]'], type: moduleType.style, scoped: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
     const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
@@ -285,7 +285,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 return (data, token) => (token.stop = !!data) || this.resolveURI(uri);
             }), moduleProfile => {
                 if (!moduleProfile) {
-                    asserter([`${ this.space }Failed to resolve uri of module "${ this.path }" from "%o"`, this.URIs], this.config.optional);
+                    asserter([`${ this.space }Failed to resolve uri of module "${ this.path }" from "%o"`, this.URIs]);
                     (this.valid = false) || this.resolved(null);
                 }
             }];
@@ -372,7 +372,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             module = scriptModuleResolver(module, emptier());
         } else if (Object.is(type, moduleType.style)) {
             if (!Reflect.has(this.config, 'scoped') || this.config.scoped) {
-                asserter(`${ this.space }It's invalid to use "$" in style module path "${ this.path }"`, !this.path.includes('$'));
                 const name = `dg_style_module-${ this.path.replace(/\./g, '_') }`, style = styleResolver('', name, true), sheet = style.sheet, iterator = { index: 0 };
                 forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, name, iterator));
                 module = style;
@@ -562,7 +561,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         nodeContext.childrenMap = newChildrenMap;
     })(),
     exist: (data, _, nodeContext) => data ? (Object.is(nodeContext.state, 'unloaded') && nodeContext.loading()) : nodeContext.unloading(true),
-    file: (data, node) => asserter([`The data bound to directive "$file" of element "%o" should be "File${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && Array.every(file => (file instanceof File))) : (data instanceof File))),
+    file: (data, node) => asserter([`The data bound to directive "$file" of element "%o" should be "File${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && data.every(file => (file instanceof File))) : (data instanceof File))),
     focus: (data, node, _, { decorators: { prevent = false } }) => data ? node.focus({ preventScroll: prevent }) : node.blur(),
     html: (data, node, nodeContext, { decorators: { root = false } }) => {
         data = textResolver(data);
@@ -580,7 +579,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         node ? node.appendChild(fragment) : nodeContext.parentNode.insertBefore(fragment, nodeContext.landmark);
     },
-    result: (data, node) => asserter([`The data bound to directive "$result" of element "%o" should be "object${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && Array.every(file => (file instanceof Object))) : (data instanceof Object))),
+    result: (data, node) => asserter([`The data bound to directive "$result" of element "%o" should be "object${ node.multiple ? ' array' : '' }" instead of "%o"`, node, data], !data || (node.multiple ? (Array.isArray(data) && data.every(file => (file instanceof Object))) : (data instanceof Object))),
     selected: ((selectedResolver = (node, data, multiple) => {
         const value = valueResolver(node);
         return multiple ? (data || []).some(item => Object.is(item, value)) : Object.is(data, value);
@@ -1304,7 +1303,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         asserter(['The 2nd argument of "$dagger.register" should be "string array" instead of "%o"', names], Array.isArray(names) && names.every(name => isString(name)));
         forEach(names, name => resolver(target.prototype, name));
     })();
-    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0 - RC', $validator: (data, path, { type, assert, required } = {}) => {
+    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0 - RC', validator: (data, path, { type, assert, required } = {}) => {
         if ((data == null) || Number.isNaN(data)) { asserter([`The data "${ path }" should be assigned a valid value instead of "%o" before using`, data], !required); }
         type && (Array.isArray(type) ? asserter([`The type of data "${ path }" should be one of "%o" instead of "%o"`, type, (data.constructor || {}).name], type.some(type => (data instanceof type))) : asserter([`The type of data "${ path }" should be "%o" instead of "%o"`, type, (data.constructor || {}).name], data instanceof type));
         if (!assert) { return; }
@@ -1320,7 +1319,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     return ([options, modules, routers]) => {
         daggerOptions = options.content;
         logger('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
-        logger(`꧁ Powered by "🗡️dagger V${ $dagger.version } (https://daggerjs.org)". ꧂`);
+        logger(`\ua9c1 Powered by "🗡️dagger V${ $dagger.version } (https://daggerjs.org)". \ua9c2`);
         logger('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%');
         window.addEventListener('click', event => {
             const node = event.target;

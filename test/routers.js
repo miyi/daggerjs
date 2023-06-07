@@ -57,9 +57,9 @@ return {
                 name: 'style',
                 constants: {
                     title: 'style',
-                    directive: '__Style'
+                    directive: 'styl__e'
                 },
-                modules: 'Style'
+                modules: 'stylE'
             }, 'raw', {
                 name: 'general',
                 variables: {
@@ -76,7 +76,14 @@ return {
                     title: 'lifeCycle',
                     directive: 'life__Cycle'
                 },
-            }, 'html', 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
+            }, {
+                name: 'html',
+                constants: {
+                    title: 'html',
+                    directive: 'html_'
+                },
+                modules: 'html_'
+            }, 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
                 name: 'href',
                 modules: ['href', 'module_component']
             }, 'iframe', 'template', 'eventHandler', 'date', {
