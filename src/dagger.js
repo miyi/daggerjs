@@ -259,7 +259,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
-        // dependencyResolver(moduleProfile, this);
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
@@ -365,6 +364,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         if (isNamespace) {
             module = emptier();
+            this.children || (this.children = resolvedContent);
             const styleModuleNames = this.children.filter(moduleProfile => Object.is(moduleProfile.type, moduleType.style)).map(moduleProfile => moduleProfile.module.getAttribute('name')).filter(name => name);
             forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile, styleModuleNames));
             this.parent && this.parent.resolve().then(moduleProfile => Object.setPrototypeOf(module, moduleProfile.module));
@@ -423,8 +423,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
         } else {
-            let element = null;
-            try { element = querySelector(this.baseElement, uri); } catch (error) { pipeline = null; }
+            const element = querySelector(this.baseElement, uri, false, true);
             if (element) {
                 const cachedProfile = elementProfileCacheMap.get(element);
                 if (cachedProfile) {
@@ -1043,9 +1042,23 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
             const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
-            decorators[name] = true;
             if (value) {
-                try { decorators[name] = window[value] || JSON.parse(value); } catch { decorators[name] = value; }
+                const isTarget = Object.is(name, 'target');
+                try {
+                    if (Reflect.has(window, value)) {
+                        decorators[name] = window[value];
+                    } else if (isTarget) {
+                        decorators[name] = document.querySelector(value);
+                    } else if (['every', 'some'].includes(name)) {
+                        decorators[name] = JSON.parse(value);
+                    } else {
+                        decorators[name] = value;
+                    }
+                } catch (error) {
+                    asserter([`Failed to resolve the directive decorator "${ decorator }" for element "%o", the decorator value should be valid ${ isTarget ? "querySelector" : "JSON string"  }`, this.node]);
+                }
+            } else {
+                decorators[name] = true;
             }
         });
         if (Object.is(resolvedType, 'event')) {

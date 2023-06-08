@@ -86,7 +86,14 @@ return {
             }, 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
                 name: 'href',
                 modules: ['href', 'module_component']
-            }, 'iframe', 'template', 'eventHandler', 'date', {
+            }, 'iframe', 'template', {
+                name: 'eventHandler',
+                constants: {
+                    title: 'eventHandler',
+                    directive: 'event__Handler'
+                },
+                modules: 'eventHandler'
+            }, 'date', {
                 name: 'custom',
                 constants: {
                     title: 'custom class',

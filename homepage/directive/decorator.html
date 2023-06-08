@@ -29,10 +29,10 @@
         <div class="code">+click#every:["%43aps%4cock","%53hift"]</div>
         dagger.js对以上代码解码后将创建一个名为“every”，值为字符串数组“['CapsLock', 'Shift']”的修饰符对象。
       </div>
-      <div>对于大写字母，一个可读性更好的编码方式是在字母前加上“-”符号前缀作为转换标记，例如：
-        <div class="code">+click#every:["-caps-lock","-shift"]</div>
+      <div>对于大写字母，一个可读性更好的编码方式是在字母前加上双下划线“__”前缀作为转换标记，例如：
+        <div class="code">+click#every:["__caps__lock","__shift"]</div>
         <div>dagger.js对以上代码解码后将创建一个名为“every”，值为字符串数组“['CapsLock', 'Shift']”的修饰符对象。</div>
-        <div>请注意，dagger.js在解析修饰符时会先对具有“-”前缀的字母做大小写转换后再进行解码。因此，修饰符“-caps-lock”将解码为“CapsLock”，而“%2dcaps%2dlock”将解码为“-caps-lock”。</div>
+        <div>请注意，dagger.js在解析修饰符时会先对具有“-”前缀的字母做大小写转换后再进行解码。因此，修饰符“__caps__lock”将解码为“CapsLock”，而“%2dcaps%2dlock”将解码为“-caps-lock”。</div>
         <div>除修饰符外，您也可以在指令名称中使用中横线“-”作为字符大小写转换标记。在<a href="directive/boolean">布尔指令</a>中我们将看到相关用法。</div>
       </div>
     </div>
