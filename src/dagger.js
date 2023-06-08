@@ -65,13 +65,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     return processorCaches[expression];
 }, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(moduleType).map(type => `@${ type }`)), normalizer = (config, type) => {
-    (Array.isArray(config) || !(config instanceof Object)) && (config = { candidates: config });
-    if (config.candidates) {
-        Array.isArray(config.candidates) || (config.candidates = [config.candidates]);
-        const matchedCandidate = config.candidates.find(item => item && matchMedia(item.media || 'all').matches);
-        asserter(['There is no matched config part within "%o"', config.candidates], matchedCandidate);
-        (matchedCandidate instanceof Object) ? Object.assign(config, matchedCandidate) : (config.uri = matchedCandidate);
-    }
+    (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
+    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
+    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches)));
     config.type || (config.type = type);
     config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
     return config;
@@ -80,8 +76,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     config[name] = normalizer(value, key.substring(1));
 }) || Reflect.deleteProperty(config, key)) : (config[key] = normalizer(config[key]))) || config)(), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = async ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
-    resolver = await ((resolver instanceof Function) ? resolver(null, token) : resolver);
-    return nextResolvers.length ? serializer([nextResolvers.shift()(resolver, token), ...nextResolvers], token) : resolver;
+    if (resolver instanceof Promise) {
+        return resolver.then(resolver => serializer([resolver, ...nextResolvers], token));
+    } else if (resolver instanceof Function) {
+        return serializer([resolver(null, token), ...nextResolvers], token);
+    } else {
+        return nextResolvers.length ? serializer([nextResolvers.shift()(resolver, token), ...nextResolvers], token) : resolver;
+    }
 }, originalStringifyMethod = JSON.stringify, originalSetAdd = Set.prototype.add, originalSetClear = Set.prototype.clear, originalSetDelete = Set.prototype.delete, originalMapClear = Map.prototype.clear, originalMapSet = Map.prototype.set, originalWeakMapSet = WeakMap.prototype.set, processorResolver = () => {
     if (!directiveQueue.length) { return; }
     forEach(functionResolver(`[${ directiveQueue.map(directive => directive.processor).join(', ') }]`), (processor, index) => {

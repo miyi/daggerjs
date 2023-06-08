@@ -45,7 +45,7 @@
     },
     "script": {
         "candidates": [{
-            "media": "screen",
+            "media": "screen and (resolution: 10dppx)",
             "uri": "#script"
         }],
         "uri": "#script",
