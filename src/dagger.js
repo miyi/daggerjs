@@ -120,7 +120,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
 }).catch(() => {
     const info = `Failed to fetch remote module from "${ url }"`;
-    required ? asserter(info) : warner(info);
+    required ? asserter(info) : warner(`\u274e ${ info }`);
 }), styleResolver = (content, name, disabled) => {
     const style = document.createElement('style');
     content && (style.textContent = content);
@@ -437,7 +437,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (element) {
                 const cachedProfile = elementProfileCacheMap.get(element);
                 if (cachedProfile) {
-                    warner([`${ this.space }The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
+                    warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
                     pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
                 } else {
                     originalMapSet.call(elementProfileCacheMap, element, this);
@@ -563,7 +563,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         Object.is(itemName, true) && (itemName = 'item');
         Object.is(keyName, true) && (keyName = 'key');
         Object.is(indexName, true) && (indexName = 'index');
-        warner(['duplication found in slice scope schemes "%o"', { item: itemName, key: keyName, index: indexName }], !Object.is(keyName, indexName) && !Object.is(keyName, itemName) && !Object.is(itemName, indexName));
+        warner(['\u274e Duplication found in slice scope schemes "%o"', { item: itemName, key: keyName, index: indexName }], !Object.is(keyName, indexName) && !Object.is(keyName, itemName) && !Object.is(itemName, indexName));
         forEach(entries, ([key, value], index) => sliceResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, parentNode));
         children.length = entries.length;
         childrenMap.forEach(array => forEach(array, nodeContext => (nodeContext.parent = null, nodeContext.destructor(true))));
@@ -901,7 +901,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     updateEventHandler (event, name, processor, decorators) {
         if (!name) {
             const { current, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
-            warner([`Please avoid using "current" and "inside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !(current && inside));
+            warner([`\u274e Please avoid using "current" and "inside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !(current && inside));
             if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();
@@ -988,7 +988,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                     directiveAttributeResolver(node, slotDirective, slotValue);
                     if (this.defaultSlotScope) {
                         this.defaultSlotScope[slotName] = node.innerHTML;
-                        warner([`Please avoid adding "$html" or "$text" directive on element "%o" as it's defined "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
+                        warner([`\u274e Please avoid adding "$html" or "$text" directive on element "%o" as it's defined "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
                         node.removeAttribute('$html');
                         node.removeAttribute('$text');
                         this.resolveDirective('$html', slotName, directives);
@@ -1093,7 +1093,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 this.resolveLandmark(node, '"$exist" node replaced');
                 this.unique = false;
             } else if (Object.is(name, 'html') || Object.is(name, 'text')) {
-                warner(['Please avoid adding "$html" and "$text" directives together on element "%o"', node], !directives.child);
+                warner(['\u274e Please avoid adding "$html" and "$text" directives together on element "%o"', node], !directives.child);
                 directives.child = directive;
             } else {
                 if (Object.is(name, 'class')) {
@@ -1209,7 +1209,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
     }
-}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, routeChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
+}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     groupEnder(`resolving modules of the router "${ nextRouter.path }"`);
     logger(`\u2705 router has changed from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"`);
     processorResolver();
@@ -1237,14 +1237,14 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
         logger(`\ud83e\udd98 router alias matched, redirecting router from "${ path }" to "${ redirectPath }"`);
-        return routeChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
+        return routingChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
     if (!rootRouter.match(routers, scenarios, paths)) {
         if (Reflect.has(routerConfigs, 'default')) {
-            warner(`The router "${ path }" is invalid, redirect to the default router "${ routerConfigs.default }"`);
-            return routeChangeResolver(routerConfigs.default);
+            warner(`\u274e The router "${ path }" is invalid, redirect to the default router "${ routerConfigs.default }"`);
+            return routingChangeResolver(routerConfigs.default);
         } else {
             asserter(`The router "${ path }" is invalid`);
         }
@@ -1263,18 +1263,11 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
     });
     const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
-    const sentries = [...sentrySet];
-    Promise.all(sentries.map(sentry => sentry.processor(nextRouter))).then(results => {
-        const length = results.length;
-        for (let index = 0; index < length; ++index) {
-            if (results[index]) {
-                const sentry = sentries[index];
-                warner(['The router redirect is prevented by the "$sentry" directive defined on the "%o" element', sentry.owner.node || sentry.owner.profile.node]);
-                // logger();
-                return history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`);
-            }
-        }
-        routerChangeResolver(nextRouter);
+    logger('\u23f3 resolving sentries within the current router...');
+    Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
+        logger('\u2705 resolved sentries within the current router');
+        const matchedOwners = results.filter(result => result.prevent).map(result => result.sentry.owner);
+        matchedOwners.length ? forEach(matchedOwners, owner => warner(['\u274e The router redirect is prevented by the "$sentry" directive defined on the "%o" element', owner.node || owner.profile.node])) || history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter);
     });
 })(), Router = class {
     constructor (router, parent = null) {
@@ -1283,19 +1276,19 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const space = new Array(this.layer * 4).fill(' ').join('');
         let path = router.path;
         this.modules = arrayWrapper(modules);
-        asserter([`${ space }The "modules" field of router should be either "string" or "string array" matched RegExp "${ moduleNameRegExp.toString() }" insted of "%o"`, modules], this.modules.every(module => isString(module) && moduleNameRegExp.test(module)));
+        asserter([`${ space }The "modules" field of router should be either "string" or "string array" matched RegExp "${ moduleNameRegExp.toString() }" instead of "%o"`, modules], this.modules.every(module => isString(module) && moduleNameRegExp.test(module)));
         if (parent) {
             (!path || Object.is(path, '*')) && (path = '.+');
             this.path = `${ parent.path }/${ path }`;
         } else {
-            warner(`${ space }The "path" field of the root router should be removed`, !Reflect.has(router, 'path'));
-            warner(`${ space }The "match" field of the root router should be removed`, !Reflect.has(router, 'match'));
+            warner(`${ space }\u274e The "path" field of the root router should be removed`, !Reflect.has(router, 'path'));
+            warner(`${ space }\u274e The "match" field of the root router should be removed`, !Reflect.has(router, 'match'));
             path = '';
             this.path = '';
         }
         logger(`${ space }\u23f3 resolving the ${ this.path ? `router with path "${ this.path }"` : 'root router' }`);
         if (parent && Reflect.has(router, 'match') && !((match instanceof Function) ? match(rootScope, rootNamespace.module) : functionResolver(`($module, $scope) => { with ($module) with ($scope) return (() => { 'use strict'; return ${ match }; })() }`)(rootNamespace.module, rootScope))) {
-            warner([`${ space }The router "%o" is invalid as the "match" field "%o" returns falsy or equivalent`, router, match]);
+            warner([`${ space }\u274e The router "%o" is invalid as the "match" field "%o" returns falsy or equivalent`, router, match]);
             this.invalid = true;
             return;
         }
@@ -1362,7 +1355,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (Object.is(routerConfigs.mode, 'history')) {
                 event.preventDefault();
                 history.pushState({}, '', href);
-                routeChangeResolver();
+                routingChangeResolver();
             } else {
                 const prefix = routerConfigs.prefix;
                 href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }${ href }`);
@@ -1390,13 +1383,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const rootSelectors = daggerOptions.rootSelectors;
             asserter(['The "rootSelectors" should be "string array" instead of "%o"', rootSelectors], Array.isArray(rootSelectors) && rootSelectors.every(isString));
             const rootNodeSet = new Set(rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat());
-            warner(['It\'s illegal to set "%o" as root node', html], !rootNodeSet.has(html));
+            warner(['\u274e It\'s illegal to set "%o" as root node', html], !rootNodeSet.has(html));
             rootNodeSet.delete(html);
             const rootNodes = [...rootNodeSet];
             forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, rootNamespace, rootNodeProfiles, null, true]));
-            warner(['No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
-            window.addEventListener('popstate', () => routeChangeResolver());
-            routeChangeResolver();
+            warner(['\u274e No node with valid directive was detected under root elements "%o"', rootNodes], rootNodeProfiles.length);
+            window.addEventListener('popstate', () => routingChangeResolver());
+            routingChangeResolver();
         };
         rootNamespace = new ModuleProfile({ content: modules.content, type: moduleType.namespace }, base);
         rootNamespace.resolve(new Set(arrayWrapper(routing.modules))).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
