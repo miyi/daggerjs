@@ -43,7 +43,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), meta = Symbol('meta'), moduleType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, promisor = Promise.resolve(), routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['template#template'], type: moduleType.template }, script: { uri: ['script[type="dagger/script"]'], type: moduleType.script, anonymous: true }, style: { uri: ['style[type="dagger/style"]'], type: moduleType.style, scoped: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+}, emptyObject = emptier(), meta = Symbol('meta'), moduleType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', model: 'model' }, promisor = Promise.resolve(), routerTopology = null, sentrySet = new Set(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['title', 'body'] }, modules: { model: { uri: ['template#model'], type: moduleType.model }, script: { uri: ['script[type="dagger/script"]'], type: moduleType.script, anonymous: true }, style: { uri: ['style[type="dagger/style"]'], type: moduleType.style, scoped: true } }, routers: { mode: 'hash', prefix: '#', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
     const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
         const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
@@ -187,7 +187,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
 })(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, content, module, name, type }, styleModuleNames) => {
-    if (Object.is(type, moduleType.template)) {
+    if (Object.is(type, moduleType.model)) {
         selectorInjector(templateResolver(content), styleModuleNames);
     } else if (Object.is(type, moduleType.script)) {
         (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
@@ -203,7 +203,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     const dependencies = [];
     resolver(moduleProfile, dependencies, parent);
     const path = parent.path;
-    asserter(`Failed to resolve template module "${ path }" with recursive or circular reference "${ [path, ...dependencies.reverse(), path].join(' → ') }"`, !dependencies.length);
+    asserter(`Failed to resolve module "${ path }" with recursive or circular reference "${ [path, ...dependencies.reverse(), path].join(' → ') }"`, !dependencies.length);
 })(), scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
     if (rule instanceof CSSKeyframesRule) {
         const originalName = rule.name;
@@ -240,12 +240,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         const { integrity, uri, type } = config;
         if (type) {
-            asserter(`${ this.space }The type of module "${ this.path }" should be one of "json, namespace, script, style, string, template" instead of "${ type }"`, moduleType[type]);
+            asserter(`${ this.space }The type of module "${ this.path }" should be one of "json, namespace, script, style, string, model" instead of "${ type }"`, moduleType[type]);
             this.type = type;
         }
         if (Reflect.has(config, 'content')) {
             this.content = config.content;
-            asserter(`${ this.space }The type of module "${ this.path }" should be specified as one of "json, namespace, script, style, string, template" instead of "${ type }"`, type);
+            asserter(`${ this.space }The type of module "${ this.path }" should be specified as one of "json, namespace, script, style, string, model" instead of "${ type }"`, type);
         } else if (uri) {
             this.URIs = uri;
         } else {
@@ -311,7 +311,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             return serializer([configResolver(this.baseElement, this.base), ({ base, content }) => this.resolveNamespace(content, base)]);
         } else if (Object.is(type, moduleType.script)) {
             return import(`data:text/javascript, ${ encodeURIComponent(content.replace(relativePathRegExp, (match, url1, url2) => match.replace(url1 || url2, new URL(url1 || url2, this.base)))) }`).catch(() => asserter(`${ this.space }Failed to import dynamic script module "${ this.path }" with resolved content "${ content }"`));
-        } else if (Object.is(type, moduleType.template)) {
+        } else if (Object.is(type, moduleType.model)) {
             const nodeProfile = new NodeProfile(templateResolver(content), this.parent, null, null, false, {});
             return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
         } else if (Object.is(type, moduleType.style)) {
@@ -335,7 +335,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (this.type) { return; }
         const { tagName, type } = element;
         if (Object.is(tagName, 'TEMPLATE')) {
-            this.type = moduleType.template;
+            this.type = moduleType.model;
         } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
             this.type = moduleType.style;
         } else if (Object.is(tagName, 'SCRIPT')) {
@@ -356,11 +356,11 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         this.resolvedContent = resolvedContent;
         let module = resolvedContent;
         const type = this.type, isNamespace = Object.is(type, moduleType.namespace);
-        if (this.parent && (isNamespace || Object.is(type, moduleType.template))) {
+        if (this.parent && (isNamespace || Object.is(type, moduleType.model))) {
             try {
-                asserter(`${ this.space }It's illegal to use "${ this.name }" as a namespace or template module name as it's the tag name of a builtin html element`, !Object.is(this.name, this.name.toLowerCase()) || Object.is(this.name, 'template') || (document.createElement(this.name) instanceof HTMLUnknownElement));
+                asserter(`${ this.space }It's illegal to use "${ this.name }" as a namespace or model module name as it's the tag name of a builtin html element`, !Object.is(this.name, this.name.toLowerCase()) || (document.createElement(this.name) instanceof HTMLUnknownElement));
             } catch (error) {
-                asserter(`${ this.space }It's illegal to use "${ this.name }" as a namespace or template module name`);
+                asserter(`${ this.space }It's illegal to use "${ this.name }" as a namespace or model module name`);
             }
         }
         if (isNamespace) {
@@ -403,7 +403,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             this.type = moduleType.style;
         } else if (url.endsWith('.html') || type.includes(mimeType.html)) {
             content = content.trim();
-            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? moduleType.namespace : moduleType.template;
+            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? moduleType.namespace : moduleType.model;
         } else if (url.endsWith('.json') || type.includes(mimeType.json)) {
             this.type = moduleType.json;
         } else {
@@ -686,7 +686,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (html) {
             return this.loading();
         }
-        if (raw || plain) { // comment/raw/script/style/template
+        if (raw || plain) { // comment/raw/script/style/model
             this.resolveNode();
             this.node.removeAttribute && this.node.removeAttribute('dg-cloak');
             plain && this.resolveChildren();
@@ -974,7 +974,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 raw && directiveAttributeResolver(node, rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     directiveAttributeResolver(node, slotDirective, slotValue);
@@ -986,7 +986,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                         this.resolveDirective('$html', slotName, directives);
                     }
                 }
-                if (isVirtualElement || isTemplate) {
+                if (isVirtualElement || Object.is(name, 'template')) {
                     this.virtual = true;
                     this.resolveLandmark(node, 'virtual node removed');
                 }
@@ -1003,7 +1003,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 this.plain = !(this.directives || this.landmark);
                 rootNodeProfiles && (this.plain ? (node.hasAttribute(cloak) && forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak)) : (rootNodeProfiles.push(this) && (rootNodeProfiles = null)));
                 if (isVirtualElement) {
-                    asserter(`It is illegal to use "$html" or "$text" directive on template module "${ name }"`, !directives.child); // TODO
+                    asserter(`It is illegal to use "$html" or "$text" directive on model module "${ name }"`, !directives.child); // TODO
                     this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile)))
                 } else if (!directives.child) {
                     this.resolveChildren(node, rootNodeProfiles);
@@ -1131,12 +1131,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         let cachedFields = templateCacheMap.get(module);
         if (!cachedFields) {
             cachedFields = emptier();
-            const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'template')) || {}).module;
-            asserter(`"${ moduleProfile.path }" or "${ moduleProfile.path }.template" is not a valid template module`, template instanceof NodeProfile);
-            cachedFields.children = template.children;
-            cachedFields.defaultSlotScope = template.defaultSlotScope;
+            const isModel = module instanceof NodeProfile, model = isModel ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'model')) || {}).module;
+            asserter(`"${ moduleProfile.path }" or "${ moduleProfile.path }.model" is not a valid model module`, model instanceof NodeProfile);
+            cachedFields.children = model.children;
+            cachedFields.defaultSlotScope = model.defaultSlotScope;
             originalWeakMapSet.call(templateCacheMap, module, cachedFields);
-            isTemplate || originalWeakMapSet.call(templateCacheMap, template, cachedFields);
+            isModel || originalWeakMapSet.call(templateCacheMap, model, cachedFields);
         }
         Object.assign(this, cachedFields);
         if (Object.keys(this.defaultSlotScope).length) {

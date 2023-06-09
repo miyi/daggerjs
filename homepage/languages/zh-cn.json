@@ -30,7 +30,7 @@
     "script": "脚本",
     "style": "样式",
     "namespace": "名空间",
-    "template": "模板",
+    "model": "模板",
     "expression": "指令表达式",
     "scope": "作用域",
     "router": "路由",

@@ -86,7 +86,14 @@ return {
             }, 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
                 name: 'href',
                 modules: ['href', 'module_component']
-            }, 'iframe', 'template', {
+            }, 'iframe', {
+                name: 'template',
+                constants: {
+                    title: 'template',
+                    directive: 'model'
+                },
+                modules: 'model'
+            }, {
                 name: 'eventHandler',
                 constants: {
                     title: 'eventHandler',

@@ -13,7 +13,7 @@
         border: 1px solid green;
     }
   </style>
-  <template id="template">
+  <template id="model">
     <div id="raw-content" @raw +loading="$module.loading()">
       <span>You should see the raw expression "${ Math.random() }", remove "@raw" directive to see what happens.</span>
       <button +click="alert('You should not see this message.')">toggle</button>

@@ -14,7 +14,7 @@
     "@namespace": {
         "index": {
             "content": {
-                "template": "#index_template",
+                "model": "#index_template",
                 "style": "#index_style",
                 "content": "./index.json"
             }
@@ -43,11 +43,11 @@
     "module_component": {
         "name": "component",
         "content": "<div>component1</div>",
-        "type": "template"
+        "type": "model"
     },
     "href": "http://localhost:8283/modules/href.html",
     "iframe": "http://localhost:8283/modules/iframe.html",
-    "template": "http://localhost:8283/modules/template.html",
+    "model": "http://localhost:8283/modules/template.html",
     "date": "http://localhost:8283/modules/date.html",
     "eventHandler": "http://localhost:8283/modules/eventHandler.html",
     "custom": "http://localhost:8283/modules/custom.html",

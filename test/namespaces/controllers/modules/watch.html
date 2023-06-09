@@ -67,7 +67,7 @@
         margin: 10px;
     }
   </style>
-  <template id="template">
+  <template id="model">
     <template +loading="loading1()" $watch#1="console.log('watch1', data1)" $watch#2="console.log('watch2', data1.array[1])" $watch#3="watch(data1)" $watch#4="console.warn(data1.number) || (((data1.number < 9) && setTimeout(() => (data1.number += 1), 500)))" $watch#5="console.warn(map)" $watch#6="console.warn(set)">
       <br/>
       <button +click="exist = !exist">exist</button>

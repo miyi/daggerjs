@@ -22,7 +22,7 @@
         border: 1px solid green;
     }
   </style>
-  <template id="template">
+  <template id="model">
     <div +loading="loading()" style="margin-top: 20px;">
       <label>single file select (*.txt, *.js, *.zip)</label><input type="file" accept=".txt,.js,.zip" $multiple="!multiple" $file="file" $result#data="result" $watch="watch(file, 'single')">
       <span $text#test0="`${ result.progress }%`"></span>
