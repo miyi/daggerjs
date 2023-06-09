@@ -936,7 +936,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
     })();
     return NodeContext;
-})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('__') ? content.replace(/__[a-z]/g, string => string[2].toUpperCase()) : content, templateCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveAttributeResolver = (node, name, value = '') => {
+})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('__') ? content.replace(/__[a-z]/g, string => string[2].toUpperCase()) : content, viewModuleCacheMap = new WeakMap(), dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveAttributeResolver = (node, name, value = '') => {
     daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/\#/g, '__').replace(/:/g, '_').replace(/[^\w]/g, '-') }-debug`, value);
 }, directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
     expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ (fields.decorators || {}).debug ? 'debugger\n\r' : '' }return ${ expression }; })(); }`;
@@ -944,12 +944,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     const directive = Object.assign({}, fields, { processor: processor || expression });
     processor || directiveQueue.push(directive);
     return directive;
-})(), templateResolver = (tagName, namespace) => {
+})(), viewModuleResolver = (tagName, namespace) => {
     asserter(`There is no valid module named "${ tagName }" found`, namespace);
     let isVirtualElement = false, promise = namespace.promise;
     if (namespace) {
         promise = namespace.fetch(tagName, true);
-        if (promise) { isVirtualElement = true; } else { return templateResolver(tagName, namespace.parent); }
+        if (promise) { isVirtualElement = true; } else { return viewModuleResolver(tagName, namespace.parent); }
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {
@@ -974,7 +974,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 raw && directiveAttributeResolver(node, rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && viewModuleResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     directiveAttributeResolver(node, slotDirective, slotValue);
@@ -1004,7 +1004,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 rootNodeProfiles && (this.plain ? (node.hasAttribute(cloak) && forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak)) : (rootNodeProfiles.push(this) && (rootNodeProfiles = null)));
                 if (isVirtualElement) {
                     asserter(`It is illegal to use "$html" or "$text" directive on view module "${ name }"`, !directives.child); // TODO
-                    this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile)))
+                    this.promises.push(promise.then(moduleProfile => this.resolveViewModule(moduleProfile)))
                 } else if (!directives.child) {
                     this.resolveChildren(node, rootNodeProfiles);
                 }
@@ -1126,17 +1126,17 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         this.promises.push(promisor.then(() => node.replaceWith(this.landmark) || message));
         return this.landmark;
     }
-    resolveTemplate (moduleProfile) {
+    resolveViewModule (moduleProfile) {
         const module = moduleProfile.module;
-        let cachedFields = templateCacheMap.get(module);
+        let cachedFields = viewModuleCacheMap.get(module);
         if (!cachedFields) {
             cachedFields = emptier();
-            const isModel = module instanceof NodeProfile, view = isModel ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'view')) || {}).module;
+            const isViewModule = module instanceof NodeProfile, view = isViewModule ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'view')) || {}).module;
             asserter(`"${ moduleProfile.path }" or "${ moduleProfile.path }.view" is not a valid view module`, view instanceof NodeProfile);
             cachedFields.children = view.children;
             cachedFields.defaultSlotScope = view.defaultSlotScope;
-            originalWeakMapSet.call(templateCacheMap, module, cachedFields);
-            isModel || originalWeakMapSet.call(templateCacheMap, view, cachedFields);
+            originalWeakMapSet.call(viewModuleCacheMap, module, cachedFields);
+            isViewModule || originalWeakMapSet.call(viewModuleCacheMap, view, cachedFields);
         }
         Object.assign(this, cachedFields);
         if (Object.keys(this.defaultSlotScope).length) {

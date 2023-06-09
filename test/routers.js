@@ -86,13 +86,20 @@ return {
             }, 'file', 'exist', 'each', 'value', 'checked', 'selected', 'modules', {
                 name: 'href',
                 modules: ['href', 'module_component']
-            }, 'iframe', {
+            }, {
+                name: 'iframe',
+                constants: {
+                    title: 'iframe',
+                    directive: 'iframe_'
+                },
+                modules: 'iframe_'
+            }, {
                 name: 'template',
                 constants: {
                     title: 'template',
-                    directive: 'view'
+                    directive: 'view_'
                 },
-                modules: 'view'
+                modules: 'view_'
             }, {
                 name: 'eventHandler',
                 constants: {

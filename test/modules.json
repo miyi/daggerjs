@@ -46,8 +46,8 @@
         "type": "view"
     },
     "href": "http://localhost:8283/modules/href.html",
-    "iframe": "http://localhost:8283/modules/iframe.html",
-    "view": "http://localhost:8283/modules/template.html",
+    "iframe_": "http://localhost:8283/modules/iframe.html",
+    "template_": "http://localhost:8283/modules/template.html",
     "date": "http://localhost:8283/modules/date.html",
     "eventHandler": "http://localhost:8283/modules/eventHandler.html",
     "custom": "http://localhost:8283/modules/custom.html",
