@@ -56,7 +56,7 @@
   </template>
   <template id="innerTemplate1">
     <namespace.inner.inner_template321 +loading="{ html: '<span +click#stop=script1.processor()>1234567</span>' }"></namespace.inner.inner_template321>
-    <inner_template2 +sentry="console.log($scope, $router, $nextRouter), new Promise((resolve, reject) => setTimeout(() => resolve(false), 1000))"></inner_template2>
+    <inner_template2 +sentry="console.log($scope, $router, $nextRouter), new Promise((resolve, reject) => setTimeout(() => resolve(true), 2000))"></inner_template2>
     <div class="innerTemplate1_root">
       <div description="should be dashed red">
         <span>inside innerTemplate1 start - ${ index }</span><br/>

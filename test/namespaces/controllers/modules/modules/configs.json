@@ -45,10 +45,10 @@
     },
     "script": {
         "candidates": [{
-            "media": "screen and (resolution: 10dppx)",
+            "media": "screen",
             "uri": "#script"
         }],
-        "uri": "#script",
+        "uri": "#script0",
         "anonymous": true
     },
     "script_inline": {

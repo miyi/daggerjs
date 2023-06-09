@@ -36,7 +36,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     warner: (messages, condition) => daggerOptions.warning && vendor(messages, condition, console.warn, daggerOptions.warningPlainStyle, daggerOptions.warningHighlightStyle),
     groupStarter: label => daggerOptions.log && console.group(label),
     groupEnder: label => daggerOptions.log && console.groupEnd(label)
-}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[a-z]{1}[\w]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+}))(), context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, isRouterWritable = false, moduleNameRegExp = /^[a-z]{1}[\w]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], arrayWrapper = target => Array.isArray(target) ? target : [target], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
@@ -65,11 +65,20 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     return processorCaches[expression];
 }, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(moduleType).map(type => `@${ type }`)), normalizer = (config, type) => {
-    (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
-    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches)));
+    const isArray = Array.isArray(config), rawConfig = config;
+    if (isString(config) || (isArray && config.every(isString))) {
+        config = { uri: config };
+    } else if (isArray) {
+        config = { candidates: config };
+    }
+    if (config.candidates) {
+        config.candidates = arrayWrapper(config.candidates);
+        const matchedCandidate = config.candidates.find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches));
+        asserter(['There is no matched config candidate within "%o" for current runtime environment', rawConfig], matchedCandidate);
+        Object.assign(config, matchedCandidate);
+    }
     config.type || (config.type = type);
-    config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
+    config.uri && (config.uri = arrayWrapper(config.uri));
     return config;
 }) => config => forEach(Object.keys(config), key => resolvedTypes[key] && (config[key] instanceof Object) ? (forEach(Object.entries(config[key]), ([name, value]) => {
     asserter([`The module "${ name }" already exists in "%o"`, config], !Reflect.has(config, name));
@@ -657,7 +666,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     positive || (modifier = modifier.substring(1));
     const modifierRegExp = new RegExp(modifier), result = (event.getModifierState && event.getModifierState(modifier)) || [event.code, event.key, event.button].some(value => modifierRegExp.test(value));
     return positive == result;
-}) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
+}) => (event, modifiers, methodName) => (!modifiers || (modifiers = arrayWrapper(modifiers), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
     constructor (profile, parent = null, index = 0, sliceScope = null, parentNode = null) {
         const { directives, dynamic, namespace, node, landmark, plain, text, html, raw } = profile;
         this.directives = directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
@@ -674,7 +683,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (dynamic) {
             const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
             this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
-            forEach(Array.isArray(expressions) ? expressions : [expressions], expression => {
+            forEach(arrayWrapper(expressions), expression => {
                 if (isString(expression)) { // assert invalid expression
                     const index = expression.indexOf('='), withoutEqual = index < 0;
                     expression = { name: withoutEqual ? expression : expression.substring(0, index), value: withoutEqual ? '' : expression.substring(index + 1) };
@@ -801,7 +810,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     removeDirectives (data, targetNames) { // TODO: assert
         if (!data) { return; }
-        Array.isArray(targetNames) || (targetNames = [targetNames]);
+        targetNames = arrayWrapper(targetNames);
         directivesRemover(targetNames, [...this.controllers, this.childrenController, this.existController], controller => this.removeController(controller));
         directivesRemover(targetNames, this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options));
     }
@@ -858,7 +867,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         (promise instanceof Promise) ? promise.then(callback) : callback(promise);
     }
     resolveScope (scope, plain, root) {
-        // TODO: assert existed prototype: Object.getPrototypeOf(scope)[meta]
         plain || (scope = proxyResolver(scope));
         this.scope = Object.setPrototypeOf(scope, root ? rootScope : this.scope);
         return scope;
@@ -1228,7 +1236,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     route.startsWith(slash) || (route = `${ slash }${ route }`);
     const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
-        logger(`\ud83e\udd98 router alias matched, router redirected from "${ path }" to "${ redirectPath }"`);
+        logger(`\ud83e\udd98 router alias matched, redirecting router from "${ path }" to "${ redirectPath }"`);
         return routeChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
@@ -1255,14 +1263,26 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
     });
     const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
-    Promise.all([...sentrySet].map(sentry => sentry.processor(nextRouter) && (warner(['The router redirect is prevented by "%o"', sentry.owner.node || sentry.owner.profile.node]) || true))).then(array => array.some(rejected => rejected) ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter));
+    const sentries = [...sentrySet];
+    Promise.all(sentries.map(sentry => sentry.processor(nextRouter))).then(results => {
+        const length = results.length;
+        for (let index = 0; index < length; ++index) {
+            if (results[index]) {
+                const sentry = sentries[index];
+                warner(['The router redirect is prevented by the "$sentry" directive defined on the "%o" element', sentry.owner.node || sentry.owner.profile.node]);
+                // logger();
+                return history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`);
+            }
+        }
+        routerChangeResolver(nextRouter);
+    });
 })(), Router = class {
     constructor (router, parent = null) {
         const { children, constants = {}, variables = {}, modules = [], tailable = false, match = '' } = router;
         this.layer = parent ? (parent.layer + 1) : 0;
         const space = new Array(this.layer * 4).fill(' ').join('');
         let path = router.path;
-        this.modules = Array.isArray(modules) ? modules : [modules];
+        this.modules = arrayWrapper(modules);
         asserter([`${ space }The "modules" field of router should be either "string" or "string array" matched RegExp "${ moduleNameRegExp.toString() }" insted of "%o"`, modules], this.modules.every(module => isString(module) && moduleNameRegExp.test(module)));
         if (parent) {
             (!path || Object.is(path, '*')) && (path = '.+');
@@ -1368,7 +1388,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             rootRouter = new Router(routing);
             groupEnder('resolving routers');
             const rootSelectors = daggerOptions.rootSelectors;
-            asserter(['The "rootSelectors" should be "string array" instead of "%o"', rootSelectors], Array.isArray(rootSelectors) && rootSelectors.every(selector => isString(selector)));
+            asserter(['The "rootSelectors" should be "string array" instead of "%o"', rootSelectors], Array.isArray(rootSelectors) && rootSelectors.every(isString));
             const rootNodeSet = new Set(rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat());
             warner(['It\'s illegal to set "%o" as root node', html], !rootNodeSet.has(html));
             rootNodeSet.delete(html);
@@ -1379,6 +1399,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             routeChangeResolver();
         };
         rootNamespace = new ModuleProfile({ content: modules.content, type: moduleType.namespace }, base);
-        rootNamespace.resolve(new Set(Array.isArray(routing.modules) ? routing.modules : [routing.modules])).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
+        rootNamespace.resolve(new Set(arrayWrapper(routing.modules))).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
     };
 })())))();
