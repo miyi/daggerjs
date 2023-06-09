@@ -32,7 +32,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "overview.introduction",
-                        "model": "overview_introduction",
+                        "view": "overview_introduction",
                         "previousLink": "",
                         "nextLink": "overview/install"
                     },
@@ -43,7 +43,7 @@
                     "path": "install",
                     "constants": {
                         "title": "overview.install",
-                        "model": "overview_install",
+                        "view": "overview_install",
                         "previousLink": "overview/introduction",
                         "nextLink": "overview/application"
                     },
@@ -54,7 +54,7 @@
                     "path": "application",
                     "constants": {
                         "title": "overview.application",
-                        "model": "overview_application",
+                        "view": "overview_application",
                         "previousLink": "overview/install",
                         "nextLink": "directive/introduction"
                     },
@@ -68,7 +68,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "directive.introduction",
-                        "model": "directive_introduction",
+                        "view": "directive_introduction",
                         "previousLink": "overview/application",
                         "nextLink": "directive/decorator"
                     },
@@ -79,7 +79,7 @@
                     "path": "decorator",
                     "constants": {
                         "title": "directive.decorator",
-                        "model": "directive_decorator",
+                        "view": "directive_decorator",
                         "previousLink": "directive/introduction",
                         "nextLink": "directive/expression"
                     },
@@ -90,7 +90,7 @@
                     "path": "expression",
                     "constants": {
                         "title": "directive.expression",
-                        "model": "directive_expression",
+                        "view": "directive_expression",
                         "previousLink": "directive/decorator",
                         "nextLink": "directive/scope"
                     },
@@ -101,7 +101,7 @@
                     "path": "scope",
                     "constants": {
                         "title": "directive.scope",
-                        "model": "directive_scope",
+                        "view": "directive_scope",
                         "previousLink": "directive/expression",
                         "nextLink": "directive/lifeCycle"
                     },
@@ -112,7 +112,7 @@
                     "path": "lifeCycle",
                     "constants": {
                         "title": "directive.lifeCycle",
-                        "model": "directive_life-Cycle",
+                        "view": "directive_life-Cycle",
                         "previousLink": "directive/scope",
                         "nextLink": "directive/loading"
                     },
@@ -123,7 +123,7 @@
                     "path": "loading",
                     "constants": {
                         "title": "directive.loading",
-                        "model": "directive_loading",
+                        "view": "directive_loading",
                         "previousLink": "directive/lifeCycle",
                         "nextLink": "directive/loaded"
                     },
@@ -134,7 +134,7 @@
                     "path": "loaded",
                     "constants": {
                         "title": "directive.loaded",
-                        "model": "directive_loaded",
+                        "view": "directive_loaded",
                         "previousLink": "directive/loading",
                         "nextLink": "directive/unloading"
                     },
@@ -145,7 +145,7 @@
                     "path": "unloading",
                     "constants": {
                         "title": "directive.unloading",
-                        "model": "directive_unloading",
+                        "view": "directive_unloading",
                         "previousLink": "directive/loaded",
                         "nextLink": "directive/unloaded"
                     },
@@ -156,7 +156,7 @@
                     "path": "unloaded",
                     "constants": {
                         "title": "directive.unloaded",
-                        "model": "directive_unloaded",
+                        "view": "directive_unloaded",
                         "previousLink": "directive/unloading",
                         "nextLink": "directive/sentry"
                     },
@@ -167,7 +167,7 @@
                     "path": "sentry",
                     "constants": {
                         "title": "directive.sentry",
-                        "model": "directive_sentry",
+                        "view": "directive_sentry",
                         "previousLink": "directive/unloaded",
                         "nextLink": "directive/controller"
                     },
@@ -178,7 +178,7 @@
                     "path": "controller",
                     "constants": {
                         "title": "directive.controller",
-                        "model": "directive_controller",
+                        "view": "directive_controller",
                         "previousLink": "directive/sentry",
                         "nextLink": "directive/checked"
                     },
@@ -189,7 +189,7 @@
                     "path": "checked",
                     "constants": {
                         "title": "directive.checked",
-                        "model": "directive_checked",
+                        "view": "directive_checked",
                         "previousLink": "directive/controller",
                         "nextLink": "directive/class"
                     },
@@ -200,7 +200,7 @@
                     "path": "class",
                     "constants": {
                         "title": "directive.class",
-                        "model": "directive_class",
+                        "view": "directive_class",
                         "previousLink": "directive/checked",
                         "nextLink": "directive/each"
                     },
@@ -211,7 +211,7 @@
                     "path": "each",
                     "constants": {
                         "title": "directive.each",
-                        "model": "directive_each",
+                        "view": "directive_each",
                         "previousLink": "directive/class",
                         "nextLink": "directive/exist"
                     },
@@ -222,7 +222,7 @@
                     "path": "exist",
                     "constants": {
                         "title": "directive.exist",
-                        "model": "directive_exist",
+                        "view": "directive_exist",
                         "previousLink": "directive/each",
                         "nextLink": "directive/file"
                     },
@@ -233,7 +233,7 @@
                     "path": "file",
                     "constants": {
                         "title": "directive.file",
-                        "model": "directive_file",
+                        "view": "directive_file",
                         "previousLink": "directive/exist",
                         "nextLink": "directive/focus"
                     },
@@ -244,7 +244,7 @@
                     "path": "focus",
                     "constants": {
                         "title": "directive.focus",
-                        "model": "directive_focus",
+                        "view": "directive_focus",
                         "previousLink": "directive/file",
                         "nextLink": "directive/html"
                     },
@@ -255,7 +255,7 @@
                     "path": "html",
                     "constants": {
                         "title": "directive.html",
-                        "model": "directive_html",
+                        "view": "directive_html",
                         "previousLink": "directive/focus",
                         "nextLink": "directive/result"
                     },
@@ -266,7 +266,7 @@
                     "path": "result",
                     "constants": {
                         "title": "directive.result",
-                        "model": "directive_result",
+                        "view": "directive_result",
                         "previousLink": "directive/html",
                         "nextLink": "directive/selected"
                     },
@@ -277,7 +277,7 @@
                     "path": "selected",
                     "constants": {
                         "title": "directive.selected",
-                        "model": "directive_selected",
+                        "view": "directive_selected",
                         "previousLink": "directive/result",
                         "nextLink": "directive/style"
                     },
@@ -288,7 +288,7 @@
                     "path": "style",
                     "constants": {
                         "title": "directive.style",
-                        "model": "directive_style",
+                        "view": "directive_style",
                         "previousLink": "directive/selected",
                         "nextLink": "directive/text"
                     },
@@ -299,7 +299,7 @@
                     "path": "text",
                     "constants": {
                         "title": "directive.text",
-                        "model": "directive_text",
+                        "view": "directive_text",
                         "previousLink": "directive/style",
                         "nextLink": "directive/value"
                     },
@@ -310,7 +310,7 @@
                     "path": "value",
                     "constants": {
                         "title": "directive.value",
-                        "model": "directive_value",
+                        "view": "directive_value",
                         "previousLink": "directive/text",
                         "nextLink": "directive/watch"
                     },
@@ -321,7 +321,7 @@
                     "path": "watch",
                     "constants": {
                         "title": "directive.watch",
-                        "model": "directive_watch",
+                        "view": "directive_watch",
                         "previousLink": "directive/value",
                         "nextLink": "directive/boolean"
                     },
@@ -332,7 +332,7 @@
                     "path": "boolean",
                     "constants": {
                         "title": "directive.boolean",
-                        "model": "directive_boolean",
+                        "view": "directive_boolean",
                         "previousLink": "directive/watch",
                         "nextLink": "directive/general"
                     },
@@ -343,7 +343,7 @@
                     "path": "general",
                     "constants": {
                         "title": "directive.general",
-                        "model": "directive_general",
+                        "view": "directive_general",
                         "previousLink": "directive/boolean",
                         "nextLink": "directive/eventHandler"
                     },
@@ -354,7 +354,7 @@
                     "path": "eventHandler",
                     "constants": {
                         "title": "directive.eventHandler",
-                        "model": "directive_event-handler",
+                        "view": "directive_event-handler",
                         "previousLink": "directive/general",
                         "nextLink": "directive/meta"
                     },
@@ -365,7 +365,7 @@
                     "path": "meta",
                     "constants": {
                         "title": "directive.meta",
-                        "model": "directive_meta",
+                        "view": "directive_meta",
                         "previousLink": "directive/eventHandler",
                         "nextLink": "directive/raw"
                     },
@@ -376,7 +376,7 @@
                     "path": "raw",
                     "constants": {
                         "title": "directive.raw",
-                        "model": "directive_raw",
+                        "view": "directive_raw",
                         "previousLink": "directive/meta",
                         "nextLink": "directive/dynamic"
                     },
@@ -387,7 +387,7 @@
                     "path": "dynamic",
                     "constants": {
                         "title": "directive.dynamic",
-                        "model": "directive_dynamic",
+                        "view": "directive_dynamic",
                         "previousLink": "directive/raw",
                         "nextLink": "module/introduction"
                     },
@@ -404,7 +404,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "module.introduction",
-                        "model": "module_introduction",
+                        "view": "module_introduction",
                         "previousLink": "directive/dynamic",
                         "nextLink": "module/template"
                     },
@@ -412,10 +412,10 @@
                         "module_introduction": "./module/introduction.html"
                     }
                 }, {
-                    "path": "model",
+                    "path": "view",
                     "constants": {
                         "title": "module.template",
-                        "model": "module_template",
+                        "view": "module_template",
                         "previousLink": "module/introduction",
                         "nextLink": "module/style"
                     },
@@ -426,7 +426,7 @@
                     "path": "style",
                     "constants": {
                         "title": "module.style",
-                        "model": "module_style",
+                        "view": "module_style",
                         "previousLink": "module/template",
                         "nextLink": "module/script"
                     },
@@ -437,7 +437,7 @@
                     "path": "script",
                     "constants": {
                         "title": "module.script",
-                        "model": "module_script",
+                        "view": "module_script",
                         "previousLink": "module/style",
                         "nextLink": "module/json"
                     },
@@ -448,7 +448,7 @@
                     "path": "json",
                     "constants": {
                         "title": "module.json",
-                        "model": "module_json",
+                        "view": "module_json",
                         "previousLink": "module/style",
                         "nextLink": "module/string"
                     },
@@ -459,7 +459,7 @@
                     "path": "string",
                     "constants": {
                         "title": "module.string",
-                        "model": "module_string",
+                        "view": "module_string",
                         "previousLink": "module/json",
                         "nextLink": "module/namespace"
                     },
@@ -470,7 +470,7 @@
                     "path": "namespace",
                     "constants": {
                         "title": "module.namespace",
-                        "model": "module_namespace",
+                        "view": "module_namespace",
                         "previousLink": "module/string",
                         "nextLink": "router/introduction"
                     },
@@ -484,7 +484,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "router.introduction",
-                        "model": "router_introduction",
+                        "view": "router_introduction",
                         "previousLink": "module/namespace",
                         "nextLink": "router/structure"
                     },
@@ -495,7 +495,7 @@
                     "path": "structure",
                     "constants": {
                         "title": "router.structure",
-                        "model": "router_structure",
+                        "view": "router_structure",
                         "type": "router",
                         "previousLink": "router/introduction",
                         "nextLink": "api/introduction"
@@ -510,7 +510,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "api.introduction",
-                        "model": "api_introduction",
+                        "view": "api_introduction",
                         "previousLink": "router/structure",
                         "nextLink": "miscellaneous/introduction"
                     },
@@ -524,7 +524,7 @@
                     "path": "introduction",
                     "constants": {
                         "title": "miscellaneous.introduction",
-                        "model": "miscellaneous_introduction",
+                        "view": "miscellaneous_introduction",
                         "previousLink": "api/introduction",
                         "nextLink": ""
                     },

@@ -16,7 +16,7 @@
         border: 3px dotted blue;
     }
   </style>
-  <template id="model">
+  <template id="view">
     <div +loading="{ id: '', placeholder: '' }">
       <input $id="id" $placeholder="placeholder">
       <button +click="({ id, placeholder } = toggle())">toggle</button>

@@ -31,7 +31,7 @@
         border: 1px solid green;
     }
   </style>
-  <template id="model">
+  <template id="view">
     <div id="container" +loading="init()">
       <div id="outerContainer" $html="html">loading...</div>
       <button +click="html = html ? '' : '<inner_template></inner_template>'">toggle</button>

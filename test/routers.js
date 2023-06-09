@@ -90,9 +90,9 @@ return {
                 name: 'template',
                 constants: {
                     title: 'template',
-                    directive: 'model'
+                    directive: 'view'
                 },
-                modules: 'model'
+                modules: 'view'
             }, {
                 name: 'eventHandler',
                 constants: {

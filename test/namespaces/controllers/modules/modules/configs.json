@@ -1,11 +1,11 @@
 {
-    "model": [{
+    "view": [{
         "description": "mismatch",
         "media": "(resolution: 4dppx)",
         "uri": ["#template-mismatch"]
     }, {
         "description": "force breaking when embedded module missing",
-        "uri": ["#model", "#template_not_exist"]
+        "uri": ["#view", "#template_not_exist"]
     }],
     "empty_data": {
         "content": {},
@@ -20,7 +20,7 @@
     "inner_template2": ["./innerTemplate2_not_exist.html", "./template.html"],
     "inner_template3": {
         "content": "<inner_template1></inner_template1>",
-        "type": "model"
+        "type": "view"
     },
     "namespace": {
         "explicit": true,
