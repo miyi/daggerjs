@@ -1206,7 +1206,16 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
     }
-}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
+}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (href, event = null) => {
+    if (href.startsWith('##')) {
+        const name = href.substring(2), anchor = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
+        if(!anchor) { return; }
+        event && event.preventDefault();
+        anchor.scrollIntoView();
+        location.href.endsWith(href) || history.pushState({}, '', `${ location.href }${ href }`);
+        return true;
+    }
+}, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     groupEnder(`resolving modules of the router "${ nextRouter.path }"`);
     logger(`\u2705 router has changed from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"`);
     processorResolver();
@@ -1222,16 +1231,18 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         styleModuleSet.forEach(style => (style.disabled = false, style.setAttribute('active-debug', true)));
         currentStyleSet = styleModuleSet;
     }
+    const index = location.href.lastIndexOf('##');
+    (index > 0) && anchorResolver(location.href.substring(index + 1));
 }) => nextRouter => {
     logger(`\u23f3 router is changing from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"...`);
     const path = nextRouter.path;
     styleModuleSet = styleModules[path] || (styleModules[path] = new Set());
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
     return rootNamespace.resolve(new Set(resolvedRouters.map(router => router.modules).flat())).then(() => resolver(nextRouter));
-})()) => (route = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
+})()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
     const slash = '/';
-    route.startsWith(slash) || (route = `${ slash }${ route }`);
-    const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path];
+    fullPath.startsWith(slash) || (fullPath = `${ slash }${ fullPath }`);
+    const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = fullPath.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
         logger(`\ud83e\udd98 router alias matched, redirecting router from "${ path }" to "${ redirectPath }"`);
         return routingChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
@@ -1251,8 +1262,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     query && forEach([...new URLSearchParams(query)], ([key, value]) => (queries[key] = value));
     forEach(Object.keys(variables), key => {
         if (Reflect.has(queries, key) && !Reflect.has(constants, key)) {
+            const type = typeof variables[key], query = queries[key];
             try {
-                const type = typeof variables[key], query = queries[key];
                 variables[key] = Object.is(type, 'string') ? query : window[`${ type[0].toUpperCase() }${ type.substring(1) }`](JSON.parse(query));
             } catch (error) {
                 asserter(`The expected variable type is "${ type }" but the real queryString content is "${ query }"`);
@@ -1278,8 +1289,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             (!path || Object.is(path, '*')) && (path = '.+');
             this.path = `${ parent.path }/${ path }`;
         } else {
-            warner(`${ space }\u274e The "path" field of the root router should be removed`, !Reflect.has(router, 'path'));
-            warner(`${ space }\u274e The "match" field of the root router should be removed`, !Reflect.has(router, 'match'));
+            warner(`${ space }\u274e The "path" field of the root router will be ignored`, !Reflect.has(router, 'path'));
+            warner(`${ space }\u274e The "match" field of the root router will be ignored`, !Reflect.has(router, 'match'));
             path = '';
             this.path = '';
         }
@@ -1350,15 +1361,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const node = event.target;
             if (!['A', 'AREA'].includes(node.tagName) || !node.hasAttribute('href')) { return; }
             const href = node.getAttribute('href').trim(), isHistoryMode = Object.is(routerConfigs.mode, 'history');
-            if (href.startsWith('#')) {
-                const anchor = document.getElementById(href.substring(1));
-                if(anchor) {
-                    warner([`The href "${ href }" matched anchor element "%o", the router change is prevented`, anchor], isHistoryMode);
-                    event.preventDefault();
-                    // history.pushState({}, '', href);
-                    return anchor.scrollIntoView();
-                }
-            }
+            if (anchorResolver(href)) { return; }
             const prefix = routerConfigs.prefix;
             href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }/${ href }`);
             if (isHistoryMode) {

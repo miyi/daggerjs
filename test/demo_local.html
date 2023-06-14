@@ -56,11 +56,18 @@
     </style>
   </head>
   <body dg-cloak>
+    <a href="##anchor1">anchor1</a>
+    <a href="##anchor2">anchor2</a>
+    <a href="##anchor3">anchor3</a>
     <span class="raw">Please click the following links to see directives demo:</span>
     <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
     <div>
       <div class="mountPoint1" +loading="{ item: 'default-item' }" $html#router="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></div>
       <span>This the end!</span>
     </div>
+    <div style="height: 2000px"></div>
+    <div id="anchor1">anchor1</div>
+    <div name="anchor2">anchor2</div>
+    <a name="anchor3">anchor3</a>
   </body>
 </html>
