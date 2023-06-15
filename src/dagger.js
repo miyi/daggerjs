@@ -1207,8 +1207,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
     }
 }) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (anchor, event = null) => {
-    if (anchor.startsWith('@')) {
-        const name = anchor.substring(1), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
+    if (anchor.startsWith('#@')) {
+        const name = anchor.substring(2), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
         if(!anchorElement) { return; }
         event && event.preventDefault();
         anchorElement.scrollIntoView();
@@ -1239,7 +1239,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
     return rootNamespace.resolve(new Set(resolvedRouters.map(router => router.modules).flat())).then(() => resolver(nextRouter));
 })()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
-    const slash = '/', anchorIndex = location.hash.lastIndexOf('@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
+    const slash = '/', anchorIndex = location.hash.lastIndexOf('#@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
     fullPath = fullPath.replace(anchor, '');
     fullPath.startsWith(slash) || (fullPath = `${ slash }${ fullPath }`);
     const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = fullPath.split('?'), redirectPath = aliases[path];
