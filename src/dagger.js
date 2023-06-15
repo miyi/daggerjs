@@ -1208,12 +1208,16 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
 }) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (anchor, event = null) => {
     if (anchor.startsWith('#@')) {
-        const name = anchor.substring(2), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
-        if(!anchorElement) { return; }
-        event && event.preventDefault();
-        anchorElement.scrollIntoView();
-        location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
-        return true;
+        try {
+            const name = anchor.substring(2), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
+            if(!anchorElement) { return; }
+            event && event.preventDefault();
+            anchorElement.scrollIntoView();
+            location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
+            return true;
+        } catch (error) {
+            return;
+        }
     }
 }, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     groupEnder(`resolving modules of the router "${ nextRouter.path }"`);
@@ -1381,7 +1385,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
         base = modules.base;
         routerConfigs = routers.content;
-        Object.is(routerConfigs.mode, 'history') || (routerConfigs.prefix = `#${ routerConfigs.prefix }`);
+        const prefix = routerConfigs.prefix;
+        if (Object.is(routerConfigs.mode, 'history')) {
+            asserter('It\'s illegal to use "#" as prefix in "history" router mode', !prefix.startsWith('#'));
+        } else {
+            asserter('It\'s illegal to use "@" as prefix in "hash" router mode', !prefix.startsWith('@'));
+            routerConfigs.prefix = `#${ prefix }`;
+        }
         rootScope = Object.seal(proxyResolver({ $router: null }));
         moduleConfigNormalizer(modules.content);
         const html = document.documentElement, routing = routerConfigs.routing || { modules: Object.keys(modules.content) };
