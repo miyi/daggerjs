@@ -1206,13 +1206,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
     }
-}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (href, event = null) => {
-    if (href.startsWith('##')) {
-        const name = href.substring(2), anchor = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
-        if(!anchor) { return; }
+}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (anchor, event = null) => {
+    if (anchor.startsWith('#@')) {
+        const name = anchor.substring(2), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
+        if(!anchorElement) { return; }
         event && event.preventDefault();
-        anchor.scrollIntoView();
-        location.href.endsWith(href) || history.pushState({}, '', `${ location.href }${ href }`);
+        anchorElement.scrollIntoView();
+        location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
         return true;
     }
 }, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
@@ -1231,8 +1231,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         styleModuleSet.forEach(style => (style.disabled = false, style.setAttribute('active-debug', true)));
         currentStyleSet = styleModuleSet;
     }
-    const index = location.href.lastIndexOf('##');
-    (index > 0) && anchorResolver(location.href.substring(index + 1));
+    anchorResolver(nextRouter.anchor);
 }) => nextRouter => {
     logger(`\u23f3 router is changing from "${ (rootScope.$router || {}).path || '/' }" to "${ nextRouter.path }"...`);
     const path = nextRouter.path;
@@ -1240,19 +1239,21 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
     return rootNamespace.resolve(new Set(resolvedRouters.map(router => router.modules).flat())).then(() => resolver(nextRouter));
 })()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
-    const slash = '/';
+    const slash = '/', anchorIndex = location.hash.lastIndexOf('#@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
+    fullPath = fullPath.replace(anchor, '');
     fullPath.startsWith(slash) || (fullPath = `${ slash }${ fullPath }`);
     const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = fullPath.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
         logger(`\ud83e\udd98 router alias matched, redirecting router from "${ path }" to "${ redirectPath }"`);
-        return routingChangeResolver(query ? `${ redirectPath }?${ query }` : redirectPath);
+        return routingChangeResolver(`${ query ? `${ redirectPath }?${ query }` : redirectPath }${ anchor }`);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
     if (!rootRouter.match(routers, scenarios, paths)) {
         if (Reflect.has(routerConfigs, 'default')) {
             warner(`\u274e The router "${ path }" is invalid, redirect to the default router "${ routerConfigs.default }"`);
-            return routingChangeResolver(routerConfigs.default);
+            const defaultPath = routerConfigs.default;
+            return routingChangeResolver(`${ query ? `${ defaultPath }?${ query }` : defaultPath }${ anchor }`);
         } else {
             asserter(`The router "${ path }" is invalid`);
         }
@@ -1270,7 +1271,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
         }
     });
-    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
+    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants), anchor };
     logger(`\u23f3 resolving sentries within router "${ (rootScope.$router || {}).path || '/' }"...`);
     Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
         logger(`\u2705 resolved sentries within router "${ (rootScope.$router || {}).path || '/' }"`);
@@ -1361,7 +1362,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const node = event.target;
             if (!['A', 'AREA'].includes(node.tagName) || !node.hasAttribute('href')) { return; }
             const href = node.getAttribute('href').trim(), isHistoryMode = Object.is(routerConfigs.mode, 'history');
-            if (anchorResolver(href)) { return; }
+            if (anchorResolver(href, event)) { return; }
             const prefix = routerConfigs.prefix;
             href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }/${ href }`);
             if (isHistoryMode) {
