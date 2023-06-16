@@ -241,9 +241,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         asserter(`The module name should be valid string matched RegExp "${ moduleNameRegExp.toString() }" instead of "${ name }"`, !parent || moduleNameRegExp.test(name));
         this.layer = name ? (((parent || {}).layer || 0) + 1) : 0, this.space = new Array(this.layer * 4).fill(' ').join(''), this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = null;
         if (parent) {
-            this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.tags = [...parent.tags, `_${ this.path.replace(/\./g, '_') }`], this.baseElement = parent.baseElement;
+            this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.tags = [...parent.tags, this.path.replace(/\./g, '__')], this.baseElement = parent.baseElement;
         } else {
-            this.path = name, this.tags = ['_'], this.baseElement = document;
+            this.path = name, this.tags = ['__'], this.baseElement = document;
         }
         const { integrity, uri, type } = config;
         if (type) {
@@ -377,9 +377,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             module = scriptModuleResolver(module, emptier());
         } else if (Object.is(type, moduleType.style)) {
             if (!Object.is(this.config.scoped, false)) {
-                const style = styleResolver('', this.path, true), sheet = style.sheet, iterator = { index: 0 };
-                forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, `_${ this.parent.path.replace(/\./g, '_') }`, iterator));
-                style.setAttribute('from', `${ this.path }-template`);
+                const style = styleResolver('', this.path, true), sheet = style.sheet, iterator = { index: 0 }, tag = this.parent.path ? this.parent.path.replace(/\./g, '__') : '__';
+                forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, tag, iterator));
+                style.setAttribute('based', `${ this.path }-template`);
                 module = style;
             }
             originalSetAdd.call(styleModuleSet, module);
@@ -975,13 +975,17 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const cloak = 'dg-cloak', { attributes, tagName } = node, rawDirective = '@raw', raw = attributes[rawDirective];
             this.html = node.isSameNode(document.documentElement) && node, this.raw = !!(raw || rawElementNames[tagName]);
             if (this.raw) {
-                raw && directiveAttributeResolver(node, rawDirective);
+                if (raw) {
+                    directiveAttributeResolver(node, rawDirective);
+                    node.removeAttribute(rawDirective);
+                }
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
                 const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && viewModuleResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
                     const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     directiveAttributeResolver(node, slotDirective, slotValue);
+                    node.removeAttribute(slotDirective);
                     if (this.defaultSlotScope) {
                         this.defaultSlotScope[slotName] = node.innerHTML;
                         warner([`\u274e Please avoid adding "$html" or "$text" directive on element "%o" as it's defined "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
@@ -1149,6 +1153,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 if (container.hasAttribute(slotDirective)) {
                     const slotValue = container.getAttribute(slotDirective).trim(), slotName = `${ emptySlot }${ slotValue }`;
                     directiveAttributeResolver(container, slotDirective, slotValue);
+                    container.removeAttribute(slotDirective);
                     slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
                 }
             });

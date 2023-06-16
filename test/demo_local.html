@@ -27,10 +27,11 @@
         <div class="component">${ component }</div>
     </template>
     <template id="prefix">
-        <div class="prefix-raw">prefix</div>
-        <div class="prefix-plain">prefix-${ item }</div>
-        <div $class="`prefix-${ item }`">prefix-${ item }</div>
-        <suffix $each="'string'" $exist="item > 'n'"></suffix>
+      <div><template +loading="{ item: 0 }" @slot>hello ${ item }</template></div>
+      <div class="prefix-raw">prefix</div>
+      <div class="prefix-plain">prefix-${ item }</div>
+      <div $class="`prefix-${ item }`">prefix-${ item }</div>
+      <suffix $each="'string'" $exist="item > 'n'"></suffix>
     </template>
     <template id="suffix">
         <div $class="`suffix-${ item }`">suffix-${ item }</div>
@@ -64,7 +65,9 @@
     </style>
   </head>
   <body dg-cloak>
-    <!--<prefix></prefix>-->
+    <!--<prefix>
+      <template @slot="1">${ item }</template>
+    </prefix>-->
     <a href="#@anchor1">anchor1</a>
     <a href="#@anchor2">anchor2</a>
     <a href="#@anchor3">anchor3</a>
