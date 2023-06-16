@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html +loading="{ $: 'hello dagger' }">
+<html +loading="{ $: 'hello dagger', item: 123 }">
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -41,11 +41,19 @@
     <script id="script" type="dagger/script">
         export const clear = () => console.clear();
     </script>
+    <style id="root_style" type="dagger/style">
+      div {
+        color: green;
+      }
+    </style>
     <style id="index_style" type="dagger/style">
         a {
-            --card-height: 65vh;
-            display: inline-block;
-            padding: 10px;
+          --card-height: 65vh;
+          display: inline-block;
+          padding: 10px;
+        }
+        div {
+          border: 1px solid red;
         }
     </style>
     <style>
@@ -56,6 +64,7 @@
     </style>
   </head>
   <body dg-cloak>
+    <!--<prefix></prefix>-->
     <a href="#@anchor1">anchor1</a>
     <a href="#@anchor2">anchor2</a>
     <a href="#@anchor3">anchor3</a>

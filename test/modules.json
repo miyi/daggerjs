@@ -6,6 +6,7 @@
     }, {
         "uri": "#component"
     }],
+    "root_style": "#root_style",
     "prefix": "#prefix",
     "suffix": "#suffix",
     "@script": {
