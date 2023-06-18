@@ -31,7 +31,7 @@
       <div class="prefix-raw">prefix</div>
       <div class="prefix-plain">prefix-${ item }</div>
       <div $class="`prefix-${ item }`">prefix-${ item }</div>
-      <suffix $each="'string'" $exist="item > 'n'"></suffix>
+      <suffix $each="'string'" $exist="true" @directive="{ name: '$exist', value: `${ index > 2 }` }"></suffix>
     </template>
     <template id="suffix">
         <div $class="`suffix-${ item }`">suffix-${ item }</div>

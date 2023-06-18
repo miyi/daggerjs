@@ -267,6 +267,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
+        asserter(`The module "${ moduleProfile.path }" is referred but not listed in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
@@ -301,7 +302,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
             pipeline = [...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)];
         }
-        serializer(pipeline);
+        promisor.then(() => serializer(pipeline));
         return this.promise;
     }
     resolveContent (content) {
@@ -676,18 +677,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             this.scope = rootScope;
         }
         this.module = namespace.module;
-        if (dynamic) {
-            const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
-            this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
-            forEach(arrayWrapper(expressions), expression => {
-                if (isString(expression)) { // assert invalid expression
-                    const index = expression.indexOf('='), withoutEqual = index < 0;
-                    expression = { name: withoutEqual ? expression : expression.substring(0, index), value: withoutEqual ? '' : expression.substring(index + 1) };
-                }
-                profile.resolveDirective(expression.name, expression.value || '', this.directives);
-            });
-            processorResolver();
-        }
         if (html) {
             return this.loading();
         }
@@ -698,8 +687,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         } else if (text) {
             this.resolveNode(() => (this.controller = this.resolveController(text)));
         } else {
-            const { each, exist } = this.directives || {};
-            (each || exist || profile.virtual) && this.resolveLandmark(sliceScope);
+            const each = (this.directives || {}).each;
+            (each || profile.virtual) && this.resolveLandmark(sliceScope);
             if (sliceScope) {
                 const { plain, root } = each.decorators;
                 this.sliceScope = this.resolveScope(sliceScope, plain, root);
@@ -711,7 +700,25 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                     return this;
                 }
             }
+            if (dynamic) {
+                const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
+                this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
+                forEach(arrayWrapper(expressions), expression => {
+                    if (isString(expression)) {
+                        const index = expression.indexOf('='), withoutValue = index < 0;
+                        expression = withoutValue ? { name: expression, value: '' } : { name: expression.substring(0, index), value: expression.substring(index + 1) };
+                    }
+                    asserter(['The name of "@directive" expression should be "string" instead of "%o"', expression.name], isString(expression.name));
+                    asserter(['The value of "@directive" expression should be "string" instead of "%o"', expression.value], isString(expression.value));
+                    const name = expression.name.trim();
+                    asserter([`It's illegal to create "@raw", "@directive" or "$each" directive with the "@directive" expression "%o"`, expressions], !name.startsWith('@raw') && !name.startsWith('@directive') && !name.startsWith('$each'));
+                    profile.resolveDirective(name, expression.value || '', this.directives);
+                });
+                processorResolver();
+            }
+            const exist = (this.directives || {}).exist;
             if (exist) {
+                this.lanmark || this.resolveLandmark(sliceScope);
                 this.state = 'unloaded';
                 this.existController = this.resolveController(exist);
             } else {
@@ -941,7 +948,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     })();
     return NodeContext;
 })(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('__') ? content.replace(/__[a-z]/g, string => string[2].toUpperCase()) : content, viewModuleCacheMap = new WeakMap, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveAttributeResolver = (node, name, value = '') => {
-    daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substr(1)).trim().replace(/\#/g, '__').replace(/:/g, '_').replace(/[^\w]/g, '-') }-debug`, value);
+    daggerOptions.debugDirective && node.setAttribute(`${ directiveType[name[0]] || 'meta' }-${ decodeURIComponent(name.substring(1)).trim().replace(/\#/g, '__').replace(/:/g, '_').replace(/[^\w]/g, '-') }-debug`, value);
 }, directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
     const { clear, debug } = fields.decorators || {};
     expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ debug ? 'debugger;\n\r' : '' }${ clear ? 'console.clear();\n\r' : '' }return ${ expression }; })(); }`;
@@ -1246,7 +1253,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     const path = nextRouter.path;
     styleModuleSet = styleModules[path] || (styleModules[path] = new Set);
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
-    return rootNamespace.resolve(new Set(resolvedRouters.map(router => router.modules).flat())).then(() => resolver(nextRouter));
+    return rootNamespace.resolve(nextRouter.modules).then(() => resolver(nextRouter));
 })()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
     const slash = '/', anchorIndex = location.hash.lastIndexOf('#@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
     fullPath = fullPath.replace(anchor, '');
@@ -1280,7 +1287,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
         }
     });
-    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants), anchor };
+    const nextRouter = { mode, prefix, path, paths, modules: new Set(resolvedRouters.map(router => router.modules).flat()), query, queries, scenarios, schemes: Object.assign({}, variables, constants), anchor };
     logger(`\u23f3 resolving sentries within router "${ (rootScope.$router || {}).path || '/' }"...`);
     Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
         logger(`\u2705 resolved sentries within router "${ (rootScope.$router || {}).path || '/' }"`);
@@ -1418,6 +1425,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             routingChangeResolver();
         };
         rootNamespace = new ModuleProfile({ content: modules.content, type: moduleType.namespace }, base);
-        rootNamespace.resolve(new Set(arrayWrapper(routing.modules))).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
+        rootNamespace.resolve(new Set(arrayWrapper(routing.modules || []))).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || groupEnder('resolving top level modules') || new NodeContext(new NodeProfile(html)));
     };
 })())))();
