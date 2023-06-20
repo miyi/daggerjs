@@ -778,7 +778,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 originalSetAdd.call(sentrySet, this.sentry);
             }
             eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
-                const target = decorators.target || this.node, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators);
+                const outside = decorators.outside, currentTarget = decorators.target || this.node, target = outside ? window : currentTarget, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators, currentTarget);
                 asserter([`The target of "+${ event }" directive defined on element "%o" is invalid`, this.node || this.profile.node], target);
                 target.addEventListener(event, handler, options);
                 return { target, event, handler, options, decorators };
@@ -901,11 +901,11 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             this.state = 'unloaded';
         }
     }
-    updateEventHandler (event, name, processor, decorators) {
+    updateEventHandler (event, name, processor, decorators, bindingTarget) {
         if (!name) {
             const { on, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
-            warner([`\u274e Please avoid using "on" and "inside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !(on && inside));
-            if (!((!(on || inside) || (on && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
+            warner([`\u274e Please avoid using "on", "inside" or "outside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !!on + !!inside + !!outside < 2);
+            if (!((!(on || inside || outside) || (outside && !bindingTarget.contains(target)) || (on && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();
             stopImmediate && event.stopImmediatePropagation();
