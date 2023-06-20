@@ -267,7 +267,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
-        asserter(`The module "${ moduleProfile.path }" is referred but not listed in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
+        asserter(`The module "${ moduleProfile.path }" is referenced but not listed in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
@@ -434,7 +434,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (element) {
                 const cachedProfile = elementProfileCacheMap.get(element);
                 if (cachedProfile) {
-                    warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" refer to the same embedded element "%o"`, element]);
+                    warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" reference the same embedded element "%o"`, element]);
                     pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
                 } else {
                     originalMapSet.call(elementProfileCacheMap, element, this);
@@ -1254,7 +1254,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     styleModuleSet = styleModules[path] || (styleModules[path] = new Set);
     groupStarter(`resolving modules of the router "${ nextRouter.path }"`);
     return rootNamespace.resolve(nextRouter.modules).then(() => resolver(nextRouter));
-})()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerConfigs.prefix, '')) => {
+})()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash)) => {
+    fullPath = fullPath.replace(routerConfigs.prefix, '');
     const slash = '/', anchorIndex = location.hash.lastIndexOf('#@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
     fullPath = fullPath.replace(anchor, '');
     fullPath.startsWith(slash) || (fullPath = `${ slash }${ fullPath }`);
@@ -1268,8 +1269,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     if (!rootRouter.match(routers, scenarios, paths)) {
         if (Reflect.has(routerConfigs, 'default')) {
             warner(`\u274e The router "${ path }" is invalid, redirect to the default router "${ routerConfigs.default }"`);
-            const defaultPath = routerConfigs.default;
-            return routingChangeResolver(`${ query ? `${ defaultPath }?${ query }` : defaultPath }${ anchor }`);
+            const defaultPath = routerConfigs.default, resolvedPath = `${ prefix }${ query ? `${ defaultPath }?${ query }` : defaultPath }${ anchor }`;
+            history.pushState({}, '', resolvedPath);
+            return routingChangeResolver(resolvedPath);
         } else {
             asserter(`The router "${ path }" is invalid`);
         }

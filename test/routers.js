@@ -30,6 +30,9 @@ return {
         },
         modules: ['root_style', 'test_script', 'script', 'component', 'prefix', 'suffix'],
         children: [{
+            path: 'newpage',
+            modules: 'newpage'
+        }, {
             path: 'index1',
             constants: {
                 title: 'index',
