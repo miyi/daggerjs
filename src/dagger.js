@@ -267,7 +267,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
-        asserter(`The module "${ moduleProfile.path }" is referenced but not listed in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
+        asserter(`The module "${ moduleProfile.path }" is referenced but not declared in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
     resolve (childNameSet = null) {
