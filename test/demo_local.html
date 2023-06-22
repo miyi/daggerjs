@@ -64,7 +64,7 @@
       }
     </style>
   </head>
-  <body dg-cloak>
+  <body dg-cloak +click="console.log('body click bubble', $event.currentTarget)" +click#capture="console.log('body click capture', $event.currentTarget)">
     <!--<prefix>
       <template @slot="1">${ item }</template>
     </prefix>-->
@@ -75,7 +75,8 @@
     <a href="#@anchor3">anchor3</a>
     <span class="raw">Please click the following links to see directives demo:</span>
     <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
-    <div>
+    <div +click#stop="console.log('div click bubble', $event.currentTarget, $event.target)">
+      <button +click#outside="console.log('button click bubble/outside', $event.currentTarget, $event.target)">click</button>
       <div class="mountPoint1" +loading="{ item: 'default-item' }" $html#router="$router.schemes.template && `<${ $router.schemes.template }></${ $router.schemes.template }>`"></div>
       <span>This the end!</span>
     </div>

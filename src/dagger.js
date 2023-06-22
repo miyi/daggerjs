@@ -500,7 +500,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     event.cancelBubble || handler(event, capture, targets, index);
 }) => (eventName, capture) => {
-    if ((capture && captureSet.has(eventName)) || bubbleSet.has(eventName)) { return; }
+    if ((capture && captureSet.has(eventName)) || (!capture && bubbleSet.has(eventName))) { return; }
     (capture ? captureSet : bubbleSet).add(eventName);
     window.addEventListener(eventName, event => handler(event, capture, capture ? event.composedPath().reverse() : event.composedPath(), 0), capture);
 })(), generalUpdater = (data, node, _, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
@@ -936,7 +936,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!name) {
             const { on, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
             warner([`\u274e Please avoid using "on", "inside" or "outside" decorators together on "+${ type }" directive on element "%o".`, currentTarget], !!on + !!inside + !!outside < 2);
-            if (!((!(on || inside || outside) || (outside && !bindingTarget.contains(target)) || (on && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
+            if (!((!(on || inside || outside) || (outside && bindingTarget.contains && !bindingTarget.contains(target)) || (on && isCurrent) || (inside && (!currentTarget.contains || (currentTarget.contains(target) && !isCurrent)))) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();
             stopImmediate && event.stopImmediatePropagation();
@@ -1090,10 +1090,10 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
             const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
-            if (value) {
-                if (Object.is(name, 'target')) {
-                    decorators[name] = value;
-                } else if (Reflect.has(window, value)) {
+            if (Object.is(name, 'target')) {
+                decorators[name] = value;
+            } else if (value) {
+                if (Reflect.has(window, value)) {
                     decorators[name] = window[value];
                 } else if (['every', 'some'].includes(name)) {
                     try {
