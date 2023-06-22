@@ -107,9 +107,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     currentController = controller;
     return result;
 }, querySelector = (baseElement, selector, all = false, ignoreMismatch = false) => {
-    const element = baseElement[all ? 'querySelectorAll' : 'querySelector'](selector);
-    ignoreMismatch || asserter(`Failed to get element matched selector "${ selector }"`, all ? element.length : element);
-    return element;
+    try {
+        const element = baseElement[all ? 'querySelectorAll' : 'querySelector'](selector);
+        ignoreMismatch || asserter(`Failed to get element matched selector "${ selector }"`, all ? element.length : element);
+        return element;
+    } catch (error) {
+        asserter(`The string "${ selector }" is not a valid querySelector`);
+    }
 }, remoteResourceResolver = (url, integrity = '', required = false) => fetch(url, daggerOptions.integrity && integrity ? { integrity: `sha256-${ integrity }` } : {}).then(response => {
     if (response.ok) {
         const type = response.headers.get('content-type');
@@ -482,7 +486,24 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (trim) { return value.trim(); }
         return value;
     }
-}, nameFilters = ['draggable'], generalUpdater = (data, node, _, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
+}, nameFilters = ['draggable'], eventDelegator = ((bubbleSet = new Set, captureSet = new Set, handler = (event, capture, targets, index = 0) => {
+    const currentTarget = targets[index++];
+    if (!currentTarget) { return; }
+    const eventListenerSet = currentTarget.$eventListenerMap && currentTarget.$eventListenerMap[event.type], eventListeners = eventListenerSet ? [...eventListenerSet].filter(listener => Object.is(listener.decorators.capture, capture)) : [];
+    if (!eventListeners.length) { return handler(event, capture, targets, index); }
+    Object.defineProperty(event, 'currentTarget', { configurable: true, value: currentTarget });
+    for (const { decorators, handler } of eventListeners) {
+        handler(event);
+        if (decorators.stopImmediate) {
+            return event.stopImmediatePropagation();
+        }
+    }
+    event.cancelBubble || handler(event, capture, targets, index);
+}) => (eventName, capture) => {
+    if ((capture && captureSet.has(eventName)) || bubbleSet.has(eventName)) { return; }
+    (capture ? captureSet : bubbleSet).add(eventName);
+    window.addEventListener(eventName, event => handler(event, capture, capture ? event.composedPath().reverse() : event.composedPath(), 0), capture);
+})(), generalUpdater = (data, node, _, { name }) => node && ((data == null) ? node.removeAttribute(name) : node.setAttribute(name, textResolver(data))), nodeUpdater = ((changeEvent = new Event('change')) => ({
     $boolean: (data, node, _, { name }) => node.toggleAttribute(name, !!data),
     checked: (data, node, { parentNode }, { decorators }) => {
         const { tagName, type } = node, isOption = Object.is(tagName, 'OPTION'), isCheckbox = Object.is(type, 'checkbox');
@@ -663,7 +684,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     positive || (modifier = modifier.substring(1));
     const modifierRegExp = new RegExp(modifier), result = (event.getModifierState && event.getModifierState(modifier)) || [event.code, event.key, event.button].some(value => modifierRegExp.test(value));
     return positive == result;
-}) => (event, modifiers, methodName) => (!modifiers || (modifiers = arrayWrapper(modifiers), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
+}) => (event, modifiers, methodName) => (!modifiers || (modifiers = arrayWrapper(modifiers), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), eventHandlerRemover = ({ target, event, handler, options, listener }) => listener ? originalSetDelete.call(target.$eventListenerMap[event], listener) : target.removeEventListener(event, handler, options), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
     constructor (profile, parent = null, index = 0, sliceScope = null, parentNode = null) {
         const { directives, dynamic, namespace, node, landmark, plain, text, html, raw } = profile;
         this.directives = directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
@@ -777,11 +798,21 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 this.sentry = Object.assign({}, sentry, { owner: this, processor: sentry.processor.bind(null, this.module, this.scope) });
                 originalSetAdd.call(sentrySet, this.sentry);
             }
-            eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
-                const outside = decorators.outside, currentTarget = decorators.target || this.node, target = outside ? window : currentTarget, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators, currentTarget);
-                asserter([`The target of "+${ event }" directive defined on element "%o" is invalid`, this.node || this.profile.node], target);
-                target.addEventListener(event, handler, options);
-                return { target, event, handler, options, decorators };
+            eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name }) => {
+                const { capture, outside, once, passive, target } = decorators, resolvedTarget = target ? (window[target] || querySelector(document, target)) : this.node, currentTarget = outside ? window : resolvedTarget, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators, resolvedTarget);
+                asserter([`The target of "+${ event }" directive defined on element "%o" is invalid`, this.node || this.profile.node], resolvedTarget);
+                if (once || passive) {
+                    const options = { capture, once, passive };
+                    currentTarget.addEventListener(event, handler, options);
+                    return { target: currentTarget, event, handler, options };
+                } else { // use event delegate
+                    eventDelegator(event, capture);
+                    currentTarget.$eventListenerMap || (currentTarget.$eventListenerMap = emptier());
+                    const listenerSet = currentTarget.$eventListenerMap[event] || new Set, listener = { decorators, handler };
+                    originalSetAdd.call(listenerSet, listener);
+                    currentTarget.$eventListenerMap[event] = listenerSet;
+                    return { target: currentTarget, event, listener };
+                }
             }));
             controllers && (this.controllers = controllers.map(controller => this.resolveController(controller)).filter(controller => controller));
         }
@@ -815,7 +846,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (!data) { return; }
         targetNames = arrayWrapper(targetNames);
         directivesRemover(targetNames, [...this.controllers, this.childrenController, this.existController], controller => this.removeController(controller));
-        directivesRemover(targetNames, this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options));
+        directivesRemover(targetNames, this.eventHandlers, eventHandlerRemover);
     }
     resolveChildren () {
         const children = this.profile.children, child = (this.directives || {}).child;
@@ -884,7 +915,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (this.profile.plain || this.childrenMap) { return this.removeChildren(isRoot); }
             this.childrenController && this.removeController(this.childrenController);
             forEach(this.controllers, controller => this.removeController(controller)) || (this.controllers = null);
-            forEach(this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options)) || (this.eventHandlers = null);
+            forEach(this.eventHandlers, eventHandlerRemover) || (this.eventHandlers = null);
             if (this.sentry) {
                 originalSetDelete.call(sentrySet, this.sentry);
                 this.sentry = null;
@@ -1060,19 +1091,18 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
             const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
             if (value) {
-                const isTarget = Object.is(name, 'target');
-                try {
-                    if (Reflect.has(window, value)) {
-                        decorators[name] = window[value];
-                    } else if (isTarget) {
-                        decorators[name] = document.querySelector(value);
-                    } else if (['every', 'some'].includes(name)) {
+                if (Object.is(name, 'target')) {
+                    decorators[name] = value;
+                } else if (Reflect.has(window, value)) {
+                    decorators[name] = window[value];
+                } else if (['every', 'some'].includes(name)) {
+                    try {
                         decorators[name] = JSON.parse(value);
-                    } else {
-                        decorators[name] = value;
+                    } catch (error) {
+                        asserter([`Failed to resolve the directive decorator "${ decorator }" for element "%o", the decorator value should be valid "JSON string"`, this.node]);
                     }
-                } catch (error) {
-                    asserter([`Failed to resolve the directive decorator "${ decorator }" for element "%o", the decorator value should be valid ${ isTarget ? "querySelector" : "JSON string"  }`, this.node]);
+                } else {
+                    decorators[name] = value;
                 }
             } else {
                 decorators[name] = true;
@@ -1083,7 +1113,6 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (lifeCycleDirectiveNames[name]) {
                 directives[name] = directiveResolver(value, fields, Object.is(name, 'sentry') ? '$nextRouter' : '$node');
             } else {
-                fields.options = decorators;
                 directives.eventHandlers.push(directiveResolver(value, fields, '$node, $event'));
             }
         } else {
@@ -1121,7 +1150,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 } else if (interactiveDirectiveNames[name]) { // two-way data binding
                     const isValueDirective = Object.is(name, 'value');
                     if (!decorators.oneway) {
-                        fields.options = true; // useCapture
+                        decorators.capture = true; // useCapture
                         const { tagName, type } = node, isCheckedDirective = Object.is(name, 'checked'), isSelectedDirective = Object.is(name, 'selected'), isCheckedType = Object.is(type, 'checkbox') || Object.is(type, 'radio'), isFileType = Object.is(type, 'file');
                         if (Object.is(name, 'focus')) {
                             dataBinder(directives, value, fields, 'blur');
@@ -1220,16 +1249,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
 }) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (anchor, event = null) => {
     if (anchor.startsWith('#@')) {
-        try {
-            const name = anchor.substring(2), anchorElement = document.getElementById(name) || document.querySelector(`a[name=${ name }]`);
-            if(!anchorElement) { return; }
-            event && event.preventDefault();
-            anchorElement.scrollIntoView();
-            location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
-            return true;
-        } catch (error) {
-            return;
-        }
+        const name = anchor.substring(2), anchorElement = document.getElementById(name) || querySelector(document, `a[name=${ name }]`);
+        if(!anchorElement) { return; }
+        event && event.preventDefault();
+        anchorElement.scrollIntoView();
+        location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
+        return true;
     }
 }, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     groupEnder(`resolving modules of the router "${ nextRouter.path }"`);
