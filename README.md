@@ -25,9 +25,11 @@ Please find the dagger.js source code in the ***"src"*** folder.
 
 Please find the homepage source code in the ***"homepage"*** folder.
 
-Please find the demo in the ***"test"*** folder.
+Please find the functional test cases code in the ***"function_tests"*** folder.
 
-You may refer to the nginx.conf under the root folder before start up the homepage & demo site.
+Please find the demo in the ***"demo"*** folder.
+
+You may reference to the nginx.conf under the root folder before start up the homepage & demo site.
 
 There is also a small nodejs server for demo usage in the ***"mock_server"*** folder, start it up with the commands ***"npm install"*** and ***"npm run nodemon"***.  
 
@@ -68,4 +70,4 @@ https://user-images.githubusercontent.com/66679262/179400179-5d50cbba-98e6-470a-
 #### [3D Carousel](https://codepen.io/dagger8224/pen/JjLRbmz)
 https://user-images.githubusercontent.com/66679262/179400265-ebd5bdbb-0222-454e-96c6-8b43b4d91625.mp4
 
-Please refer to https://codepen.io/dagger8224/pens for more demos.
+Please reference to https://codepen.io/dagger8224/pens for more demos.
