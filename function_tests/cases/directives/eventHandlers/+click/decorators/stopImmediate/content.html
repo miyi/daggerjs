@@ -1,0 +1,8 @@
+<div +loading="{ count1: 0, count2: 0, count3: 0 }">
+    <div id="div" +click="count1++">
+        <button id="button" +click#stop__Immediate="count2++" +click="count3++">button</button>
+    </div>
+    <span id="count1">${ count1 }</span>
+    <span id="count2">${ count2 }</span>
+    <span id="count3">${ count3 }</span>
+</div>
