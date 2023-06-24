@@ -9,23 +9,72 @@
  *  </copyright>
  *  ***********************************************************************/
 
-export default ((context = Symbol('context'), currentController = null, daggerOptions = { integrity: false }, directiveObjects = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, rootNamespace = null, rootNodeProfiles = [], rootScope = null, emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set(), forEach = (iterators, processor) => {
+export default ((context = Symbol('context'), currentController = null, daggerOptions = { integrity: true }, directiveQueue = [], dispatchSource = { bubble: 'bubble', self: 'self', mutation: 'mutation' }, moduleNameRegExp = /^[a-z]{1}[\w]*$/, rootNamespace = null, rootScope = null, rootScopeCallback = null, rootNodeProfiles = [], arrayWrapper = target => Array.isArray(target) ? target : [target], emptier = () => Object.create(null), processorCaches = emptier(), styleModuleSet = new Set, eventDelegator = ((bubbleSet = new Set, captureSet = new Set, handler = (event, capture, targets, index = 0) => {
+    const currentTarget = targets[index++];
+    if (!currentTarget) { return; }
+    const eventListenerSet = currentTarget.$eventListenerMap && currentTarget.$eventListenerMap[event.type], eventListeners = eventListenerSet ? [...eventListenerSet].filter(listener => Object.is(listener.decorators.capture, capture)) : [];
+    if (!eventListeners.length) { return handler(event, capture, targets, index); }
+    Object.defineProperty(event, 'currentTarget', { configurable: true, value: currentTarget });
+    for (const { decorators, handler } of eventListeners) {
+        handler(event);
+        if (decorators.stopImmediate) {
+            return event.stopImmediatePropagation();
+        }
+    }
+    event.cancelBubble || handler(event, capture, targets, index);
+}) => (eventName, target, listener, capture) => {
+    target.$eventListenerMap || (target.$eventListenerMap = emptier());
+    const listenerSet = target.$eventListenerMap[eventName] || new Set;
+    (listener instanceof Function) && (listener = { decorators: { capture }, handler: listener });
+    originalSetAdd.call(listenerSet, listener);
+    target.$eventListenerMap[eventName] = listenerSet;
+    if ((capture && captureSet.has(eventName)) || (!capture && bubbleSet.has(eventName))) { return; }
+    (capture ? captureSet : bubbleSet).add(eventName);
+    window.addEventListener(eventName, event => handler(event, capture, capture ? event.composedPath().reverse() : event.composedPath(), 0), capture);
+})(), forEach = (iterators, processor) => {
     if (!iterators) { return; }
     const length = iterators.length || 0;
     for (let index = 0; index < length; ++index) { processor(iterators[index], index); }
 }, hashTableResolver = (...array) => {
     const hashTable = emptier();
     return forEach(array, key => (hashTable[key] = true)) || hashTable;
-}, emptyObject = emptier(), htmlNodeContext = null, meta = Symbol('meta'), promisor = Promise.resolve(), resolvedType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', template: 'template' }, routerTopology = null, sentrySet = new Set(), templateCacheMap = new WeakMap(), textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { integrity: true, rootSelectors: ['title', 'body'] }, modules: { template: { uri: ['body'], type: resolvedType.template, optional: true }, script: { uri: ['script[type="dagger/script"]'], type: resolvedType.script, optional: true }, style: { uri: ['style[type="dagger/style"]'], type: resolvedType.style, scoped: true, optional: true } }, routers: { mode: 'history', aliases: {}, default: '', prefix: '', redirects: {}, routing: {} } }, configExtender = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
-    const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`);
-    debugger
+}, meta = Symbol('meta'), moduleType = { json: 'json', namespace: 'namespace', script: 'script', style: 'style', string: 'string', view: 'view' }, promisor = Promise.resolve(), routerTopology = null, sentrySet = new Set, textNode = document.createTextNode(''), configResolver = ((defaultConfigContent = { options: { debugDirective: true, integrity: true, log: true, warning: true, logPlainStyle: 'color: #337ab7', logHighlightStyle: 'color: #9442d0', warningPlainStyle: 'color: #ff0000', warningHighlightStyle: 'color: #b22222', errorPlainStyle: 'color: #ff0000', errorHighlightStyle: 'color: #b22222', rootSelectors: ['body'] }, modules: { view: { uri: ['template#view'], type: moduleType.view }, script: { uri: ['script[type="dagger/script"]'], type: moduleType.script, anonymous: true }, style: { uri: ['style[type="dagger/style"]'], type: moduleType.style, scoped: true } }, routers: { mode: 'hash', prefix: '', aliases: {}, default: '', routing: null } }, resolver = (base, content, type, extendsDefaultConfig) => ({ base, content: extendsDefaultConfig ? Object.assign({}, defaultConfigContent[type], content) : content })) => (baseElement, base, type = 'modules') => {
+    const configContainer = querySelector(baseElement, `script[type="dagger/${ type }"]`, false, true);
     if (configContainer) {
-        const src = configContainer.getAttribute('src'), extendsDefaultConfig = configContainer.hasAttribute('extends');
+        const src = configContainer.getAttribute('src'), extendsDefaultConfig = !Object.is(type, 'modules') || configContainer.hasAttribute('extends');
         configContainer.hasAttribute('base') && (base = new URL(configContainer.getAttribute('base') || '', base).href);
-        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => configExtender(base, functionResolver(content), type, extendsDefaultConfig)) : configExtender(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
+        return src ? remoteResourceResolver(new URL(src, base), configContainer.integrity).then(({ content }) => resolver(base, functionResolver(content), type, extendsDefaultConfig)) : resolver(base, configContainer.textContent.trim() ? functionResolver(configContainer.textContent) : {}, type, extendsDefaultConfig);
     }
     return { base, content: defaultConfigContent[type] };
-})(), functionResolver = expression => processorCaches[expression] || (processorCaches[expression] = new Function(`return (${ expression });`)()), isString = object => Object.is(typeof object, 'string'), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = ([resolver, ...nextResolvers], token = { stop: false }) => {
+})(), functionResolver = expression => {
+    if (!Reflect.has(processorCaches, expression)) {
+        try {
+            try {
+                processorCaches[expression] = new Function(`return (${ expression });`)();
+            } catch (error) {
+                processorCaches[expression] = new Function(`return (() => {${ expression }})();`)();
+            }
+        } catch (error) {}
+    }
+    return processorCaches[expression];
+}, isString = ((string = 'string') => target => Object.is(typeof target, string))(), moduleConfigNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(moduleType).map(type => `@${ type }`)), normalizer = (config, type) => {
+    const isArray = Array.isArray(config), rawConfig = config;
+    if (isString(config) || (isArray && config.every(isString))) {
+        config = { uri: config };
+    } else if (isArray) {
+        config = { candidates: config };
+    }
+    if (config.candidates) {
+        config.candidates = arrayWrapper(config.candidates);
+        const matchedCandidate = config.candidates.find(item => (item instanceof Object) && (!Reflect.has(item, 'media') || matchMedia(item.media).matches));
+        Object.assign(config, matchedCandidate);
+    }
+    config.type || (config.type = type);
+    config.uri && (config.uri = arrayWrapper(config.uri));
+    return config;
+}) => config => forEach(Object.keys(config), key => resolvedTypes[key] && (config[key] instanceof Object) ? (forEach(Object.entries(config[key]), ([name, value]) => {
+    config[name] = normalizer(value, key.substring(1));
+}) || Reflect.deleteProperty(config, key)) : (config[key] = normalizer(config[key]))) || config)(), ownKeys = target => Reflect.ownKeys(target).filter(key => !Object.is(key, meta)), serializer = async ([resolver, ...nextResolvers], token = { stop: false }) => {
     if (token.stop) { return; }
     if (resolver instanceof Promise) {
         return resolver.then(resolver => serializer([resolver, ...nextResolvers], token));
@@ -35,34 +84,44 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         return nextResolvers.length ? serializer([nextResolvers.shift()(resolver, token), ...nextResolvers], token) : resolver;
     }
 }, originalStringifyMethod = JSON.stringify, originalSetAdd = Set.prototype.add, originalSetClear = Set.prototype.clear, originalSetDelete = Set.prototype.delete, originalMapClear = Map.prototype.clear, originalMapSet = Map.prototype.set, originalWeakMapSet = WeakMap.prototype.set, processorResolver = () => {
-    if (!directiveObjects.length) { return; }
-    forEach(functionResolver(`[${ directiveObjects.map(directive => directive.processor).join(', ') }]`), (processor, index) => {
-        const directive = directiveObjects[index];
+    if (!directiveQueue.length) { return; }
+    forEach(functionResolver(`[${ directiveQueue.map(directive => directive.processor).join(', ') }]`), (processor, index) => {
+        const directive = directiveQueue[index];
         processorCaches[directive.processor] = processor;
         directive.processor = processor;
     });
-    directiveObjects.length = 0;
-}, processorWrapper = originalMethod => function (...parameters) {
-    const controller = currentController;
-    currentController = null;
-    const result = originalMethod.apply(this, parameters);
-    currentController = controller;
-    return result;
+    directiveQueue.length = 0;
+}, processorWrapper = originalMethod => {
+    const handler = function (...parameters) {
+        const controller = currentController;
+        currentController = null;
+        const result = originalMethod.apply(this, parameters);
+        currentController = controller;
+        return result;
+    };
+    handler.prototype = originalMethod.prototype;
+    return handler;
 }, querySelector = (baseElement, selector, all = false) => baseElement[all ? 'querySelectorAll' : 'querySelector'](selector), remoteResourceResolver = (url, integrity = '') => fetch(url, daggerOptions.integrity && integrity ? { integrity: `sha256-${ integrity }` } : {}).then(response => {
     if (response.ok) {
-        const type = response.headers.get('content-type');
-        return response.text().then(content => ({ content, type }));
+        return response.text().then(content => ({ content, type: response.headers.get('content-type') }));
     }
-}).catch(() => {}), templateResolver = content => {
+}).catch(() => {}), styleResolver = (content, name, disabled) => {
+    const style = document.createElement('style');
+    content && (style.textContent = content);
+    document.head.appendChild(style);
+    style.disabled = disabled;
+    style.setAttribute('name', name);
+    return style;
+}, templateResolver = content => {
     const template = document.createElement('template');
     template.innerHTML = content;
     return template.content;
-}, selectorInjector = (element, selectors) => forEach(element.children, child => {
+}, selectorInjector = (element, tags) => forEach(element.children, child => {
     if (Object.is(child.tagName, 'TEMPLATE')) {
-        child.getAttribute('$html') && (child.$styleNames = selectors.join(','));
-        selectorInjector(child.content, selectors);
+        child.getAttribute('$html') && (child.$tags = tags);
+        selectorInjector(child.content, tags);
     } else if (child instanceof HTMLElement) {
-        forEach(selectors, selector => child.setAttribute(selector, ''));
+        forEach(tags, tag => child.setAttribute(tag, ''));
     }
 }), textResolver = (data, trim = true) => {
     if (!isString(data)) {
@@ -71,7 +130,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         data = String(data);
     }
     return trim ? data.trim() : data;
-}, proxyResolver = ((hasOwnProperty = Object.prototype.hasOwnProperty, invalidSymbols = new Set([...Reflect.ownKeys(Symbol).map(key => Symbol[key]).filter(item => Object.is(typeof item, 'symbol')), context, meta]), resolvedDataMap = new WeakMap(), validConstructorSet = new Set([void(0), Array, Object]), proxyHandler = {
+}, proxyResolver = ((hasOwnProperty = Object.prototype.hasOwnProperty, invalidSymbols = new Set([...Reflect.ownKeys(Symbol).map(key => Symbol[key]).filter(item => Object.is(typeof item, 'symbol')), context, meta]), resolvedDataMap = new WeakMap, validConstructorSet = new Set([void(0), Array, Object]), proxyHandler = {
     get: (target, property) => {
         const value = target[property];
         if (currentController && !invalidSymbols.has(property) && (Object.is(value) || hasOwnProperty.call(target, property))) {
@@ -106,7 +165,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (resolvedData) {
             data = resolvedData;
         } else {
-            data[meta] = new Set();
+            data[meta] = new Set;
             if (validConstructorSet.has(data.constructor)) {
                 const resolvedData = new Proxy(data, proxyHandler);
                 originalWeakMapSet.call(resolvedDataMap, data, resolvedData);
@@ -118,24 +177,15 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map(), embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, content, module, name, type }, styleModuleNames) => {
-    if (Object.is(type, resolvedType.template)) {
-        selectorInjector(templateResolver(content), styleModuleNames);
-    } else if (Object.is(type, resolvedType.script)) {
-        (!Reflect.has(config, 'anonymous') || config.anonymous) ? Object.assign(parentModule, module) : (parentModule[name] = module);
-    } else if ((Object.is(type, resolvedType.namespace) && config.explicit) || Object.is(type, resolvedType.json)) {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map, embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+    if (Object.is(type, moduleType.script)) {
+        Object.is(config.anonymous, false) ? (parentModule[name] = module) : Object.assign(parentModule, module);
+    } else if ((Object.is(type, moduleType.namespace) && config.explicit) || Object.is(type, moduleType.json)) {
         config.anonymous ? Object.assign(parentModule, module) : (parentModule[name] = module);
-    } else if (Object.is(type, resolvedType.string)) {
+    } else if (Object.is(type, moduleType.string)) {
         parentModule[name] = module;
     }
-}, configNormalizer = ((resolvedTypes = hashTableResolver(...Object.keys(resolvedType).map(type => `@${ type }`)), normalizer = (config, type) => {
-    (Array.isArray(config) || !(config instanceof Object)) && (config = { uri: config, candidates: config });
-    config.candidates && (Array.isArray(config.candidates) || (config.candidates = [config.candidates]));
-    Object.assign(config, (config.candidates || []).find(item => { try { return (item instanceof Object) && (!Reflect.has(item, 'match') || matchMedia(item.match).matches || functionResolver(item.match)); } catch (error) { return false; } }));
-    config.type || (config.type = type);
-    config.uri && (Array.isArray(config.uri) || (config.uri = [config.uri]));
-    return config;
-}) => config => forEach(Object.keys(config), key => resolvedTypes[key] && (config[key] instanceof Object) ? (forEach(Object.keys(config[key]), name => (config[name] = normalizer(config[key][name], key.substring(1)))) || Reflect.deleteProperty(config, key)) : (config[key] = normalizer(config[key]))) || config)(), scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
+}, scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
     if (rule instanceof CSSKeyframesRule) {
         const originalName = rule.name;
         rule.name = `${ originalName }-${ name }`;
@@ -159,85 +209,76 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             (value instanceof Object) && !isFunction && scriptModuleResolver(value, value);
         });
     } catch (error) {} finally { return resolvedModule; }
-}, styleResolver = (content, name, disabled) => {
-    const style = document.createElement('style');
-    content && (style.textContent = content);
-    document.head.appendChild(style);
-    style.disabled = disabled;
-    style.setAttribute('name', name);
-    return style;
 }, ModuleProfile = class {
     constructor (config = {}, base = '', name = '', parent = null) {
+        name = name.trim();
         this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = null;
         if (parent) {
-            this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.baseElement = parent.baseElement;
+            this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.tags = [...parent.tags, this.path.replace(/\./g, '__')], this.baseElement = parent.baseElement;
         } else {
-            this.path = name, this.baseElement = document;
+            this.path = name, this.tags = ['__'], this.baseElement = document;
         }
         const { integrity, uri, type } = config;
+        type && (this.type = type);
         if (Reflect.has(config, 'content')) {
             this.content = config.content;
         } else if (uri) {
             this.URIs = uri;
         }
-        type && (this.type = type);
         daggerOptions.integrity && integrity && (this.integrity = integrity);
         this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
+        config.prefetch && this.resolve();
     }
-    fetch (paths) {
-        paths = paths.split('.');
-        const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path)));
-        return moduleProfile && moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetchSync(paths));
-    }
-    fetchSync (paths) {
+    fetch (paths, asynchronous = false) {
+        asynchronous && (paths = paths.split('.'));
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
-        return moduleProfile && moduleProfile.fetchSync(paths);
+        return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
     }
-    resolve () {
+    resolve (childNameSet = null) {
+        const type = this.type;
         if (!Object.is(this.state, 'unresolved')) {
-            if (this.valid && Object.is(this.state, 'resolved')) {
-                if (Object.is(this.type, resolvedType.style)) {
-                    this.resolveModule(this.resolvedContent);
-                } else if (Object.is(this.type, resolvedType.namespace)) {
-                    forEach(this.children, child => child.resolve());
-                }
+            if (childNameSet) { // rootNamespace
+                this.promise = new Promise(resolver => (this.resolver = resolver));
+            } else {
+                return this.promise;
             }
-            return this.promise;
         }
         this.state = 'resolving';
         let pipeline = null;
         if (this.content == null) {
-            pipeline = [...this.URIs.map(uri => (data, token) => (token.stop = !!data) || this.resolveURI(uri)), moduleProfile => moduleProfile || (this.valid = false) || this.resolved(null)];
+            pipeline = [...this.URIs.map(uri => {
+                return (data, token) => (token.stop = !!data) || this.resolveURI(uri);
+            }), moduleProfile => moduleProfile || (this.valid = false) || this.resolved(null)];
         } else {
             const content = this.content;
-            if ([resolvedType.namespace, resolvedType.json].includes(this.type)) {
-                pipeline = [Object.is(this.type, resolvedType.namespace) ? this.resolveNamespace(content) : content];
+            if ([moduleType.namespace, moduleType.json].includes(type)) {
+                pipeline = [Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
             } else {
                 pipeline = [this.resolveContent(content)];
             }
             pipeline = [...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)];
         }
-        serializer(pipeline);
+        promisor.then(() => serializer(pipeline));
         return this.promise;
     }
     resolveContent (content) {
         isString(content) || (content = originalStringifyMethod(content));
         this.content = content.trim();
         const type = this.type;
-        if (Object.is(type, resolvedType.namespace)) {
+        if (Object.is(type, moduleType.namespace)) {
             this.baseElement = templateResolver(content);
             return serializer([configResolver(this.baseElement, this.base), ({ base, content }) => this.resolveNamespace(content, base)]);
-        } else if (Object.is(type, resolvedType.script)) {
+        } else if (Object.is(type, moduleType.script)) {
             return import(`data:text/javascript, ${ encodeURIComponent(content.replace(relativePathRegExp, (match, url1, url2) => match.replace(url1 || url2, new URL(url1 || url2, this.base)))) }`);
-        } else if (Object.is(type, resolvedType.template)) {
-            const parentPath = this.parent.path, nodeProfile = new NodeProfile(templateResolver(content), parentPath ? parentPath.split('.') : [], null, null, false, {});
+        } else if (Object.is(type, moduleType.view)) {
+            const nodeProfile = new NodeProfile(templateResolver(content), this.parent, null, null, false, {});
             return Promise.all(nodeProfile.promises || []).then(() => nodeProfile);
-        } else if (Object.is(type, resolvedType.style)) {
-            return styleResolver(content, `dg_style_module_content-${ this.path.replace(/\./g, '_') }`, true);
-        } else if (Object.is(type, resolvedType.json)) {
+        } else if (Object.is(type, moduleType.style)) {
+            return styleResolver(content, `${ this.path }-template`, true);
+        } else if (Object.is(type, moduleType.json)) {
             return JSON.parse(content);
-        } else if (Object.is(type, resolvedType.string)) {
+        } else if (Object.is(type, moduleType.string)) {
             return this.content;
         }
     }
@@ -249,67 +290,69 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     resolveEmbeddedType (element) {
         if (this.type) { return; }
-        const { tagName, type } = element, isScript = Object.is(tagName, 'SCRIPT');
+        const { tagName, type } = element;
         if (Object.is(tagName, 'TEMPLATE')) {
-            this.type = resolvedType.template;
-        } else if (isScript && Object.is(type, embeddedType.namespace)) {
-            this.type = resolvedType.namespace;
-            return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
-        } else if (isScript && Object.is(type, embeddedType.script)) {
-            this.type = resolvedType.script;
-        } else if (isScript && Object.is(type, embeddedType.json)) {
-            this.type = resolvedType.json;
+            this.type = moduleType.view;
         } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
-            this.type = resolvedType.style;
-        } else {
-            this.type = resolvedType.string;
+            this.type = moduleType.style;
+        } else if (Object.is(tagName, 'SCRIPT')) {
+            if (Object.is(type, embeddedType.namespace)) {
+                this.type = moduleType.namespace;
+                return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
+            } else if (Object.is(type, embeddedType.script)) {
+                this.type = moduleType.script;
+            } else if (Object.is(type, embeddedType.json)) {
+                this.type = moduleType.json;
+            } else if (Object.is(type, embeddedType.string)) {
+                this.type = moduleType.string;
+            }
         }
     }
     resolveModule (resolvedContent) {
         this.resolvedContent = resolvedContent;
         let module = resolvedContent;
-        const type = this.type;
-        if (Object.is(type, resolvedType.namespace)) {
+        const type = this.type, isNamespace = Object.is(type, moduleType.namespace);
+        if (isNamespace) {
             module = emptier();
-            this.children = this.resolvedContent;
-            const styleModuleNames = this.children.filter(moduleProfile => Object.is(moduleProfile.type, resolvedType.style)).map(moduleProfile => moduleProfile.module.getAttribute('name')).filter(name => name);
-            forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile, styleModuleNames));
+            this.children || (this.children = resolvedContent);
+            forEach(resolvedContent, moduleProfile => childModuleResolver(module, moduleProfile));
             this.parent && this.parent.resolve().then(moduleProfile => Object.setPrototypeOf(module, moduleProfile.module));
-        } else if (Object.is(type, resolvedType.script)) {
+        } else if (Object.is(type, moduleType.view)) {
+            selectorInjector(module.node, this.parent.tags);
+        } else if (Object.is(type, moduleType.script)) {
             module = scriptModuleResolver(module, emptier());
-        } else if (Object.is(type, resolvedType.style)) {
-            if (!Reflect.has(this.config, 'scoped') || this.config.scoped) {
-                const name = `dg_style_module-${ this.path.replace(/\./g, '_') }`, style = styleResolver('', name, true), sheet = style.sheet, iterator = { index: 0 };
-                forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, name, iterator));
+        } else if (Object.is(type, moduleType.style)) {
+            if (!Object.is(this.config.scoped, false)) {
+                const style = styleResolver('', this.path, true), sheet = style.sheet, iterator = { index: 0 }, tag = this.parent.path ? this.parent.path.replace(/\./g, '__') : '__';
+                forEach(module.sheet.cssRules, rule => scopedRuleResolver(sheet, rule, tag, iterator));
+                style.setAttribute('based', `${ this.path }-template`);
                 module = style;
             }
             originalSetAdd.call(styleModuleSet, module);
         }
         return module;
     }
-    resolveNamespace (config, base = this.base) {
-        this.parent && configNormalizer(config);
-        this.children = Object.entries(config).map(([key, value]) => this.parent ? new ModuleProfile(value, base, key, this) : ((value.parent = this) && value));
-        return Promise.all(this.children.map(child => child.resolve()).filter((_, index) => {
-            const child = this.children[index];
-            const prefetch = child.config.prefetch;
-            return !prefetch || new RegExp(prefetch).test(Object.is(daggerOptions.routing.mode, 'history') ? location.pathname : location.hash);
-        }));
+    resolveNamespace (config, base, childNameSet = null) {
+        this.parent && moduleConfigNormalizer(config);
+        this.children || (this.children = Object.entries(config).map(([name, config]) => new ModuleProfile(config, base, name, this)));
+        let children = this.children;
+        childNameSet && (children = this.children.filter(child => childNameSet.has(child.name)));
+        return Promise.all(children.map(child => child.resolve()));
     }
     resolveRemoteType (content, type, url) {
         this.base = url;
         if (this.type) { return; }
         if (url.endsWith('.js') || url.endsWith('.mjs') || mimeType.script.some(scriptType => type.includes(scriptType))) {
-            this.type = resolvedType.script;
+            this.type = moduleType.script;
         } else if (url.endsWith('.css') || type.includes(mimeType.style)) {
-            this.type = resolvedType.style;
+            this.type = moduleType.style;
         } else if (url.endsWith('.html') || type.includes(mimeType.html)) {
             content = content.trim();
-            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? resolvedType.namespace : resolvedType.template;
+            this.type = (content.startsWith('<html>') || content.startsWith('<!DOCTYPE ')) ? moduleType.namespace : moduleType.view;
         } else if (url.endsWith('.json') || type.includes(mimeType.json)) {
-            this.type = resolvedType.json;
+            this.type = moduleType.json;
         } else {
-            this.type = resolvedType.string;
+            this.type = moduleType.string;
         }
     }
     resolveURI (uri) {
@@ -326,27 +369,22 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
         } else {
-            try {
-                const element = querySelector(this.baseElement, uri);
-                if (element) {
-                    const cachedProfile = elementProfileCacheMap.get(element);
-                    if (cachedProfile) {
-                        pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
-                    } else {
-                        originalMapSet.call(elementProfileCacheMap, element, this);
-                        pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
-                    }
+            const element = querySelector(this.baseElement, uri, false, true);
+            if (element) {
+                const cachedProfile = elementProfileCacheMap.get(element);
+                if (cachedProfile) {
+                    pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                } else {
+                    originalMapSet.call(elementProfileCacheMap, element, this);
+                    pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
                 }
-            } catch (error) { pipeline = null; }
-            pipeline || (pipeline = [this.parent.fetch(uri), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent]);
+            } else {
+                pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+            }
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
     }
-}) => {
-    styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false);
-    ModuleProfile.normalizeConfig = configNormalizer;
-    return ModuleProfile;
-})(), NodeContext = ((dataUpdater = {
+}) => ModuleProfile)(), NodeContext = ((dataUpdater = {
     checked: node => Object.is(node.tagName, 'OPTION') ? node.selected : node.checked,
     file: node => (node.multiple ? [...node.files] : node.files[0]) || null,
     focus: node => node.isSameNode(document.activeElement),
@@ -368,7 +406,9 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         return result;
     }) => (node, decorators) => node.multiple ? [...node.files].map(file => processor(file, decorators)) : processor(node.files[0], decorators))(),
     selected: node => {
-        const { name, type, tagName } = node, isSelect = Object.is(tagName, 'SELECT'), data = [...(isSelect ? node.selectedOptions : querySelector(document.body, `input[type="${ type }"][name="${ name }"]:checked`, true))].map(node => valueResolver(node)), multiple = isSelect ? node.multiple : Object.is(type, 'checkbox');
+        const { name, type, tagName } = node, isSelect = Object.is(tagName, 'SELECT');
+        const data = [...(isSelect ? node.selectedOptions : querySelector(document.body, `input[type="${ type }"][name="${ name }"]:checked`, true))].map(node => valueResolver(node)), multiple = isSelect ? node.multiple : Object.is(type, 'checkbox');
+
         return multiple ? data : data[0];
     },
     value: ({ type, value, valueAsNumber }, { number, trim }, { detail }) => {
@@ -393,7 +433,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                     !select.multiple && data && (nodes = querySelector(select, 'option', true));
                     if (!select.$changeEvent) {
                         select.$changeEvent = true;
-                        select.addEventListener('change', event => forEach(querySelector(event.target, 'option', true), option => option.dispatchEvent(changeEvent)));
+                        eventDelegator('change', select, event => forEach(querySelector(event.target, 'option', true), option => option.dispatchEvent(changeEvent)));
                     }
                 }
             } else {
@@ -452,7 +492,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         topologySet && forEach(entries, ([key, value]) => value && value[meta] && topologySet.forEach(topology => topology.fetch(key, value)));
         if (!entries.length) { return originalMapClear.call(childrenMap) || nodeContext.removeChildren(true); }
         childrenMap.forEach((array, value) => valueSet.has(value) || forEach(array, nodeContext => nodeContext.destructor(true)) || originalMapDelete.call(childrenMap, value));
-        const newChildrenMap = new Map();
+        const newChildrenMap = new Map;
         let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index' } = decorators;
         Object.is(itemName, true) && (itemName = 'item');
         Object.is(keyName, true) && (keyName = 'key');
@@ -471,10 +511,10 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (!data) { return; }
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
         if (!node) {
-            const styleNames = profile.node.$styleNames;
-            styleNames && selectorInjector(fragment, styleNames.split(','));
+            const tags = profile.node.$tags;
+            tags && selectorInjector(fragment, tags);
         }
-        Reflect.construct(NodeProfile, [fragment, root ? [] : profile.paths, rootNodeProfiles, null, true]);
+        Reflect.construct(NodeProfile, [fragment, root ? rootNamespace : profile.namespace, rootNodeProfiles, null, true]);
         if (rootNodeProfiles.length) {
             processorResolver();
             Promise.all(rootNodeProfiles.map(nodeProfile => Promise.all(nodeProfile.promises || []))).then(() => forEach(rootNodeProfiles, (nodeProfile, index) => nodeContext.profile && Reflect.construct(NodeContext, [nodeProfile, root ? null : nodeContext, index, null, (nodeProfile.landmark || nodeProfile.node).parentNode])));
@@ -556,48 +596,32 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     positive || (modifier = modifier.substring(1));
     const modifierRegExp = new RegExp(modifier), result = (event.getModifierState && event.getModifierState(modifier)) || [event.code, event.key, event.button].some(value => modifierRegExp.test(value));
     return positive == result;
-}) => (event, modifiers, methodName) => (!modifiers || (Array.isArray(modifiers) || (modifiers = [modifiers]), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
+}) => (event, modifiers, methodName) => (!modifiers || (modifiers = arrayWrapper(modifiers), modifiers[methodName](modifier => resolver(event, modifier)))))(), directivesRemover = (targetNames, directives, callback) => directives && forEach(directives.filter((directive, index) => directive && (directive.index = index, directive.decorators && targetNames.includes(directive.decorators.name))).reverse(), directive => callback(directive) || directives.splice(directive.index, 1)), eventHandlerRemover = ({ target, event, handler, options, listener }) => listener ? originalSetDelete.call(target.$eventListenerMap[event], listener) : target.removeEventListener(event, handler, options), valueResolver = node => node && Reflect.has(node[context] || {}, 'value') ? node[context].value : node.value, NodeContext = class {
     constructor (profile, parent = null, index = 0, sliceScope = null, parentNode = null) {
-        this.directives = profile.directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
+        const { directives, dynamic, namespace, node, landmark, plain, text, html, raw } = profile;
+        this.directives = directives, this.profile = profile, this.index = index, this.state = 'loaded', this.parent = this.children = this.childrenMap = this.existController = this.landmark = this.upperBoundary = this.childrenController = this.controller = this.controllers = this.eventHandlers = this.scope = this.sentry = this.node = null;
         if (parent) {
             this.parent = parent;
             this.parentNode = parentNode || parent.node || parent.parentNode;
-            const paths = profile.paths;
-            this.module = Object.is(paths, parent.profile.paths) ? parent.module : rootNamespace.fetchSync([...paths]).module;
             this.scope = parent.scope;
             parent.children.splice(index, 0, this);
         } else {
-            this.parentNode = profile.node.parentNode || profile.landmark.parentNode;
-            this.module = rootNamespace.module;
-            this.scope = (htmlNodeContext || {}).scope || rootScope;
+            this.parentNode = node.parentNode || landmark.parentNode;
+            this.scope = rootScope;
         }
-        const dynamic = profile.dynamic;
-        if (dynamic) {
-            const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
-            this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
-            forEach(Array.isArray(expressions) ? expressions : [expressions], expression => {
-                if (isString(expression)) { // assert invalid expression
-                    const index = expression.indexOf('='), withoutEqual = index < 0;
-                    expression = { name: withoutEqual ? expression : expression.substring(0, index), value: withoutEqual ? '' : expression.substring(index + 1) };
-                }
-                profile.resolveDirective(expression.name, expression.value || '', this.directives);
-            });
-            processorResolver();
-        }
-        const { plain, text, html, raw } = profile;
+        this.module = namespace.module;
         if (html) {
-            htmlNodeContext = this;
             return this.loading();
         }
-        if (raw || plain) { // comment/raw/script/style/template
+        if (raw || plain) { // comment/raw/script/style/view
             this.resolveNode();
             this.node.removeAttribute && this.node.removeAttribute('dg-cloak');
             plain && this.resolveChildren();
         } else if (text) {
             this.resolveNode(() => (this.controller = this.resolveController(text)));
         } else {
-            const { each, exist } = this.directives || {};
-            (each || exist || profile.virtual) && this.resolveLandmark(sliceScope);
+            const each = (this.directives || {}).each;
+            (each || profile.virtual) && this.resolveLandmark(sliceScope);
             if (sliceScope) {
                 const { plain, root } = each.decorators;
                 this.sliceScope = this.resolveScope(sliceScope, plain, root);
@@ -605,11 +629,25 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             } else {
                 profile.slotScope && (this.slotScope = this.resolveScope(Object.assign({}, profile.slotScope), true));
                 if (each) {
-                    this.children = [], this.childrenMap = new Map(), this.controller = this.resolveController(each);
+                    this.children = [], this.childrenMap = new Map, this.controller = this.resolveController(each);
                     return this;
                 }
             }
+            if (dynamic) {
+                const expressions = dynamic.processor(this.module, this.scope, this.parentNode), directives = this.directives;
+                this.directives = Object.assign({}, directives, { controllers: [...(directives.controllers || [])], eventHandlers: [...(directives.eventHandlers || [])] });
+                forEach(arrayWrapper(expressions), expression => {
+                    if (isString(expression)) {
+                        const index = expression.indexOf('='), withoutValue = index < 0;
+                        expression = withoutValue ? { name: expression, value: '' } : { name: expression.substring(0, index), value: expression.substring(index + 1) };
+                    }
+                    profile.resolveDirective(expression.name.trim(), expression.value || '', this.directives);
+                });
+                processorResolver();
+            }
+            const exist = (this.directives || {}).exist;
             if (exist) {
+                this.lanmark || this.resolveLandmark(sliceScope);
                 this.state = 'unloaded';
                 this.existController = this.resolveController(exist);
             } else {
@@ -637,7 +675,8 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     initialize () {
         const { html, virtual } = this.profile;
         html ? (this.node = html) : (virtual || this.resolveNode());
-        this.loaded();
+        const loaded = (this.directives || {}).loaded;
+        this.resolvePromise(loaded && loaded.processor(this.module, this.scope, this.node), () => this.postLoaded());
         html || this.resolveChildren();
     }
     loading () {
@@ -655,23 +694,29 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             this.initialize();
         }) : this.initialize();
     }
-    loaded () {
-        const loaded = (this.directives || {}).loaded;
-        this.resolvePromise(loaded && loaded.processor(this.module, this.scope, this.node), () => Object.is(this.state, 'loading') && this.postLoaded());
-    }
     postLoaded () {
         this.state = 'loaded';
         this.node && this.node.removeAttribute('dg-cloak');
-        if (this.directives) {
+        if (rootScopeCallback) {
+            rootScopeCallback(this.scope);
+            rootScopeCallback = null;
+        } else if (this.directives) {
             const { controllers, eventHandlers, sentry } = this.directives;
             if (sentry) {
-                this.sentry = sentry.processor.bind(null, this.module, this.scope);
+                this.sentry = Object.assign({}, sentry, { owner: this, processor: sentry.processor.bind(null, this.module, this.scope) });
                 originalSetAdd.call(sentrySet, this.sentry);
             }
-            eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name, options }) => {
-                const target = decorators.target || this.node, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators);
-                target.addEventListener(event, handler, options);
-                return { target, event, handler, options, decorators };
+            eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name }) => {
+                const { capture, outside, once, passive, target } = decorators, resolvedTarget = target ? (window[target] || querySelector(document, target)) : this.node, currentTarget = outside ? window : resolvedTarget, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators, resolvedTarget);
+                if (once || passive) {
+                    const options = { capture, once, passive };
+                    currentTarget.addEventListener(event, handler, options);
+                    return { target: currentTarget, event, handler, options };
+                } else { // use event delegate
+                    const listener = { decorators, handler };
+                    eventDelegator(event, currentTarget, listener, capture);
+                    return { target: currentTarget, event, listener };
+                }
             }));
             controllers && (this.controllers = controllers.map(controller => this.resolveController(controller)).filter(controller => controller));
         }
@@ -703,22 +748,22 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
     removeDirectives (data, targetNames) { // TODO: assert
         if (!data) { return; }
-        Array.isArray(targetNames) || (targetNames = [targetNames]);
+        targetNames = arrayWrapper(targetNames);
         directivesRemover(targetNames, [...this.controllers, this.childrenController, this.existController], controller => this.removeController(controller));
-        directivesRemover(targetNames, this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options));
+        directivesRemover(targetNames, this.eventHandlers, eventHandlerRemover);
     }
     resolveChildren () {
         const children = this.profile.children, child = (this.directives || {}).child;
         !this.children && (children || (child && Object.is(child.name, 'html'))) && (this.children = []);
         child ? (this.childrenController = this.resolveController(child)) : forEach(children, (child, index) => new NodeContext(child, this, index));
     }
-    resolveController ({ name, decorators = emptyObject, processor }) {
+    resolveController ({ name, decorators = {}, processor }) {
         const node = this.node, subscribable = !decorators.once || decorators.lazy, controller = {
             name,
             owner: this,
             decorators,
             processor: processor.bind(null, this.module, this.scope),
-            topologySet: subscribable ? new Set() : null,
+            topologySet: subscribable ? new Set : null,
             observer: null,
             updater: name && (nodeUpdater[name] || (node && !nameFilters.includes(name) && Object.is(typeof node[name], 'boolean') && nodeUpdater.$boolean) || generalUpdater)
         };
@@ -760,7 +805,6 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         (promise instanceof Promise) ? promise.then(callback) : callback(promise);
     }
     resolveScope (scope, plain, root) {
-        // TODO: assert existed prototype: Object.getPrototypeOf(scope)[meta]
         plain || (scope = proxyResolver(scope));
         this.scope = Object.setPrototypeOf(scope, root ? rootScope : this.scope);
         return scope;
@@ -775,7 +819,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             if (this.profile.plain || this.childrenMap) { return this.removeChildren(isRoot); }
             this.childrenController && this.removeController(this.childrenController);
             forEach(this.controllers, controller => this.removeController(controller)) || (this.controllers = null);
-            forEach(this.eventHandlers, ({ target, event, handler, options }) => target.removeEventListener(event, handler, options)) || (this.eventHandlers = null);
+            forEach(this.eventHandlers, eventHandlerRemover) || (this.eventHandlers = null) || (this.node && (this.node.$eventListenerMap = null));
             if (this.sentry) {
                 originalSetDelete.call(sentrySet, this.sentry);
                 this.sentry = null;
@@ -786,16 +830,16 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             isRoot && node && node.remove();
             this.node = null;
             this.removeChildren(isRoot);
-            this.scope = this.sliceScope || (this.parent || htmlNodeContext).scope;
+            this.scope = this.sliceScope || (this.parent || {}).scope || rootScope;
             const unloaded = (this.directives || {}).unloaded;
             unloaded && unloaded.processor(this.module, this.scope, null);
             this.state = 'unloaded';
         }
     }
-    updateEventHandler (event, name, processor, decorators) {
+    updateEventHandler (event, name, processor, decorators, bindingTarget) {
         if (!name) {
-            const { current, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
-            if (!((!(current || inside) || (current && isCurrent) || (inside && currentTarget.contains(target) && !isCurrent)) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
+            const { on, inside, outside, every, some, prevent, stop, stopImmediate } = decorators, { type, target, currentTarget } = event, isCurrent = Object.is(target, currentTarget);
+            if (!((!(on || inside || outside) || (outside && bindingTarget.contains && !bindingTarget.contains(target)) || (on && isCurrent) || (inside && (!currentTarget.contains || (currentTarget.contains(target) && !isCurrent)))) && modifierResolver(event, every, 'every') && modifierResolver(event, some, 'some'))) { return; }
             prevent && event.preventDefault();
             stop && event.stopPropagation();
             stopImmediate && event.stopImmediatePropagation();
@@ -807,7 +851,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         currentController = suspendedController;
     }
 }) => {
-    NodeContext.prototype.updateController = ((queueingControllerSet = new Set(), processor = (nodeContext, controller, force) => {
+    NodeContext.prototype.updateController = ((queueingControllerSet = new Set, processor = (nodeContext, controller, force) => {
         if (!nodeContext.profile) { return; }
         const { decorators: { once, remove, router, lazy }, topologySet, updater, name } = controller, subscribable = !once || lazy;
         if (force || (topologySet && [...topologySet].some(topology => !Object.is(topology.oldValue, topology.value)))) {
@@ -837,33 +881,23 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         }
     })();
     return NodeContext;
-})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('-') ? content.trim().replace(/-[a-z]/g, string => string[1].toUpperCase()).replace(/-[A-Z]/g, string => `-${ string[1].toLowerCase() }`) : content, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), decoratorsResolver = expression => ((safeDataResolver = expression => { try { return expression ? (window[expression] || functionResolver(expression)) : expression; } catch (error) { return expression; } }) => {
-    const [name, ...rawDecorators] = caseResolver(expression).split('#'), decorators = emptier();
-    forEach(rawDecorators.filter(decorator => decorator), decorator => {
-        const [name, value] = decorator.split(':').map(content => decodeURIComponent(content));
-        decorators[name] = value ? safeDataResolver(value) : true;
-    });
-    return { name, decorators };
-})(), directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields, signature = '$node') => {
-    expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return ${ expression }; }`;
+})(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('__') ? content.replace(/__[a-z]/g, string => string[2].toUpperCase()) : content, viewModuleCacheMap = new WeakMap, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
+    const { clear, debug } = fields.decorators || {};
+    expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ debug ? 'debugger;\n\r' : '' }${ clear ? 'console.clear();\n\r' : '' }return ${ expression }; })(); }`;
     const processor = processorCaches[expression];
     const directive = Object.assign({}, fields, { processor: processor || expression });
-    processor || directiveObjects.push(directive);
+    processor || directiveQueue.push(directive);
     return directive;
-})(), templateResolver = (tagName, namespace) => {
-    let isVirtualElement = !namespace, promise = (namespace || {}).promise;
+})(), viewModuleResolver = (tagName, namespace) => {
+    let isVirtualElement = false, promise = namespace.promise;
     if (namespace) {
-        promise = namespace.fetch(tagName);
-        if (promise) {
-            isVirtualElement = true;
-        } else {
-            return templateResolver(tagName, namespace.parent);
-        }
+        promise = namespace.fetch(tagName, true);
+        if (promise) { isVirtualElement = true; } else { return viewModuleResolver(tagName, namespace.parent); }
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {
-    constructor (node, basePaths = [], rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
-        this.node = node, this.unique = unique, this.paths = basePaths, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
+    constructor (node, namespace = rootNamespace, rootNodeProfiles = null, parent = null, unique = false, defaultSlotScope = null) {
+        this.node = node, this.namespace = namespace, this.unique = unique, this.defaultSlotScope = defaultSlotScope || (parent || {}).defaultSlotScope || null, this.dynamic = this.plain = this.raw = this.virtual = false, this.text = this.inlineStyle = this.styles = this.directives = this.landmark = this.children = this.classNames = this.html = this.slotScope = null;
         const type = node.nodeType;
         if (Object.is(type, Node.TEXT_NODE)) {
             const resolvedTextContent = node.textContent.trim();
@@ -877,15 +911,15 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             parent.children.push(this);
         } else if (Object.is(type, Node.ELEMENT_NODE)) {
             this.promises = [];
-            const cloak = 'dg-cloak', { attributes, tagName } = node, rawDirective = '@raw';
-            this.html = node.isSameNode(document.documentElement) && node, this.raw = !!(attributes[rawDirective] || rawElementNames[tagName]);
+            const cloak = 'dg-cloak', { attributes, tagName } = node, rawDirective = '@raw', raw = attributes[rawDirective];
+            this.html = node.isSameNode(document.documentElement) && node, this.raw = !!(raw || rawElementNames[tagName]);
             if (this.raw) {
-                node.removeAttribute(rawDirective);
+                raw && node.removeAttribute(rawDirective);
                 rootNodeProfiles && node.removeAttribute(cloak);
             } else {
-                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), namespace = rootNamespace.fetchSync([...this.paths]), { promise = null, isVirtualElement = false } = ([HTMLElement, HTMLUnknownElement].includes(node.constructor) && templateResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], isTemplate = Object.is(name, 'template'), slotDirective = '@slot';
+                const controllers = [], eventHandlers = [], directives = { controllers, eventHandlers }, name = caseResolver(tagName.toLowerCase()), { promise = null, isVirtualElement = false } = (Object.is(node.constructor, HTMLUnknownElement) && viewModuleResolver(name, namespace)) || {}, dynamicDirective = '@directive', dynamic = attributes[dynamicDirective], slotDirective = '@slot';
                 if (node.hasAttribute(slotDirective)) {
-                    const slotName = `_$slot_${ node.getAttribute(slotDirective).trim() }`;
+                    const slotValue = node.getAttribute(slotDirective).trim(), slotName = `_$slot_${ slotValue }`;
                     node.removeAttribute(slotDirective);
                     if (this.defaultSlotScope) {
                         this.defaultSlotScope[slotName] = node.innerHTML;
@@ -894,7 +928,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                         this.resolveDirective('$html', slotName, directives);
                     }
                 }
-                if (isVirtualElement || isTemplate) {
+                if (isVirtualElement || Object.is(name, 'template')) {
                     this.virtual = true;
                     this.resolveLandmark(node);
                 }
@@ -910,7 +944,11 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 if (this.html) { return processorResolver(); }
                 this.plain = !(this.directives || this.landmark);
                 rootNodeProfiles && (this.plain ? (node.hasAttribute(cloak) && forEach(node.children, child => child.setAttribute(cloak, '')) || node.removeAttribute(cloak)) : (rootNodeProfiles.push(this) && (rootNodeProfiles = null)));
-                isVirtualElement ? this.promises.push(promise.then(moduleProfile => this.resolveTemplate(moduleProfile))) : (directives.child || this.resolveChildren(node, rootNodeProfiles));
+                if (isVirtualElement) {
+                    this.promises.push(promise.then(moduleProfile => this.resolveViewModule(moduleProfile)))
+                } else if (!directives.child) {
+                    this.resolveChildren(node, rootNodeProfiles);
+                }
             }
             if (parent) {
                 parent.children.push(this);
@@ -919,13 +957,15 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         } else if (Object.is(type, Node.DOCUMENT_FRAGMENT_NODE)) {
             this.promises = [];
             this.resolveChildren(node, rootNodeProfiles);
+        } else if (Object.is(type, Node.COMMENT_NODE)) {
+            this.raw = true;
         }
     }
     resolveChildren (node, rootNodeProfiles) {
         const childNodes = this.virtual ? node.content.childNodes : node.childNodes;
         if (childNodes.length) {
             this.children = [];
-            forEach(childNodes, childNode => ((Object.is(childNode.nodeType, Node.TEXT_NODE) && !childNode.data.trim()) || Object.is(childNode.nodeType, Node.COMMENT_NODE)) ? this.promises.push(promisor.then(() => childNode.remove())) : Reflect.construct(NodeProfile, [childNode, this.paths, rootNodeProfiles, this, !!this.unique]));
+            forEach(childNodes, childNode => Reflect.construct(NodeProfile, [childNode, this.namespace, rootNodeProfiles, this, !!this.unique]));
             this.plain && this.children.every(child => child.raw) && (this.raw = true) && (this.plain = false);
         } else if (this.plain) {
             (this.raw = true) && (this.plain = false);
@@ -938,14 +978,28 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         if (!resolvedType) { return; }
         const node = this.node;
         node.removeAttribute(attributeName);
-        const fields = {}, { name, decorators } = decoratorsResolver(attributeName.substring(1));
-        fields.decorators = decorators;
+        const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
+        forEach(rawDecorators.filter(decorator => decorator), decorator => {
+            const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
+            if (Object.is(name, 'target')) {
+                decorators[name] = value;
+            } else if (value) {
+                if (Reflect.has(window, value)) {
+                    decorators[name] = window[value];
+                } else if (['every', 'some'].includes(name)) {
+                    decorators[name] = JSON.parse(value);
+                } else {
+                    decorators[name] = value;
+                }
+            } else {
+                decorators[name] = true;
+            }
+        });
         if (Object.is(resolvedType, 'event')) {
             fields.event = name;
             if (lifeCycleDirectiveNames[name]) {
                 directives[name] = directiveResolver(value, fields, Object.is(name, 'sentry') ? '$nextRouter' : '$node');
             } else {
-                fields.options = decorators;
                 directives.eventHandlers.push(directiveResolver(value, fields, '$node, $event'));
             }
         } else {
@@ -981,7 +1035,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 } else if (interactiveDirectiveNames[name]) { // two-way data binding
                     const isValueDirective = Object.is(name, 'value');
                     if (!decorators.oneway) {
-                        fields.options = true; // useCapture
+                        decorators.capture = true; // useCapture
                         const { tagName, type } = node, isCheckedDirective = Object.is(name, 'checked'), isSelectedDirective = Object.is(name, 'selected'), isCheckedType = Object.is(type, 'checkbox') || Object.is(type, 'radio'), isFileType = Object.is(type, 'file');
                         if (Object.is(name, 'focus')) {
                             dataBinder(directives, value, fields, 'blur');
@@ -1002,23 +1056,23 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         this.promises.push(promisor.then(() => node.replaceWith(this.landmark)));
         return this.landmark;
     }
-    resolveTemplate (moduleProfile) {
+    resolveViewModule (moduleProfile) {
         const module = moduleProfile.module;
-        let cachedFields = templateCacheMap.get(module);
+        let cachedFields = viewModuleCacheMap.get(module);
         if (!cachedFields) {
             cachedFields = emptier();
-            const isTemplate = module instanceof NodeProfile, template = isTemplate ? module : moduleProfile.children.find(moduleProfile => Object.is(moduleProfile.name, 'template')).module;
-            cachedFields.children = template.children;
-            cachedFields.defaultSlotScope = template.defaultSlotScope;
-            originalWeakMapSet.call(templateCacheMap, module, cachedFields);
-            isTemplate || originalWeakMapSet.call(templateCacheMap, template, cachedFields);
+            const isViewModule = module instanceof NodeProfile, view = isViewModule ? module : ((moduleProfile.children || []).find(moduleProfile => Object.is(moduleProfile.name, 'view')) || {}).module;
+            cachedFields.children = view.children;
+            cachedFields.defaultSlotScope = view.defaultSlotScope;
+            originalWeakMapSet.call(viewModuleCacheMap, module, cachedFields);
+            isViewModule || originalWeakMapSet.call(viewModuleCacheMap, view, cachedFields);
         }
         Object.assign(this, cachedFields);
         if (Object.keys(this.defaultSlotScope).length) {
             const slotScope = {}, emptySlot = '_$slot_', slotDirective = '@slot';
             forEach(this.node.children, container => {
                 if (container.hasAttribute(slotDirective)) {
-                    const slotName = `${ emptySlot }${ container.getAttribute(slotDirective).trim() }`;
+                    const slotValue = container.getAttribute(slotDirective).trim(), slotName = `${ emptySlot }${ slotValue }`;
                     container.removeAttribute(slotDirective);
                     slotScope[slotName] = Object.is(container.tagName, 'TEMPLATE') ? container.innerHTML : container.outerHTML;
                 }
@@ -1030,7 +1084,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
     }
 }) => NodeProfile)(), Topology = class {
     constructor (parent, name, value) {
-        this.value = this.oldValue = value, this.parent = null, this.controllerSet = new Set(), this.children = emptier(), this.name = name;
+        this.value = this.oldValue = value, this.parent = null, this.controllerSet = new Set, this.children = emptier(), this.name = name;
         if (parent) {
             parent.children[name] = this;
             this.parent = parent;
@@ -1073,21 +1127,18 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             Reflect.deleteProperty(this.parent.children, this.name);
             this.parent = null;
         }
-        forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptyObject)[key], dispatchSource.mutation));
+        forEach(ownKeys(this.children), key => this.children[key].update((newValue || emptier())[key], dispatchSource.mutation));
     }
-}, runtime = ((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerOptions = null, styleModules = { '': styleModuleSet }, relativeLinkResolver = ((tagNames = hashTableResolver('A', 'AREA')) => event => {
-    const node = event.target;
-    if (!tagNames[node.tagName] || !node.hasAttribute('href')) { return; }
-    const href = node.getAttribute('href').trim();
-    if (Object.is(routerOptions.mode, 'history')) {
-        event.preventDefault();
-        history.pushState({}, '', href);
-        routeChangeResolver();
-    } else {
-        const prefix = routerOptions.prefix;
-        href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }${ href }`);
+}) => styleResolver('[dg-cloak] { display: none !important; }', 'dg-global-style', false) && document.addEventListener('DOMContentLoaded', () => Promise.all(['options', 'modules', 'routers'].map(type => configResolver(document, document.baseURI, type))).then(((base = '', currentStyleSet = null, routers = null, resolvedRouters = null, rootRouter = null, routerConfigs = null, styleModules = { '': styleModuleSet }, anchorResolver = (anchor, event = null) => {
+    if (anchor.startsWith('#@')) {
+        const name = anchor.substring(2), anchorElement = document.getElementById(name) || querySelector(document, `a[name=${ name }]`);
+        if(!anchorElement) { return; }
+        event && event.preventDefault();
+        anchorElement.scrollIntoView();
+        location.href.endsWith(anchor) || history.pushState({}, '', `${ location.href }${ anchor }`);
+        return true;
     }
-})(), routeChangeResolver = ((routerChangeResolver = ((rootNamespaceResolver = nextRouter => {
+}, routingChangeResolver = ((routerChangeResolver = ((resolver = nextRouter => {
     processorResolver();
     rootScope.$router = nextRouter;
     if (!currentStyleSet) {
@@ -1099,56 +1150,67 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         styleModuleSet.forEach(style => (style.disabled = false));
         currentStyleSet = styleModuleSet;
     }
+    anchorResolver(nextRouter.anchor);
 }) => nextRouter => {
-    rootNamespace.childrenCache = emptier();
-    // originalMapClear.call(templateCacheMap);
     const path = nextRouter.path;
-    styleModuleSet = styleModules[path] || (styleModules[path] = new Set());
-    const rootModules = Object.assign(emptier(), ...resolvedRouters.map(router => router.modules));
-    forEach(Object.keys(rootModules), key => (rootModules[key] instanceof ModuleProfile) || (rootModules[key] = routers.find(router => router.resolveModule(key, base)).modules[key]));
-    rootNamespace = new ModuleProfile({ content: rootModules, type: resolvedType.namespace }, base);
-    return rootNamespace.resolve().then(() => rootNamespaceResolver(nextRouter));
-})()) => (route = (Object.is(routerOptions.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash).replace(routerOptions.prefix, '')) => {
-    const slash = '/';
-    route.startsWith(slash) || (route = `${ slash }${ route }`);
-    const { mode, aliases, prefix, redirects } = routerOptions, [path = '', query = ''] = route.split('?'), redirectPath = aliases[path] || redirects[path];
+    styleModuleSet = styleModules[path] || (styleModules[path] = new Set);
+    return rootNamespace.resolve(nextRouter.modules).then(() => resolver(nextRouter));
+})()) => (fullPath = (Object.is(routerConfigs.mode, 'history') ? `${ location.pathname }${ location.search }` : location.hash)) => {
+    fullPath = fullPath.replace(routerConfigs.prefix, '');
+    const slash = '/', anchorIndex = location.hash.lastIndexOf('#@'), anchor = (anchorIndex >= 0) ? location.hash.substring(anchorIndex) : '';
+    fullPath = fullPath.replace(anchor, '');
+    fullPath.startsWith(slash) || (fullPath = `${ slash }${ fullPath }`);
+    const { mode, aliases, prefix } = routerConfigs, [path = '', query = ''] = fullPath.split('?'), redirectPath = aliases[path];
     if (redirectPath) {
-        route = query ? `${ redirectPath }?${ query }` : redirectPath;
-        aliases[path] || history.replaceState({ path: route }, '', `${ prefix }${ route }`);
-        return routeChangeResolver(route);
+        return routingChangeResolver(`${ query ? `${ redirectPath }?${ query }` : redirectPath }${ anchor }`);
     }
     const scenarios = {}, paths = Object.is(path, slash) ? [''] : path.split(slash);
     routers = [];
-    if (!rootRouter.match(routers, scenarios, paths)) { return routeChangeResolver(routerOptions.default); }
+    if (!rootRouter.match(routers, scenarios, paths)) {
+        if (Reflect.has(routerConfigs, 'default')) {
+            const defaultPath = routerConfigs.default, resolvedPath = `${ prefix }${ query ? `${ defaultPath }?${ query }` : defaultPath }${ anchor }`;
+            history.pushState({}, '', resolvedPath);
+            return routingChangeResolver(resolvedPath);
+        } else {
+            return;
+        }
+    }
     resolvedRouters = routers.slice().reverse();
-    forEach(resolvedRouters, router => router.initialize());
     const queries = {}, variables = Object.assign({}, ...resolvedRouters.map(router => router.variables)), constants = Object.assign({}, ...resolvedRouters.map(router => router.constants));
     query && forEach([...new URLSearchParams(query)], ([key, value]) => (queries[key] = value));
     forEach(Object.keys(variables), key => {
         if (Reflect.has(queries, key) && !Reflect.has(constants, key)) {
+            const type = typeof variables[key], query = queries[key];
             try {
-                const type = typeof variables[key], query = queries[key];
                 variables[key] = Object.is(type, 'string') ? query : window[`${ type[0].toUpperCase() }${ type.substring(1) }`](JSON.parse(query));
             } catch (error) {}
         }
     });
-    const nextRouter = { mode, prefix, path, paths, query, queries, scenarios, schemes: Object.assign({}, variables, constants) };
-    Promise.all([...sentrySet].map(sentry => sentry(nextRouter))).then(array => array.some(rejected => rejected) ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter));
-})(), resetEventHandler = ((resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken)) => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true), child => {
-    child.dispatchEvent(inputEvent);
-    child.dispatchEvent(changeEvent);
-}))(), Router = class {
-    constructor ({ children, path = '', constants = {}, variables = {}, modules = null, tailable = false }, parent = null) {
-        this.constants = constants, this.variables = variables, this.modules = modules, this.children = null, this.parent = parent;
-        this.scenarios = (path instanceof Object) ? Object.keys(path).map(scenario => ({ scenario, regExp: new RegExp(path[scenario] || '^$') })) : [{ scenario: path, regExp: new RegExp(`^${ path }$`) }];
-        this.initialized = false;
-        children && (this.children = children.filter(child => { try { return !Reflect.has(child, 'match') || matchMedia(child.match).matches || functionResolver(child.match); } catch (error) { return false; } }).map(child => new Router(child, this)));
+    const nextRouter = { mode, prefix, path, paths, modules: new Set(resolvedRouters.map(router => router.modules).flat()), query, queries, scenarios, schemes: Object.assign({}, variables, constants), anchor };
+    Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
+        const matchedOwners = results.filter(result => result.prevent).map(result => result.sentry.owner);
+        matchedOwners.length ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter);
+    });
+})(), Router = class {
+    constructor (router, parent = null) {
+        const { children, constants = {}, variables = {}, modules = [], tailable = false, match = '' } = router;
+        let path = router.path;
+        this.modules = arrayWrapper(modules);
+        if (parent) {
+            (!path || Object.is(path, '*')) && (path = '.+');
+            this.path = `${ parent.path }/${ path }`;
+        } else {
+            path = '';
+            this.path = '';
+        }
+        if (parent && Reflect.has(router, 'match') && !((match instanceof Function) ? match(rootScope, rootNamespace.module) : functionResolver(`($module, $scope) => { with ($module) with ($scope) return (() => { 'use strict'; return ${ match }; })() }`)(rootNamespace.module, rootScope))) {
+            this.invalid = true;
+            return;
+        }
+        this.constants = constants, this.variables = variables, this.children = null, this.parent = parent, this.scenarios = (path instanceof Object) ? Object.keys(path).map(scenario => ({ scenario, regExp: new RegExp(path[scenario] || '^$') })) : [{ scenario: path, regExp: new RegExp(`^${ path }$`) }];
+        forEach(this.modules, module => module.trim());
+        children && (this.children = children.map(child => new Router(child, this)).filter(child => !child.invalid));
         this.tailable = tailable || !(this.children || []).length;
-    }
-    initialize () {
-        if (this.initialized) { return; }
-        this.initialized = true;
-        this.modules && (this.modules = ModuleProfile.normalizeConfig(this.modules));
     }
     match (routers, scenarios, paths, length = paths.length, start = 0) {
         const scenarioLength = this.scenarios.length;
@@ -1163,18 +1225,9 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             return ((Object.is(length, start) && this.tailable) || (this.children || []).find(child => child.match(routers, scenarios, paths, length, start))) && routers.push(this);
         }
     }
-    resolveModule (key, base) {
-        if (this.modules) {
-            const module = this.modules[key];
-            this.modules[key] = module && ((module instanceof ModuleProfile) ? module : new ModuleProfile(module, base, key));
-            return this.modules[key];
-        }
-    }
 }) => {
-    rootScope = Object.seal(proxyResolver({ $router: null, $validator: () => {} }));
     const register = ((resolver = (prototype, name) => {
-        const method = prototype[name];
-        if (!method) { return; }
+        const method = (prototype || {})[name];
         const resolvedMethod = function (...parameters) {
             const result = method.apply(this, parameters);
             this[meta] && this[meta].forEach(topology => topology.dispatch());
@@ -1183,31 +1236,49 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         Reflect.defineProperty(resolvedMethod, 'name', { configurable: true, value: name });
         Reflect.defineProperty(prototype, name, { get: () => resolvedMethod });
     }) => (target, names) => forEach(names, name => resolver(target.prototype, name)))();
-    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
-    JSON.stringify = processorWrapper(JSON.stringify);
-    forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
-    const runtime = (configs = { base: document.baseURI, content: {} }) => { // TODO: base
-        const content = configs.content;
-        if (content.routing) {
-            content.routing = Object.assign(daggerOptions.routing, content.routing);
-            Object.assign(daggerOptions, content);
-        } else {
-            daggerOptions.routing.scenarios = { modules: content };
-        }
-        routerOptions = daggerOptions.routing;
-        Object.is(routerOptions.mode, 'history') || routerOptions.prefix || (routerOptions.prefix = '#');
-        const rootModules = emptier();
-        document.body.addEventListener('click', relativeLinkResolver, true);
-        document.body.addEventListener('reset', resetEventHandler);
-        base = configs.base, rootRouter = new Router(routerOptions.scenarios), rootRouter.initialize();
-        forEach(Object.keys(rootRouter.modules || {}), key => (rootModules[key] = rootRouter.resolveModule(key, base)));
-        rootNamespace = Reflect.construct(ModuleProfile, [{ content: rootModules, type: resolvedType.namespace }, base]);
-        rootNamespace.resolve().then(() => styleModuleSet.forEach(style => (style.disabled = false)) || serializer([new NodeContext(new NodeProfile(document.documentElement)).promise, () => { // TODO
-            forEach([...new Set(daggerOptions.rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat())], rootNode => Reflect.construct(NodeProfile, [rootNode, [], rootNodeProfiles, null, true]));
-            window.addEventListener('popstate', () => routeChangeResolver());
-            routeChangeResolver();
-        }]));
+    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0-RC-release' }));
+    return ([options, modules, routers]) => {
+        daggerOptions = options.content;
+        eventDelegator('click', window, event => {
+            const node = event.target;
+            if (!['A', 'AREA'].includes(node.tagName) || !node.hasAttribute('href')) { return; }
+            const href = node.getAttribute('href').trim(), isHistoryMode = Object.is(routerConfigs.mode, 'history');
+            if (anchorResolver(href, event)) { return; }
+            const prefix = routerConfigs.prefix;
+            href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }/${ href }`);
+            if (isHistoryMode) {
+                event.preventDefault();
+                history.pushState({}, '', node.href);
+                routingChangeResolver();
+            }
+        }, true);
+        const resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken);
+        eventDelegator('reset', window, () => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true, true), child => {
+            child.dispatchEvent(inputEvent);
+            child.dispatchEvent(changeEvent);
+        }));
+        register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
+        JSON.stringify = processorWrapper(JSON.stringify);
+        forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
+        base = modules.base;
+        routerConfigs = routers.content;
+        const prefix = routerConfigs.prefix;
+        Object.is(routerConfigs.mode, 'history') || (routerConfigs.prefix = `#${ prefix }`);
+        rootScope = Object.seal(proxyResolver({ $router: null }));
+        moduleConfigNormalizer(modules.content);
+        const html = document.documentElement, routing = routerConfigs.routing || { modules: Object.keys(modules.content) };
+        rootScopeCallback = scope => {
+            rootScope = scope;
+            rootRouter = new Router(routing);
+            const rootSelectors = daggerOptions.rootSelectors;
+            const rootNodeSet = new Set(rootSelectors.map(rootSelector => [...querySelector(document, rootSelector, true)]).flat());
+            rootNodeSet.delete(html);
+            const rootNodes = [...rootNodeSet];
+            forEach(rootNodes, rootNode => Reflect.construct(NodeProfile, [rootNode, rootNamespace, rootNodeProfiles, null, true]));
+            eventDelegator('popstate', window, () => routingChangeResolver());
+            routingChangeResolver();
+        };
+        rootNamespace = new ModuleProfile({ content: modules.content, type: moduleType.namespace }, base);
+        rootNamespace.resolve(new Set(arrayWrapper(routing.modules || []))).then(() => styleModuleSet.forEach(style => (style.disabled = false)) || new NodeContext(new NodeProfile(html)));
     };
-    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0 - RC' }));
-    return runtime;
-})()) => document.addEventListener('DOMContentLoaded', () => serializer([configResolver(document, document.baseURI, 'options'), runtime])))();
+})())))();
