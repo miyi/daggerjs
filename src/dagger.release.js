@@ -368,18 +368,15 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
                 const base = new URL(uri, this.base).href;
                 pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
+        } else if (moduleNameRegExp.test(uri)) {
+            pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
         } else {
-            const element = querySelector(this.baseElement, uri, false, true);
-            if (element) {
-                const cachedProfile = elementProfileCacheMap.get(element);
-                if (cachedProfile) {
-                    pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
-                } else {
-                    originalMapSet.call(elementProfileCacheMap, element, this);
-                    pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
-                }
+            const element = querySelector(this.baseElement, uri, false, true), cachedProfile = elementProfileCacheMap.get(element);
+            if (cachedProfile) {
+                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
             } else {
-                pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                originalMapSet.call(elementProfileCacheMap, element, this);
+                pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
             }
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
@@ -509,7 +506,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         data = textResolver(data);
         nodeContext.removeChildren(true);
         if (!data) { return; }
-        data.startsWith('<') || (data = `<${ data }></${ data }>`);
+        moduleNameRegExp.test(data) && (data = `<${ data }></${ data }>`);
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
         if (!node) {
             const tags = profile.node.$tags;

@@ -140,18 +140,15 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     } catch (error) {
         asserter(`The string "${ selector }" is not a valid querySelector`);
     }
-}, remoteResourceResolver = (url, integrity = '', required = false) => fetch(url, daggerOptions.integrity && integrity ? { integrity: `sha256-${ integrity }` } : {}).then(response => {
+}, remoteResourceResolver = (url, integrity = '') => fetch(url, daggerOptions.integrity && integrity ? { integrity: `sha256-${ integrity }` } : {}).then(response => {
     if (response.ok) {
         const type = response.headers.get('content-type');
         asserter(`Missing "content-type" for the response content of "${ url }"`, type);
         return response.text().then(content => ({ content, type }));
     } else {
-        asserter(`Failed to fetch remote module from "${ url }"`, !required);
+        warner(`\u274e Failed to fetch remote resource from "${ url }"`);
     }
-}).catch(() => {
-    const info = `Failed to fetch remote module from "${ url }"`;
-    required ? asserter(info) : warner(`\u274e ${ info }`);
-}), styleResolver = (content, name, disabled) => {
+}).catch(() => warner(`\u274e Failed to fetch remote resource from "${ url }"`)), styleResolver = (content, name, disabled) => {
     const style = document.createElement('style');
     content && (style.textContent = content);
     document.head.appendChild(style);
@@ -459,19 +456,16 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 const base = new URL(uri, this.base).href;
                 pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
+        } else if (moduleNameRegExp.test(uri)) {
+            pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
         } else {
-            const element = querySelector(this.baseElement, uri, false, true);
-            if (element) {
-                const cachedProfile = elementProfileCacheMap.get(element);
-                if (cachedProfile) {
-                    warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" reference the same embedded element "%o"`, element]);
-                    pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
-                } else {
-                    originalMapSet.call(elementProfileCacheMap, element, this);
-                    pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
-                }
+            const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCacheMap.get(element);
+            if (cachedProfile) {
+                warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" reference the same embedded element "%o"`, element]);
+                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
             } else {
-                pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                originalMapSet.call(elementProfileCacheMap, element, this);
+                pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
             }
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
@@ -603,7 +597,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         data = textResolver(data);
         nodeContext.removeChildren(true);
         if (!data) { return; }
-        data.startsWith('<') || (data = `<${ data }></${ data }>`);
+        moduleNameRegExp.test(data) && (data = `<${ data }></${ data }>`);
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
         if (!node) {
             const tags = profile.node.$tags;
