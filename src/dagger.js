@@ -230,15 +230,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     } else if (Object.is(type, moduleType.string)) {
         parentModule[name] = module;
     }
-}, dependencyResolver = ((resolver = (moduleProfile, dependencies, parent) => parent && ((moduleProfile.integrity && (Object.is(moduleProfile.integrity, parent.integrity) || resolver(moduleProfile, dependencies, parent.parent)) && !dependencies.includes(moduleProfile.path)) || (moduleProfile.dependencies && (moduleProfile.dependencies.includes(parent) || moduleProfile.dependencies.some(moduleProfile => resolver(moduleProfile, dependencies, parent))))) && dependencies.push(moduleProfile.path)) => (moduleProfile, parent) => {
-    if (!parent) { return; }
-    parent.dependencies || (parent.dependencies = []);
-    parent.dependencies.push(moduleProfile);
-    const dependencies = [];
-    resolver(moduleProfile, dependencies, parent);
-    const path = parent.path;
-    asserter(`Failed to resolve module "${ path }" with recursive or circular reference "${ [path, ...dependencies.reverse(), path].join(' → ') }"`, !dependencies.length);
-})(), scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
+}, scopedRuleResolver = ((selectorRegExp = /([\s:+>~])/) => (sheet, rule, name, iterator) => {
     if (rule instanceof CSSKeyframesRule) {
         const originalName = rule.name;
         rule.name = `${ originalName }-${ name }`;
@@ -288,6 +280,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         daggerOptions.integrity && integrity && (this.integrity = integrity);
         this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
         config.prefetch && this.resolve();
+    }
+    checkCircularDependency (moduleProfile) {
+        let parent = this;
+        while (parent) {
+            asserter(`Failed to resolve module "${ moduleProfile.path }" as there is a circular reference with "${ parent.path }"`, !moduleProfile.integrity || !Object.is(parent.integrity, moduleProfile.integrity));
+            parent = parent.parent;
+        }
     }
     fetch (paths, asynchronous = false) {
         asynchronous && (paths = paths.split('.'));
@@ -425,7 +424,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 asserter(`The modules "${ [...childNameSet].join(', ') }" is not defined in the root namespace`);
             }
         }
-        return Promise.all(children.map(child => dependencyResolver(child, this) || child.resolve()));
+        return Promise.all(children.map(child => this.checkCircularDependency(child) || child.resolve()));
     }
     resolveRemoteType (content, type, url) {
         this.base = url;
