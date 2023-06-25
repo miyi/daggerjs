@@ -1383,7 +1383,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         asserter(['The 2nd argument of "$dagger.register" should be "string array" instead of "%o"', names], Array.isArray(names) && names.every(name => isString(name)));
         forEach(names, name => resolver(target.prototype, name));
     })();
-    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0 - RC', validator: (data, path, { type, assert, required } = {}) => {
+    window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0-RC-debug', validator: (data, path, { type, assert, required } = {}) => {
         if ((data == null) || Number.isNaN(data)) { asserter([`The data "${ path }" should be assigned a valid value instead of "%o" before using`, data], !required); }
         type && (Array.isArray(type) ? asserter([`The type of data "${ path }" should be one of "%o" instead of "%o"`, type, (data.constructor || {}).name], type.some(type => (data instanceof type))) : asserter([`The type of data "${ path }" should be "%o" instead of "%o"`, type, (data.constructor || {}).name], data instanceof type));
         if (!assert) { return; }
@@ -1398,7 +1398,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }}));
     return ([options, modules, routers]) => {
         daggerOptions = options.content;
-        const edge = new Array(131).fill('%').join('');
+        const edge = new Array(141).fill('%').join('');
         logger(edge);
         logger(`\ua9c1 Powered by "\ud83d\udde1\ufe0f dagger V${ $dagger.version } (https://daggerjs.org)". \ua9c2`);
         logger(edge);
