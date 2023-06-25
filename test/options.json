@@ -9,5 +9,5 @@
     "warningHighlightStyle": "",
     "errorPlainStyle": "",
     "errorHighlightStyle": "", */
-    "rootSelectors": ["title", "body"]
+    "rootSelectors": ["not_exist", "title", "body"]
 }

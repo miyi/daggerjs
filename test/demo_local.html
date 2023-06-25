@@ -12,7 +12,7 @@
     <script type="dagger/options" src="./options.json"></script>
     <script type="dagger/modules" src="./modules.json"></script>
     <script type="dagger/routers" src="./routers.js"></script>
-    <title $text="`${ $router.schemes.title } demo`">loading...</title>
+    <title $text="`${ $router.constants.title } demo`">loading...</title>
     <template id="index_template">
         <div id="plain-previous-sibling"></div>
         <div id="plain-wrapper">
@@ -77,7 +77,7 @@
     <a $exist="true" href="mailto://dagger8224@gmail.com">mail to author</a>
     <div +click#stop="console.log('div click bubble', $event.currentTarget, $event.target)">
       <button +click#outside="console.log('button click bubble/outside', $event.currentTarget, $event.target)">click</button>
-      <div class="mountPoint1" +loading="{ item: 'default-item' }" $html#router="$router.schemes.template && `<${ $router.schemes.template }></${ $router.schemes.template }>`"></div>
+      <div class="mountPoint1" +loading="{ item: 'default-item' }" $html#router="$router.constants.template"></div>
       <span>This the end!</span>
     </div>
     <div style="height: 2000px"></div>

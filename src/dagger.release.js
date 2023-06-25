@@ -509,6 +509,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
         data = textResolver(data);
         nodeContext.removeChildren(true);
         if (!data) { return; }
+        data.startsWith('<') || (data = `<${ data }></${ data }>`);
         const rootNodeProfiles = [], profile = nodeContext.profile, fragment = templateResolver(data);
         if (!node) {
             const tags = profile.node.$tags;
@@ -1186,7 +1187,7 @@ export default ((context = Symbol('context'), currentController = null, daggerOp
             } catch (error) {}
         }
     });
-    const nextRouter = { mode, prefix, path, paths, modules: new Set(resolvedRouters.map(router => router.modules).flat()), query, queries, scenarios, schemes: Object.assign({}, variables, constants), anchor };
+    const nextRouter = { mode, prefix, path, paths, modules: new Set(resolvedRouters.map(router => router.modules).flat()), query, queries, scenarios, variables, constants, anchor };
     Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
         const matchedOwners = results.filter(result => result.prevent).map(result => result.sentry.owner);
         matchedOwners.length ? history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter);

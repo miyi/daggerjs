@@ -20,7 +20,7 @@
     <script type="dagger/options" src="./options.json"></script>
     <script type="dagger/modules" src="./modules.json"></script>
     <script type="dagger/routers" src="./routers.json"></script>
-    <title $text="$[$router.schemes.title] || $router.schemes.title">loading...</title>
+    <title $text="$[$router.constants.title] || $router.constants.title">loading...</title>
   </head>
   <body dg-cloak +loading="{ isMenuClosed: true }" +sentry="sentry($scope, $nextRouter)" $watch#router="console.log('watch router', $module, $router), isLoading = false">
     <div id="loading-background" $style="`display: ${ isLoading ? 'block' : 'none' }`">
@@ -44,11 +44,11 @@
       <div class="bottom-switcher button" +click="isMenuClosed = !isMenuClosed"><span>${ isMenuClosed ? "》" : "《" }</span></div>
     </div>
     <div id="content">
-      <template $html="`<${ $router.schemes.template }></${ $router.schemes.template }>`"></template>
+      <template $html="`<${ $router.constants.template }></${ $router.constants.template }>`"></template>
     </div>
     <div id="footer" $watch="$router.path,document.scrollingElement.scrollTop = 0;">
-      <a $exist="$router.schemes.previousLink" $href="$router.schemes.previousLink">${ $.previous }</a>
-      <a $exist="$router.schemes.nextLink" $href="$router.schemes.nextLink">${ $.next }</a>
+      <a $exist="$router.constants.previousLink" $href="$router.constants.previousLink">${ $.previous }</a>
+      <a $exist="$router.constants.nextLink" $href="$router.constants.nextLink">${ $.next }</a>
     </div>
   </body>
 </html>
