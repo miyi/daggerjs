@@ -578,11 +578,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         topologySet && forEach(entries, ([key, value]) => value && value[meta] && topologySet.forEach(topology => topology.fetch(key, value)));
         if (!entries.length) { return originalMapClear.call(childrenMap) || nodeContext.removeChildren(true); }
         childrenMap.forEach((array, value) => valueSet.has(value) || forEach(array, nodeContext => nodeContext.destructor(true)) || originalMapDelete.call(childrenMap, value));
-        const newChildrenMap = new Map;
-        let { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index' } = decorators;
-        Object.is(itemName, true) && (itemName = 'item');
-        Object.is(keyName, true) && (keyName = 'key');
-        Object.is(indexName, true) && (indexName = 'index');
+        const newChildrenMap = new Map, { item: itemName = 'item', key: keyName = 'key', index: indexName = 'index' } = decorators;
         warner(['\u274e Duplication found in slice scope schemes "%o"', { item: itemName, key: keyName, index: indexName }], !Object.is(keyName, indexName) && !Object.is(keyName, itemName) && !Object.is(itemName, indexName));
         forEach(entries, ([key, value], index) => sliceResolver(index, key, value, children, childrenMap, newChildrenMap, indexName, keyName, itemName, nodeContext, profile, parentNode));
         children.length = entries.length;
@@ -1090,12 +1086,8 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         const [name, ...rawDecorators] = caseResolver(attributeName.substring(1)).split('#'), decorators = emptier(), fields = { decorators };
         forEach(rawDecorators.filter(decorator => decorator), decorator => {
             const [name, value] = decorator.split(':').map(content => decodeURIComponent(content).trim());
-            if (Object.is(name, 'target')) {
-                decorators[name] = value;
-            } else if (value) {
-                if (Reflect.has(window, value)) {
-                    decorators[name] = window[value];
-                } else if (['every', 'some'].includes(name)) {
+            if (value) {
+                if (['every', 'some'].includes(name)) {
                     try {
                         decorators[name] = JSON.parse(value);
                     } catch (error) {
@@ -1105,7 +1097,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                     decorators[name] = value;
                 }
             } else {
-                decorators[name] = true;
+                decorators[name] = name;
             }
         });
         if (Object.is(resolvedType, 'event')) {
