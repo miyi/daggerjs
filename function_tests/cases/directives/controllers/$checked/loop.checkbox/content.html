@@ -1,0 +1,3 @@
+<template +loading="{ checkedList: [true, false, true, false] }">
+    <input type="checkbox" name="checkbox-group1" $each="checkedList" $value="index + 1" $id="`checkbox${ index + 1 }`" $checked="item">
+</template>

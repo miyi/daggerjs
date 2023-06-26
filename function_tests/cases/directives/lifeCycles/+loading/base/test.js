@@ -1,1 +1,1 @@
-runner('+loading directive base test suite', describe, it, __dirname, page => [page.jQuery('#span1').text().then(text => expect(text).toBe('text')), page.jQuery('#span2').text().then(text => expect(text).toBe('1'))]);
+runner('+loading directive base test suite', describe, it, __dirname, $ => [$('#span1').text().then(text => expect(text).toBe('text')), $('#span2').text().then(text => expect(text).toBe('1'))]);
