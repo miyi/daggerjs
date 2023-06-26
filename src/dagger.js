@@ -222,7 +222,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     }
     isRootScope ? data[meta].add(new Topology(null, '', data)) : (target[property] = data);
     return data;
-})(), ModuleProfile = ((elementProfileCacheMap = new Map, embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, childModuleResolver = (parentModule, { config, module, name, type }) => {
+})(), ModuleProfile = ((elementProfileCacheMap = new Map, embeddedType = { json: 'dagger/json', namespace: 'dagger/modules', script: 'dagger/script', style: 'dagger/style', string: 'dagger/string' }, integrityProfileCache = emptier(), mimeType = { html: 'text/html', json: 'application/json', script: ['application/javascript', 'javascript/esm', 'text/javascript'], style: 'text/css' }, relativePathRegExp = /(?:^|;|\s+)(?:export|import)\s*?(?:(?:(?:[$\w*\s{},]*)\s*from\s*?)|)(?:(?:"([^"]+)?")|(?:'([^']+)?'))[\s]*?(?:$|)/gm, remoteUrlRegExp = /^(http:\/\/|https:\/\/|\/|\.\/|\.\.\/)/i, textEncoder = new TextEncoder(), childModuleResolver = (parentModule, { config, module, name, type }) => {
     if (Object.is(type, moduleType.script)) {
         Object.is(config.anonymous, false) ? (parentModule[name] = module) : Object.assign(parentModule, module);
     } else if ((Object.is(type, moduleType.namespace) && config.explicit) || Object.is(type, moduleType.json)) {
@@ -277,16 +277,9 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         } else {
             asserter([`${ this.space }Failed to parse the config "%o" for module "${ this.path }" as there is no valid "content" or "uri" definition`, config]);
         }
-        daggerOptions.integrity && integrity && (this.integrity = integrity);
+        this.integrity = integrity;
         this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
         config.prefetch && this.resolve();
-    }
-    checkCircularDependency (moduleProfile) {
-        let parent = this;
-        while (parent) {
-            asserter(`Failed to resolve module "${ moduleProfile.path }" as there is a circular reference with "${ parent.path }"`, !moduleProfile.integrity || !Object.is(parent.integrity, moduleProfile.integrity));
-            parent = parent.parent;
-        }
     }
     fetch (paths, asynchronous = false) {
         asynchronous && (paths = paths.split('.'));
@@ -324,7 +317,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 asserter([`${ this.space }The content of module "${ this.path }" with type "${ type }" should be valid "object" instead of "%o"`, content], content && Object.is(typeof content, 'object'));
                 pipeline = [Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
             } else {
-                pipeline = [this.resolveContent(content)];
+                pipeline = [this.resolveIntegrity(content), content => this.resolveContent(content)];
             }
             pipeline = [...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)];
         }
@@ -332,6 +325,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         return this.promise;
     }
     resolveContent (content) {
+        if (!isString(content)) debugger
         isString(content) || (content = originalStringifyMethod(content));
         this.content = content.trim();
         const type = this.type;
@@ -381,6 +375,26 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         asserter([`The element "%o" of type "${ type }" is not supported`, element], this.type);
     }
+    resolveIntegrity (content) {
+        if (this.name == 'namespace_embedded') debugger
+        if (daggerOptions.integrity) {
+            return crypto.subtle.digest('SHA-256', textEncoder.encode(content)).then(integrity => {
+                const resolvedIntegrity = btoa([...new Uint8Array(integrity)].map(charCode => String.fromCharCode(charCode)).join(''));
+                asserter(`The expected "SHA-256" integrity for module "${ this.path }" is "${ this.integrity }" while the computed integrity is "${ resolvedIntegrity }"`, !this.integrity || Object.is(this.integrity, resolvedIntegrity));
+                integrityProfileCache[resolvedIntegrity] || (integrityProfileCache[resolvedIntegrity] = this);
+                this.integrity = resolvedIntegrity;
+                if (Object.is(this.type, moduleType.namespace)) {
+                    let parent = this.parent;
+                    while (parent) {
+                        asserter(`Failed to resolve module "${ this.path }" as there is a circular reference with "${ parent.path }"`, !Object.is(parent.integrity, this.integrity));
+                        parent = parent.parent;
+                    }
+                }
+                return content;
+            });
+        }
+        return content;
+    }
     resolveModule (resolvedContent) {
         this.resolvedContent = resolvedContent;
         let module = resolvedContent;
@@ -424,7 +438,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                 asserter(`The modules "${ [...childNameSet].join(', ') }" is not defined in the root namespace`);
             }
         }
-        return Promise.all(children.map(child => this.checkCircularDependency(child) || child.resolve()));
+        return Promise.all(children.map(child => child.resolve()));
     }
     resolveRemoteType (content, type, url) {
         this.base = url;
@@ -451,20 +465,22 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             if (cachedProfile) {
                 pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
             } else {
-                daggerOptions.integrity && this.integrity && (integrityProfileCache[this.integrity] = this);
+                this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
-                pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
+                pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveIntegrity(content), content => this.resolveContent(content)];
             }
-        } else if (moduleNameRegExp.test(uri)) {
+        } else if (moduleNameRegExp.test(uri)) { // alias
+            asserter(`It's illegal to set module "${ this.path }" as an alias of itself`, !Object.is(this.name, uri));
             pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
-        } else {
+        } else { // selector
+            if (this.name == 'namespace_embedded') debugger
             const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCacheMap.get(element);
             if (cachedProfile) {
                 warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" reference the same embedded element "%o"`, element]);
                 pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
             } else {
                 originalMapSet.call(elementProfileCacheMap, element, this);
-                pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
+                pipeline = [this.resolveEmbeddedType(element) || this.resolveIntegrity(element.innerHTML), content => this.resolveContent(content)];
             }
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
@@ -1374,6 +1390,27 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         asserter(['The 2nd argument of "$dagger.register" should be "string array" instead of "%o"', names], Array.isArray(names) && names.every(name => isString(name)));
         forEach(names, name => resolver(target.prototype, name));
     })();
+    eventDelegator('click', window, event => {
+        const node = event.target;
+        if (!['A', 'AREA'].includes(node.tagName) || !node.hasAttribute('href')) { return; }
+        const href = node.getAttribute('href').trim(), isHistoryMode = Object.is(routerConfigs.mode, 'history');
+        if (anchorResolver(href, event)) { return; }
+        const prefix = routerConfigs.prefix;
+        href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }/${ href }`);
+        if (isHistoryMode) {
+            event.preventDefault();
+            history.pushState({}, '', node.href);
+            routingChangeResolver();
+        }
+    }, true);
+    const resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken);
+    eventDelegator('reset', window, () => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true, true), child => {
+        child.dispatchEvent(inputEvent);
+        child.dispatchEvent(changeEvent);
+    }));
+    register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
+    JSON.stringify = processorWrapper(JSON.stringify);
+    forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
     window.$dagger = Object.freeze(Object.assign(emptier(), { register, version: '1.0.0-RC-debug', validator: (data, path, { type, assert, required } = {}) => {
         if ((data == null) || Number.isNaN(data)) { asserter([`The data "${ path }" should be assigned a valid value instead of "%o" before using`, data], !required); }
         type && (Array.isArray(type) ? asserter([`The type of data "${ path }" should be one of "%o" instead of "%o"`, type, (data.constructor || {}).name], type.some(type => (data instanceof type))) : asserter([`The type of data "${ path }" should be "%o" instead of "%o"`, type, (data.constructor || {}).name], data instanceof type));
@@ -1393,27 +1430,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         logger(edge);
         logger(`\ua9c1 Powered by "\ud83d\udde1\ufe0f dagger V${ $dagger.version } (https://daggerjs.org)". \ua9c2`);
         logger(edge);
-        eventDelegator('click', window, event => {
-            const node = event.target;
-            if (!['A', 'AREA'].includes(node.tagName) || !node.hasAttribute('href')) { return; }
-            const href = node.getAttribute('href').trim(), isHistoryMode = Object.is(routerConfigs.mode, 'history');
-            if (anchorResolver(href, event)) { return; }
-            const prefix = routerConfigs.prefix;
-            href && ![prefix, '.', '/'].some(prefix => href.startsWith(prefix)) && !Object.is(href, new URL(href, document.baseURI).href) && (node.href = `${ prefix }/${ href }`);
-            if (isHistoryMode) {
-                event.preventDefault();
-                history.pushState({}, '', node.href);
-                routingChangeResolver();
-            }
-        }, true);
-        const resetToken = { detail: true }, changeEvent = new CustomEvent('change', resetToken), inputEvent = new CustomEvent('input', resetToken);
-        eventDelegator('reset', window, () => event => Object.is(event.target.tagName, 'FORM') && forEach(querySelector(document.body, 'input, textarea', true, true), child => {
-            child.dispatchEvent(inputEvent);
-            child.dispatchEvent(changeEvent);
-        }));
-        register(Date, ['setDate', 'setFullYear', 'setHours', 'setMilliseconds', 'setMinutes', 'setMonth', 'setSeconds', 'setTime', 'setUTCDate', 'setUTCFullYear', 'setUTCHours', 'setUTCMilliseconds', 'setUTCMinutes', 'setUTCMonth', 'setUTCSeconds', 'setYear']) || register(Map, ['set', 'delete', 'clear']) || register(Set, ['add', 'delete', 'clear']) || register(WeakMap, ['set', 'delete']) || register(WeakSet, ['add', 'delete']);
-        JSON.stringify = processorWrapper(JSON.stringify);
-        forEach(['concat', 'copyWithin', 'fill', 'find', 'findIndex', 'lastIndexOf', 'pop', 'push', 'reverse', 'shift', 'unshift', 'slice', 'sort', 'splice', 'includes', 'indexOf', 'join', 'keys', 'entries', 'values', 'forEach', 'filter', 'flat', 'flatMap', 'map', 'every', 'some', 'reduce', 'reduceRight', 'toLocaleString', 'toString', 'at'], key => (Array.prototype[key] = processorWrapper(Array.prototype[key])));
+        asserter(`The integrity validation is available with "https" protocol or "localhost" host only, while the current origin is "${ location.origin }"`, !daggerOptions.integrity || crypto.subtle);
         base = modules.base;
         routerConfigs = routers.content;
         const prefix = routerConfigs.prefix;
