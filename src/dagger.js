@@ -258,7 +258,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     constructor (config = {}, base = '', name = '', parent = null) {
         name = name.trim();
         asserter(`The module name should be valid string matched RegExp "${ moduleNameRegExp.toString() }" instead of "${ name }"`, !parent || moduleNameRegExp.test(name));
-        this.layer = name ? (((parent || {}).layer || 0) + 1) : 0, this.space = new Array(this.layer * 4).fill(' ').join(''), this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = null;
+        this.layer = name ? (((parent || {}).layer || 0) + 1) : 0, this.space = new Array(this.layer * 4).fill(' ').join(''), this.name = name, this.state = 'unresolved', this.childrenCache = emptier(), this.valid = true, this.module = this.integrity = this.parent = this.children = this.type = this.content = this.resolvedContent = this.referenceSet = null;
         if (parent) {
             this.parent = parent, this.path = parent.path ? `${ parent.path }.${ name }` : name, this.tags = [...parent.tags, this.path.replace(/\./g, '__')], this.baseElement = parent.baseElement;
         } else {
@@ -469,7 +469,15 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
         } else if (moduleNameRegExp.test(uri)) { // alias
             asserter(`It's illegal to set module "${ this.path }" as an alias of itself`, !Object.is(this.name, uri));
-            pipeline = [this.parent.fetch(uri, true), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
+            const moduleProfile = this.parent.fetch(uri);
+            if (moduleProfile.referenceSet) {
+                asserter(`There is a circular reference between module "${ this.path }" and module "${ moduleProfile.path }"`, !moduleProfile.referenceSet.has(this) && ![...moduleProfile.referenceSet].some(moduleProfile => moduleProfile.referenceSet.has(this)));
+                originalSetAdd.call(moduleProfile.referenceSet, this);
+            } else {
+                moduleProfile.referenceSet = new Set([this]);
+            }
+            this.referenceSet ? originalSetAdd.call(this.referenceSet, moduleProfile) : (this.referenceSet = new Set([moduleProfile]));
+            pipeline = [moduleProfile.resolve(), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
         } else { // selector
             const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCacheMap.get(element);
             if (cachedProfile) {
@@ -486,7 +494,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (this.integrity && (!this.type || Object.is(this.type, moduleType.namespace))) {
             let parent = this.parent;
             while (parent) {
-                asserter(`Failed to resolve module "${ this.path }" as there is a circular reference with "${ parent.path }"`, !Object.is(parent.integrity, this.integrity));
+                asserter(`There is a circular reference between module "${ this.path }" and module "${ parent.path }"`, !Object.is(parent.integrity, this.integrity));
                 parent = parent.parent;
             }
         }
