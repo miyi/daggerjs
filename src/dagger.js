@@ -316,7 +316,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const content = this.content;
             if ([moduleType.namespace, moduleType.json].includes(type)) {
                 asserter([`${ this.space }The content of module "${ this.path }" with type "${ type }" should be valid "object" instead of "%o"`, content], content && Object.is(typeof content, 'object'));
-                pipeline = [this.resolveIntegrity(content), () => Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
+                pipeline = [(!this.path && this.integrity) || this.resolveIntegrity(content), () => Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
             } else {
                 pipeline = [this.resolveIntegrity(content), content => this.resolveContent(content)];
             }
