@@ -281,13 +281,14 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         this.config = config, this.promise = new Promise(resolver => (this.resolver = resolver)), this.base = new URL(config.base || base, (parent || {}).base || document.baseURI).href;
         config.prefetch && this.resolve();
     }
-    fetch (paths, asynchronous = false) {
-        asynchronous && (paths = paths.split('.'));
+    fetch (paths, asynchronous = false, ignoreMismatch = false) {
+        Array.isArray(paths) || (paths = paths.split('.'));
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
+        if (ignoreMismatch && !moduleProfile) { return null; }
         asserter(`${ this.space }Failed to fetch module "${ path }" within ${ this.path ? `namespace "${ this.path }"` : 'the root namespace' }`, !Object.is(moduleProfile));
         asserter(`The module "${ moduleProfile.path }" is referenced but not declared in the "modules" field of the current router`, !Object.is(moduleProfile.state, 'unresolved'));
-        return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));
+        return asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths));
     }
     resolve (childNameSet = null) {
         const type = this.type;
@@ -1017,8 +1018,12 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     asserter(`There is no valid module named "${ tagName }" found`, namespace);
     let isVirtualElement = false, promise = namespace.promise;
     if (namespace) {
-        promise = namespace.fetch(tagName, true);
-        if (promise) { isVirtualElement = true; } else { return viewModuleResolver(tagName, namespace.parent); }
+        promise = namespace.fetch(tagName, true, true);
+        if (promise) {
+            isVirtualElement = true;
+        } else {
+            return viewModuleResolver(tagName, namespace.parent);
+        }
     }
     return { promise, isVirtualElement };
 }, NodeProfile = class {

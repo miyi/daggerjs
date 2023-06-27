@@ -230,7 +230,7 @@ export default ((context = Symbol('context'), currentController = null, directiv
         config.prefetch && this.resolve();
     }
     fetch (paths, asynchronous = false) {
-        asynchronous && (paths = paths.split('.'));
+        Array.isArray(paths) || (paths = paths.split('.'));
         if (!paths.length) { return this; }
         const path = paths.shift().trim(), moduleProfile = this.childrenCache[path] || (this.childrenCache[path] = (this.children || []).find(child => Object.is(child.name, path) && child.valid));
         return moduleProfile && (asynchronous ? moduleProfile.resolve().then(moduleProfile => moduleProfile.valid && moduleProfile.fetch(paths)) : (moduleProfile.valid && moduleProfile.fetch(paths)));

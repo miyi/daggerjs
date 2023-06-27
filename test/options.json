@@ -1,6 +1,6 @@
 {
     "debugDirective": true,
-    "integrity": true,
+    "integrity": false,
     "log": true,
     "warning": true,
     /* "logPlainStyle": "",
