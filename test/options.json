@@ -1,8 +1,8 @@
 {
     "debugDirective": true,
     "integrity": true,
-    "log": true,
-    "warning": true,
+    "log": false,
+    "warning": false,
     /* "logPlainStyle": "",
     "logHighlightStyle": "",
     "warningPlainStyle": "",

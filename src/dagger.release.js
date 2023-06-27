@@ -262,6 +262,10 @@ export default ((context = Symbol('context'), currentController = null, directiv
         promisor.then(() => serializer(pipeline));
         return this.promise;
     }
+    resolveCachedModuleProfile (moduleProfile) {
+        this.type || (this.type = moduleProfile.type);
+        return moduleProfile.resolvedContent;
+    }
     resolveContent (content) {
         isString(content) || (content = originalStringifyMethod(content));
         this.content = content.trim();
@@ -362,18 +366,18 @@ export default ((context = Symbol('context'), currentController = null, directiv
         if (remoteUrlRegExp.test(uri)) {
             const cachedProfile = integrityProfileCache[this.integrity];
             if (cachedProfile) {
-                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                pipeline = [cachedProfile.resolve(), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
             } else {
                 this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
                 pipeline = [(_, token) => serializer([remoteResourceResolver(base, this.integrity), result => result || (token.stop = true)]), ({ content, type }) => this.resolveRemoteType(content, type, base) || this.resolveContent(content)];
             }
         } else if (moduleNameRegExp.test(uri)) { // alias
-            pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+            pipeline = [this.parent.fetch(uri, true), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
         } else { // selector
             const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCacheMap.get(element);
             if (cachedProfile) {
-                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                pipeline = [cachedProfile.resolve(), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
             } else {
                 originalMapSet.call(elementProfileCacheMap, element, this);
                 pipeline = [this.resolveEmbeddedType(element) || this.resolveContent(element.innerHTML)];
@@ -877,7 +881,7 @@ export default ((context = Symbol('context'), currentController = null, directiv
     return NodeContext;
 })(), NodeProfile = ((directiveType = { '$': 'controller', '+': 'event' }, interactiveDirectiveNames = hashTableResolver('checked', 'file', 'focus', 'result', 'selected', 'value'), lifeCycleDirectiveNames = hashTableResolver('loading', 'loaded', 'sentry', 'unloading', 'unloaded'), rawElementNames = hashTableResolver('STYLE', 'SCRIPT'), caseResolver = content => content.includes('__') ? content.replace(/__[a-z]/g, string => string[2].toUpperCase()) : content, viewModuleCacheMap = new WeakMap, dataBinder = (directives, value, fields, event) => directives.eventHandlers.push(directiveResolver(`Object.is(${ value }, _$data_) || (${ value } = _$data_)`, Object.assign({ event }, fields), '$node, _$data_')), directiveResolver = ((baseSignature = '$module, $scope') => (expression, fields = {}, signature = '$node') => {
     const { clear, debug } = fields.decorators || {};
-    expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n ${ debug ? 'debugger;\n\r' : '' }${ clear ? 'console.clear();\n\r' : '' }return ${ expression }; })(); }`;
+    expression = `${ signature ? `(${ baseSignature }, ${ signature })` : `(${ baseSignature })` } => { with ($module) with ($scope) return (() => { 'use strict';\n return ${ expression }; })(); }`;
     const processor = processorCaches[expression];
     const directive = Object.assign({}, fields, { processor: processor || expression });
     processor || directiveQueue.push(directive);

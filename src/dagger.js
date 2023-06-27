@@ -300,6 +300,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         }
         this.state = 'resolving';
         logger(`${ this.space }\u23f3 resolving the ${ this.path ? `module "${ this.path }"` : 'root module' }`);
+        this.verifyDependency();
         let pipeline = null;
         if (this.content == null) {
             pipeline = [...this.URIs.map(uri => {
@@ -315,7 +316,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             const content = this.content;
             if ([moduleType.namespace, moduleType.json].includes(type)) {
                 asserter([`${ this.space }The content of module "${ this.path }" with type "${ type }" should be valid "object" instead of "%o"`, content], content && Object.is(typeof content, 'object'));
-                pipeline = [Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
+                pipeline = [this.resolveIntegrity(content), () => Object.is(type, moduleType.namespace) ? this.resolveNamespace(content, this.base, childNameSet) : content];
             } else {
                 pipeline = [this.resolveIntegrity(content), content => this.resolveContent(content)];
             }
@@ -324,8 +325,13 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         promisor.then(() => serializer(pipeline));
         return this.promise;
     }
+    resolveCachedModuleProfile (moduleProfile) {
+        this.integrity = moduleProfile.integrity;
+        this.verifyDependency();
+        this.type || (this.type = moduleProfile.type);
+        return moduleProfile.resolvedContent;
+    }
     resolveContent (content) {
-        if (!isString(content)) debugger
         isString(content) || (content = originalStringifyMethod(content));
         this.content = content.trim();
         const type = this.type;
@@ -355,45 +361,37 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         return this;
     }
     resolveEmbeddedType (element) {
-        if (this.type) { return; }
-        const { tagName, type } = element;
-        if (Object.is(tagName, 'TEMPLATE')) {
-            this.type = moduleType.view;
-        } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
-            this.type = moduleType.style;
-        } else if (Object.is(tagName, 'SCRIPT')) {
-            if (Object.is(type, embeddedType.namespace)) {
-                this.type = moduleType.namespace;
-                return this.resolveNamespace(functionResolver(element.innerHTML), element.getAttribute('base') || this.base);
-            } else if (Object.is(type, embeddedType.script)) {
-                this.type = moduleType.script;
-            } else if (Object.is(type, embeddedType.json)) {
-                this.type = moduleType.json;
-            } else if (Object.is(type, embeddedType.string)) {
-                this.type = moduleType.string;
+        if (!this.type) {
+            const { tagName, type } = element;
+            if (Object.is(tagName, 'TEMPLATE')) {
+                this.type = moduleType.view;
+            } else if (Object.is(tagName, 'STYLE') && Object.is(type, embeddedType.style)) {
+                this.type = moduleType.style;
+            } else if (Object.is(tagName, 'SCRIPT')) {
+                if (Object.is(type, embeddedType.namespace)) {
+                    this.type = moduleType.namespace;
+                    return serializer([this.resolveIntegrity(element.innerHTML), content => this.resolveNamespace(functionResolver(content), element.getAttribute('base') || this.base)]);
+                } else if (Object.is(type, embeddedType.script)) {
+                    this.type = moduleType.script;
+                } else if (Object.is(type, embeddedType.json)) {
+                    this.type = moduleType.json;
+                } else if (Object.is(type, embeddedType.string)) {
+                    this.type = moduleType.string;
+                }
             }
+            asserter([`The element "%o" of type "${ type }" is not supported`, element], this.type);
         }
-        asserter([`The element "%o" of type "${ type }" is not supported`, element], this.type);
+        return serializer([this.resolveIntegrity(element.innerHTML), content => this.resolveContent(content)]);
     }
     resolveIntegrity (content) {
-        if (this.name == 'namespace_embedded') debugger
-        if (daggerOptions.integrity) {
-            return crypto.subtle.digest('SHA-256', textEncoder.encode(content)).then(integrity => {
-                const resolvedIntegrity = btoa([...new Uint8Array(integrity)].map(charCode => String.fromCharCode(charCode)).join(''));
-                asserter(`The expected "SHA-256" integrity for module "${ this.path }" is "${ this.integrity }" while the computed integrity is "${ resolvedIntegrity }"`, !this.integrity || Object.is(this.integrity, resolvedIntegrity));
-                integrityProfileCache[resolvedIntegrity] || (integrityProfileCache[resolvedIntegrity] = this);
-                this.integrity = resolvedIntegrity;
-                if (Object.is(this.type, moduleType.namespace)) {
-                    let parent = this.parent;
-                    while (parent) {
-                        asserter(`Failed to resolve module "${ this.path }" as there is a circular reference with "${ parent.path }"`, !Object.is(parent.integrity, this.integrity));
-                        parent = parent.parent;
-                    }
-                }
-                return content;
-            });
-        }
-        return content;
+        return daggerOptions.integrity ? crypto.subtle.digest('SHA-256', textEncoder.encode(isString(content) ? content : originalStringifyMethod(content))).then(integrity => {
+            const resolvedIntegrity = btoa([...new Uint8Array(integrity)].map(charCode => String.fromCharCode(charCode)).join(''));
+            asserter(`The expected "SHA-256" integrity for module "${ this.path }" is "${ this.integrity }" while the computed integrity is "${ resolvedIntegrity }"`, !this.integrity || Object.is(this.integrity, resolvedIntegrity));
+            integrityProfileCache[resolvedIntegrity] || (integrityProfileCache[resolvedIntegrity] = this);
+            this.integrity = resolvedIntegrity;
+            this.verifyDependency();
+            return content;
+        }) : content;
     }
     resolveModule (resolvedContent) {
         this.resolvedContent = resolvedContent;
@@ -435,7 +433,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             children = this.children.filter(child => childNameSet.has(child.name));
             if (!Object.is(children.length, childNameSet.size)) {
                 forEach(children, child => originalSetDelete.call(childNameSet, child.name));
-                asserter(`The modules "${ [...childNameSet].join(', ') }" is not defined in the root namespace`);
+                asserter(`The modules "${ [...childNameSet].join(', ') }" is not declared in the root namespace`);
             }
         }
         return Promise.all(children.map(child => child.resolve()));
@@ -463,7 +461,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
         if (remoteUrlRegExp.test(uri)) {
             const cachedProfile = integrityProfileCache[this.integrity];
             if (cachedProfile) {
-                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                pipeline = [cachedProfile.resolve(), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
             } else {
                 this.integrity && (integrityProfileCache[this.integrity] = this);
                 const base = new URL(uri, this.base).href;
@@ -471,19 +469,27 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
         } else if (moduleNameRegExp.test(uri)) { // alias
             asserter(`It's illegal to set module "${ this.path }" as an alias of itself`, !Object.is(this.name, uri));
-            pipeline = [this.parent.fetch(uri, true), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+            pipeline = [this.parent.fetch(uri, true), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
         } else { // selector
-            if (this.name == 'namespace_embedded') debugger
             const element = querySelector(this.baseElement, uri), cachedProfile = elementProfileCacheMap.get(element);
             if (cachedProfile) {
                 warner([`${ this.space }\u274e The module "${ this.path }" and "${ cachedProfile.path }" reference the same embedded element "%o"`, element]);
-                pipeline = [cachedProfile.resolve(), moduleProfile => (this.type = this.type || moduleProfile.type) && moduleProfile.resolvedContent];
+                pipeline = [cachedProfile.resolve(), moduleProfile => this.resolveCachedModuleProfile(moduleProfile)];
             } else {
                 originalMapSet.call(elementProfileCacheMap, element, this);
-                pipeline = [this.resolveEmbeddedType(element) || this.resolveIntegrity(element.innerHTML), content => this.resolveContent(content)];
+                pipeline = [this.resolveEmbeddedType(element)];
             }
         }
         return pipeline && serializer([...pipeline, resolvedContent => this.resolveModule(resolvedContent), module => this.resolved(module)]);
+    }
+    verifyDependency () {
+        if (this.integrity && (!this.type || Object.is(this.type, moduleType.namespace))) {
+            let parent = this.parent;
+            while (parent) {
+                asserter(`Failed to resolve module "${ this.path }" as there is a circular reference with "${ parent.path }"`, !Object.is(parent.integrity, this.integrity));
+                parent = parent.parent;
+            }
+        }
     }
 }) => ModuleProfile)(), NodeContext = ((dataUpdater = {
     checked: node => Object.is(node.tagName, 'OPTION') ? node.selected : node.checked,
@@ -815,7 +821,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
             }
             eventHandlers && (this.eventHandlers = eventHandlers.map(({ event, decorators = {}, processor, name }) => {
                 const { capture, outside, once, passive, target } = decorators, resolvedTarget = target ? (window[target] || querySelector(document, target)) : this.node, currentTarget = outside ? window : resolvedTarget, handler = event => this.updateEventHandler(event, name, processor.bind(null, this.module, this.scope), decorators, resolvedTarget);
-                asserter([`The target of "+${ event }" directive defined on element "%o" is invalid`, this.node || this.profile.node], resolvedTarget);
+                asserter([`The target of "+${ event }" directive declared on element "%o" is invalid`, this.node || this.profile.node], resolvedTarget);
                 if (once || passive) {
                     const options = { capture, once, passive };
                     currentTarget.addEventListener(event, handler, options);
@@ -1039,7 +1045,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
                     node.removeAttribute(slotDirective);
                     if (this.defaultSlotScope) {
                         this.defaultSlotScope[slotName] = node.innerHTML;
-                        warner([`\u274e Please avoid adding "$html" or "$text" directive on element "%o" as it's defined "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
+                        warner([`\u274e Please avoid adding "$html" or "$text" directive on element "%o" as it's declared "${ slotDirective }" meta directive already`, node], !node.hasAttribute('$html') && !node.hasAttribute('$text'));
                         node.removeAttribute('$html');
                         node.removeAttribute('$text');
                         this.resolveDirective('$html', slotName, directives);
@@ -1327,7 +1333,7 @@ export default (({ asserter, logger, groupStarter, groupEnder, warner } = ((mess
     Promise.all([...sentrySet].map(sentry => Promise.resolve(sentry.processor(nextRouter)).then(prevent => ({ sentry, prevent })))).then(results => {
         logger(`\u2705 resolved sentries within router "${ (rootScope.$router || {}).path || '/' }"`);
         const matchedOwners = results.filter(result => result.prevent).map(result => result.sentry.owner);
-        matchedOwners.length ? forEach(matchedOwners, owner => warner(['\u274e The router redirect is prevented by the "$sentry" directive defined on the "%o" element', owner.node || owner.profile.node])) || history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter);
+        matchedOwners.length ? forEach(matchedOwners, owner => warner(['\u274e The router redirect is prevented by the "$sentry" directive declared on the "%o" element', owner.node || owner.profile.node])) || history.replaceState(null, '', `${ prefix }${ rootScope.$router.path }`) : routerChangeResolver(nextRouter);
     });
 })(), Router = class {
     constructor (router, parent = null) {

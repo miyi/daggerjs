@@ -17,7 +17,7 @@
             "content": {
                 "view": "#index_template",
                 "style": "#index_style",
-                "content": "./index.json"
+                "content": "/index.json"
             }
         }
     },
@@ -40,7 +40,7 @@
     "selected": "http://localhost:8283/modules/selected.html",
     "modules": {
         "uri": "http://localhost:8283/modules/modules.html",
-        "integrity": "Hem/6Te8KRACwen7s9s9L8LJ/TjCVR7YZuIFWswNIQM="
+        "integrity": "PnISqg/mOtxOEwNdu4L9i37rINf/NswCUHmyY0nFlwc="
     },
     "module_component": {
         "name": "component",

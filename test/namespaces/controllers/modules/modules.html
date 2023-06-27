@@ -18,7 +18,7 @@
     });
     const loading2 = index => {
         if (index < 4) {
-            return { html: '<inner_template2></inner_template2>', index: ++index };
+            return { html: 'inner_template2', index: ++index };
         } else {
             return { html: `end - ${ index }`, index };
         }
