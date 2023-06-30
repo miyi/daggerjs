@@ -1,0 +1,46 @@
+<html>
+  <script type="dagger/modules">
+    {
+      view: "#view",
+      style: "#style"
+    }
+  </script>
+  <style id="style">
+    .container {
+      .menu {
+        display: flex;
+        flex-direction: row;
+        gap: 2rem;
+      }
+    }
+  </style>
+  <template id="view">
+    <div
+      class="container"
+      $style="background-color: $router.constants.bgColor"
+      +loading="{number: 0}"
+    >
+      <div>I'm ${$router.constants.title}</div>
+      <button +click="number++"></button>
+      <div
+        class="menu"
+        +loading="{
+      item: [
+        {
+          name: 'layer3 a', '/nested/nested2/a'
+        },{
+          name: 'layer3 b', '/nested/nested2/a'
+        },{
+          name: 'layer3 c', '/nested/nested2/a'
+        }
+      ]
+    }"
+      >
+        <button $each="item" +click="history.pushState({},'',item.link)">
+          ${item.name}
+        </button>
+      </div>
+      <template $html="$router.constants.layer3"></template>
+    </div>
+  </template>
+</html>
