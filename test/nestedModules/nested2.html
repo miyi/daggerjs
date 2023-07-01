@@ -5,7 +5,7 @@
       style: "#style"
     }
   </script>
-  <style id="style">
+  <style id="style" type="dagger/style">
     .container {
       .menu {
         display: flex;
@@ -17,7 +17,7 @@
   <template id="view">
     <div
       class="container"
-      $style="background-color: $router.constants.bgColor"
+      $style="{ 'background-color': $router.constants.bgColor }"
       +loading="{number: 0}"
     >
       <div>I'm ${$router.constants.title}</div>
@@ -27,11 +27,11 @@
         +loading="{
       item: [
         {
-          name: 'layer3 a', '/nested/nested2/a'
+          name: 'layer3 a', link: '/nested/nested2/a'
         },{
-          name: 'layer3 b', '/nested/nested2/a'
+          name: 'layer3 b', link: '/nested/nested2/a'
         },{
-          name: 'layer3 c', '/nested/nested2/a'
+          name: 'layer3 c', link: '/nested/nested2/a'
         }
       ]
     }"

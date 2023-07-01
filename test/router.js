@@ -19,7 +19,7 @@ return {
             path: "nested2",
             modules: "nested2",
             constants: {layer2: "nested2", bgColor: "grey", title: "nested2"},
-            chilren: [
+            children: [
               {path: 'a', modules: "nested3", constants: {layer3: "nested3", bgColor: "red", title: "nested3 a"}},
               {path: 'b', modules: "nested3", constants: {layer3: "nested3", bgColor: "yellow", title: "nested3 b"}},
               {path: 'c', modules: "nested3", constants: {layer3: "nested3", bgColor: "green", title: "nested3 c"}},

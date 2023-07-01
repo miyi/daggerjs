@@ -5,7 +5,7 @@
       style: "#style"
     }
   </script>
-  <style id="style">
+  <style id="style" type="dagger/style">
     .container {
       padding: 2rem;
       display: flex;
@@ -15,7 +15,7 @@
   <template
     id="view"
     class="container"
-    $style="background-color: brown"
+    $style="{ 'background-color': 'brown' }"
     +loading="{number: 0}"
   >
     <div style="font-size: 2rem">I'm the nested module</div>
